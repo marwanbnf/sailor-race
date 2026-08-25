@@ -136,9 +136,10 @@ function formatHistoryDateLabel(dateValue: string): string {
 
 const SQUARES_PER_SEGMENT = 4;
 const TOTAL_POSITIONS = SQUARES_PER_SEGMENT * 3 + 1;
-const ISLAND_INDICES = [4, 8, 12];
-const ISLAND_SIZES = [150, 140, 170];
+const ISLAND_INDICES = [0, 4, 8, 12];
+const ISLAND_SIZES = [150, 150, 140, 170];
 
+// Reference layout: start/challenge across the top, progress/win across the bottom.
 const ISLANDS_POS: Position[] = [
   { x: 10, y: 18 },
   { x: 95, y: 39 },
@@ -207,7 +208,7 @@ function getSvgPath(): string {
 const POINTS_PER_SQUARE = 1500;
 const POSITION_EPSILON = 0.0001;
 const MOVE_STEP_INDEX = 0.15; // خمس عشر مربع لكل خطوة: حركة أدق وأكثر سلاسة
-const MOVE_STEP_MS = 200; // أسرع قليلاً لجعل الحركة أكثر وضوحاً
+const MOVE_STEP_MS = 230; // أبطأ بنسبة بسيطة مع الحفاظ على إيقاع مناسب للمسابقة
 const IDLE_TRANSITION_MS = 140;
 const DEBUG_SHIP_POSITIONS = true;
 
