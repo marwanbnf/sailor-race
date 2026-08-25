@@ -134,10 +134,10 @@ function formatHistoryDateLabel(dateValue: string): string {
   }).format(new Date(Date.UTC(year, month - 1, day, 12)));
 }
 
-const SQUARES_PER_SEGMENT = 6;
+const SQUARES_PER_SEGMENT = 4;
 const TOTAL_POSITIONS = SQUARES_PER_SEGMENT * 3 + 1;
-const ISLAND_INDICES = [0, 6, 12, 18];
-const ISLAND_SIZES = [150, 140, 140, 170];
+const ISLAND_INDICES = [4, 8, 12];
+const ISLAND_SIZES = [150, 140, 170];
 
 const ISLANDS_POS: Position[] = [
   { x: 10, y: 18 },
@@ -202,12 +202,12 @@ function getSvgPath(): string {
   }).join(" ");
 }
 
-// Each board interval is worth 250 points.
-// Six intervals separate every two islands: 6 × 250 = 1500 points.
-const POINTS_PER_SQUARE = 250;
+// Each board interval is worth 1500 points.
+// Four intervals separate every two islands: 4 × 1500 = 6000 points.
+const POINTS_PER_SQUARE = 1500;
 const POSITION_EPSILON = 0.0001;
-const MOVE_STEP_INDEX = 0.25; // ربع مربع لكل خطوة: حركة أدق على المنحنى
-const MOVE_STEP_MS = 300; // تقريباً 1.2 ثانية لكل مربع كامل: أبطأ قليلاً بدون مبالغة
+const MOVE_STEP_INDEX = 0.15; // خمس عشر مربع لكل خطوة: حركة أدق وأكثر سلاسة
+const MOVE_STEP_MS = 200; // أسرع قليلاً لجعل الحركة أكثر وضوحاً
 const IDLE_TRANSITION_MS = 140;
 const DEBUG_SHIP_POSITIONS = true;
 
@@ -2314,7 +2314,48 @@ export default function DisplayPage() {
                     </div>
                   )}
                 </>
+              ) : i === 0 ? (
+                /* بداية المسابقة */
+                <>
+                  <div
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 8,
+                      transform: "rotate(45deg)",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      background:
+                        "linear-gradient(135deg,rgba(34,197,94,0.45),rgba(21,128,61,0.3))",
+                      boxShadow: "0 2px 8px rgba(34,197,94,0.25)",
+                      border: "1.5px solid rgba(34,197,94,0.5)",
+                    }}
+                  >
+                    <span
+                      style={{
+                        transform: "rotate(-45deg)",
+                        fontSize: 16,
+                      }}
+                    >
+                      🏁
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      color: "#22c55e",
+                      fontSize: 10,
+                      marginTop: 4,
+                      fontWeight: 800,
+                      textShadow: "0 1px 3px rgba(0,0,0,1)",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    البداية
+                  </div>
+                </>
               ) : (
+                /* مربع عادي */
                 <>
                   <div
                     style={{
