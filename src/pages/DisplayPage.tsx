@@ -213,6 +213,11 @@ const MIN_MOVE_STEP_MS = 140;
 const MAX_MOVE_STEP_MS = 400;
 const IDLE_TRANSITION_MS = 140;
 const DEBUG_SHIP_POSITIONS = true;
+const SHIP_SPEED_OPTIONS = [
+  { label: "سريع", description: "حركة نشيطة", stepMs: 180, icon: "⚡" },
+  { label: "متوازن", description: "مناسب للمسابقة", stepMs: 230, icon: "⛵" },
+  { label: "هادئ", description: "أوضح للمتابعة", stepMs: 300, icon: "🌊" },
+] as const;
 
 function normalizeMoveStepMs(value: unknown): number {
   const numeric = Number(value);
@@ -676,6 +681,8 @@ function SettingsPanel({
   teams,
   onClose,
   currentPositions,
+  shipMoveStepMs,
+  onChangeShipSpeed,
   onMovePending,
   onAdjustPoints,
   onResetAll,
@@ -683,6 +690,8 @@ function SettingsPanel({
   teams: Team[];
   onClose: () => void;
   currentPositions: Record<string, number>;
+  shipMoveStepMs: number;
+  onChangeShipSpeed: (stepMs: number) => void;
   onMovePending: (
     pending: PendingPositions,
     divisors: Record<string, number>,
@@ -914,6 +923,88 @@ function SettingsPanel({
 
         {tab === "move" && (
           <div>
+            <div
+              style={{
+                padding: 12,
+                marginBottom: 14,
+                borderRadius: 16,
+                border: "1px solid rgba(56,189,248,0.24)",
+                background:
+                  "linear-gradient(145deg,rgba(14,116,144,0.18),rgba(255,255,255,0.045))",
+              }}
+            >
+              <div
+                style={{
+                  color: "#e0f2fe",
+                  fontSize: 13,
+                  fontWeight: 900,
+                  marginBottom: 9,
+                  textAlign: "center",
+                }}
+              >
+                🚢 سرعة حركة السفن
+              </div>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3,minmax(0,1fr))",
+                  gap: 7,
+                }}
+              >
+                {SHIP_SPEED_OPTIONS.map((option) => {
+                  const selected = shipMoveStepMs === option.stepMs;
+                  return (
+                    <button
+                      key={option.stepMs}
+                      type="button"
+                      className="smooth-btn"
+                      aria-pressed={selected}
+                      onClick={() => onChangeShipSpeed(option.stepMs)}
+                      style={{
+                        minWidth: 0,
+                        padding: "10px 4px 8px",
+                        borderRadius: 12,
+                        cursor: "pointer",
+                        fontFamily: "'Tajawal',sans-serif",
+                        background: selected
+                          ? "linear-gradient(180deg,#38bdf8,#0369a1)"
+                          : "rgba(255,255,255,0.055)",
+                        color: selected ? "#fff" : "rgba(255,255,255,0.62)",
+                        border: selected
+                          ? "1.5px solid rgba(125,211,252,0.8)"
+                          : "1.5px solid rgba(255,255,255,0.1)",
+                      }}
+                    >
+                      <span style={{ display: "block", fontSize: 17, lineHeight: 1 }}>
+                        {option.icon}
+                      </span>
+                      <span
+                        style={{
+                          display: "block",
+                          fontSize: 11,
+                          fontWeight: 900,
+                          marginTop: 5,
+                        }}
+                      >
+                        {option.label}
+                      </span>
+                      <span
+                        style={{
+                          display: "block",
+                          fontSize: 8.5,
+                          fontWeight: 700,
+                          opacity: 0.68,
+                          marginTop: 2,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {option.description}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
             <p
               style={{
                 color: "rgba(255,255,255,0.4)",
@@ -1575,6 +1666,7 @@ export default function DisplayPage() {
   const moveQueueRef = useRef<QueuedMove[]>([]);
   const isAnimatingRef = useRef(false);
   const initializedPositionsRef = useRef(false);
+  const [shipMoveStepMs, setShipMoveStepMs] = useState(DEFAULT_MOVE_STEP_MS);
   const shipMoveStepMsRef = useRef(DEFAULT_MOVE_STEP_MS);
 
   const positions = useMemo(() => getPathPositions(), []);
@@ -1730,9 +1822,11 @@ export default function DisplayPage() {
   useEffect(() => {
     wsClient.connect();
     const unsubState = wsClient.subscribe((state: any) => {
-      shipMoveStepMsRef.current = normalizeMoveStepMs(
+      const nextShipMoveStepMs = normalizeMoveStepMs(
         state?.settings?.shipMoveStepMs,
       );
+      shipMoveStepMsRef.current = nextShipMoveStepMs;
+      setShipMoveStepMs(nextShipMoveStepMs);
       const fixedTeams = (state.teams || [])
         .map((t: any) => ({
           ...t,
@@ -1825,6 +1919,13 @@ export default function DisplayPage() {
     if (!document.fullscreenElement)
       document.documentElement.requestFullscreen();
     else document.exitFullscreen();
+  };
+
+  const handleChangeShipSpeed = (stepMs: number) => {
+    const normalized = normalizeMoveStepMs(stepMs);
+    shipMoveStepMsRef.current = normalized;
+    setShipMoveStepMs(normalized);
+    wsClient.setShipMoveStepMs(normalized);
   };
 
   /* تحريك السفن سفينة واحدة في كل مرة، ربع مربع/ربع مربع على المسار */
@@ -2667,6 +2768,8 @@ export default function DisplayPage() {
             teams={teams}
             onClose={() => setShowSettings(false)}
             currentPositions={displayPositions}
+            shipMoveStepMs={shipMoveStepMs}
+            onChangeShipSpeed={handleChangeShipSpeed}
             onMovePending={(pending) => {
               setPendingPos(pending);
               setShowSettings(false);
