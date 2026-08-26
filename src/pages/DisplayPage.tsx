@@ -203,9 +203,9 @@ function getSvgPath(): string {
   }).join(" ");
 }
 
-// Each board interval is worth 1500 points.
-// Four intervals separate every two islands: 4 × 1500 = 6000 points.
-const POINTS_PER_SQUARE = 1500;
+// Each board interval is worth 500 points.
+// Four intervals separate every two islands: 4 × 500 = 2000 points.
+const POINTS_PER_SQUARE = 500;
 const POSITION_EPSILON = 0.0001;
 const MOVE_STEP_INDEX = 0.15; // خمس عشر مربع لكل خطوة: حركة أدق وأكثر سلاسة
 const DEFAULT_MOVE_STEP_MS = 230;
@@ -248,10 +248,10 @@ function indexToPoints(index: number): number {
 // Converts a value that may have been saved by an older version as raw points
 // into the canonical square-index value used by the renderer.
 // Examples:
-//   4   => 4   (already square-index, meaning 200 pts)
-//   0.6 => 0.6 (already square-index, meaning 30 pts)
-//   200 => 4   (legacy/raw points)
-//   30  => 0.6 (legacy/raw points)
+//   4    => 4   (already square-index, meaning 2000 pts)
+//   0.6  => 0.6 (already square-index, meaning 300 pts)
+//   2000 => 4   (legacy/raw points)
+//   300  => 0.6 (legacy/raw points)
 function storedPositionToIndex(
   rawPosition: number | undefined,
   fallbackPoints?: number,
@@ -262,13 +262,12 @@ function storedPositionToIndex(
   const maxIndex = TOTAL_POSITIONS - 1;
   const safeFallbackPoints = Number(fallbackPoints ?? NaN);
 
-  // القيم الأكبر من 21 لا يمكن أن تكون رقم مربع، إذن هي نقاط خام:
-  // 30 => 0.6 ، 200 => 4 ، 300 => 6 ، 700 => 14.
+  // أي قيمة أكبر من آخر موضع في المسار لا يمكن أن تكون رقم مربع، إذن هي نقاط خام.
   if (raw > maxIndex) return pointsToIndex(raw);
 
   // مهم جداً للقيم الأقل من 50:
-  // إذا كان السيرفر خزّن position=10 أو 20 كنقاط، والـ points لنفس الفريق
-  // تساوي نفس الرقم، لا نعامل 10 كمربع 10؛ بل كنقاط = 0.2 مربع.
+  // إذا كان السيرفر خزّن position كنقاط، والـ points لنفس الفريق تساوي نفس الرقم،
+  // فلا نعاملها كرقم مربع بل نحوّلها حسب قيمة 500 نقطة للمربع.
   if (
     Number.isFinite(safeFallbackPoints) &&
     Math.abs(raw - safeFallbackPoints) <= POSITION_EPSILON &&
@@ -278,7 +277,7 @@ function storedPositionToIndex(
   }
 
   // غير ذلك نعتبرها قيمة حديثة بصيغة رقم مربع كسري:
-  // 0.6 => بين 0 و1، 4 => مربع 4، 14.4 => بين 14 و15.
+  // 0.6 => بين 0 و1، و4 => مربع 4، و8.5 => بين 8 و9.
   return Math.max(0, Math.min(raw, maxIndex));
 }
 
@@ -294,10 +293,10 @@ function indexToExactPos(index: number, pathPositions: Position[]): Position {
   const maxIndex = pathPositions.length - 1;
   const clampedIndex = Math.max(0, Math.min(index, maxIndex));
 
-  // المسار مكوّن من 3 منحنيات، وكل منحنى فيه 6 خطوات × 250 = 1500 نقطة بين كل جزيرتين.
+  // المسار مكوّن من 3 منحنيات، وكل منحنى فيه 4 فواصل × 500 = 2000 نقطة بين كل جزيرتين.
   // بدلاً من خط مستقيم بين علامتين، نحسب موقع السفينة على نفس cubicBezier
-  // المستخدم لرسم الخط الأصفر، لذلك 300 يقف فوق علامة 300 تماماً،
-  // و700 يتبع المنحنى ولا يهبط تحته.
+  // المستخدم لرسم الخط الأصفر، لذلك 500 يقف فوق أول مربع تماماً،
+  // و1000 يقف فوق المربع الثاني على المنحنى.
   const squaresPerSegment = SQUARES_PER_SEGMENT;
   const seg = Math.min(
     Math.floor(clampedIndex / squaresPerSegment),
