@@ -208,9 +208,17 @@ function getSvgPath(): string {
 const POINTS_PER_SQUARE = 1500;
 const POSITION_EPSILON = 0.0001;
 const MOVE_STEP_INDEX = 0.15; // خمس عشر مربع لكل خطوة: حركة أدق وأكثر سلاسة
-const MOVE_STEP_MS = 230; // أبطأ بنسبة بسيطة مع الحفاظ على إيقاع مناسب للمسابقة
+const DEFAULT_MOVE_STEP_MS = 230;
+const MIN_MOVE_STEP_MS = 140;
+const MAX_MOVE_STEP_MS = 400;
 const IDLE_TRANSITION_MS = 140;
 const DEBUG_SHIP_POSITIONS = true;
+
+function normalizeMoveStepMs(value: unknown): number {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return DEFAULT_MOVE_STEP_MS;
+  return Math.round(Math.min(MAX_MOVE_STEP_MS, Math.max(MIN_MOVE_STEP_MS, numeric)));
+}
 
 const round3 = (value: number) => Math.round(value * 1000) / 1000;
 
@@ -1567,6 +1575,7 @@ export default function DisplayPage() {
   const moveQueueRef = useRef<QueuedMove[]>([]);
   const isAnimatingRef = useRef(false);
   const initializedPositionsRef = useRef(false);
+  const shipMoveStepMsRef = useRef(DEFAULT_MOVE_STEP_MS);
 
   const positions = useMemo(() => getPathPositions(), []);
   const svgPath = useMemo(() => getSvgPath(), []);
@@ -1721,6 +1730,9 @@ export default function DisplayPage() {
   useEffect(() => {
     wsClient.connect();
     const unsubState = wsClient.subscribe((state: any) => {
+      shipMoveStepMsRef.current = normalizeMoveStepMs(
+        state?.settings?.shipMoveStepMs,
+      );
       const fixedTeams = (state.teams || [])
         .map((t: any) => ({
           ...t,
@@ -1886,10 +1898,11 @@ export default function DisplayPage() {
         const remaining = Math.abs(endPos - current);
         const step = Math.min(MOVE_STEP_INDEX, remaining);
         const nextStep = current + direction * step;
+        const currentStepMs = shipMoveStepMsRef.current;
 
         transitionDurationsRef.current = {
           ...transitionDurationsRef.current,
-          [next.id]: MOVE_STEP_MS,
+          [next.id]: currentStepMs,
         };
         setTransitionDurations({ ...transitionDurationsRef.current });
 
@@ -1906,7 +1919,7 @@ export default function DisplayPage() {
         });
 
         current = nextStep;
-        await sleep(MOVE_STEP_MS + 30);
+        await sleep(currentStepMs + 30);
       }
 
       transitionDurationsRef.current = {

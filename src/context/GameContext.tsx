@@ -12,6 +12,7 @@ const initialState = {
   teams: [] as any[],
   tiles: [] as any[],
   events: [] as any[],
+  settings: { shipMoveStepMs: 230 },
   loading: true,
   error: null as string | null,
 };
@@ -32,6 +33,7 @@ function reducer(
         teams: action.payload.teams || [],
         tiles: action.payload.tiles || [],
         events: action.payload.events || [],
+        settings: action.payload.settings || state.settings,
         loading: false,
       };
     case "SET_ERROR":
@@ -62,6 +64,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     teams: state.teams,
     tiles: state.tiles,
     events: state.events,
+    settings: state.settings,
     loading: state.loading,
     error: state.error,
     addPointsToTeam: useCallback(
@@ -111,6 +114,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     ),
     updateTile: useCallback(
       (tileId: number, updates: object) => wsClient.updateTile(tileId, updates),
+      [],
+    ),
+    setShipMoveStepMs: useCallback(
+      (stepMs: number) => wsClient.setShipMoveStepMs(stepMs),
       [],
     ),
     resetGame: useCallback(() => wsClient.resetGame(), []),

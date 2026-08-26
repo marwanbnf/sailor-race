@@ -47,10 +47,15 @@ interface RegistrationItem {
   points: number;
 }
 
+interface RaceSettings {
+  shipMoveStepMs: number;
+}
+
 interface GameState {
   teams: Team[];
   tiles: Tile[];
   events: GameEvent[];
+  settings: RaceSettings;
   // البنود هنا قناة بث لحظية فقط؛ المصدر الرسمي الدائم هو Google Apps Script.
   registrationItems?: RegistrationItem[];
   registrationItemsUpdatedAt?: string;
@@ -71,6 +76,9 @@ interface ClassSyncItem {
 const ACTIVE_CLASS_COUNT = 5;
 
 const MAX_BOARD_POSITION = 18;
+const DEFAULT_SHIP_MOVE_STEP_MS = 230;
+const MIN_SHIP_MOVE_STEP_MS = 140;
+const MAX_SHIP_MOVE_STEP_MS = 400;
 
 const DEFAULT_CONSTANTS = {
   POINTS_PER_STEP: 1500,
@@ -81,6 +89,15 @@ const DEFAULT_CONSTANTS = {
 
 // هذه هويات النظام القديم فقط لغرض تنظيف game.json القديم عند التشغيل.
 const LEGACY_TEAM_IDS = new Set(["blue", "red", "green", "purple"]);
+
+function normalizeRaceSettings(raw: any): RaceSettings {
+  const numeric = Number(raw?.shipMoveStepMs);
+  return {
+    shipMoveStepMs: Number.isFinite(numeric)
+      ? Math.round(Math.min(MAX_SHIP_MOVE_STEP_MS, Math.max(MIN_SHIP_MOVE_STEP_MS, numeric)))
+      : DEFAULT_SHIP_MOVE_STEP_MS,
+  };
+}
 
 function getToday() {
   return new Date().toDateString();
@@ -171,7 +188,12 @@ const DATA_FILE = "./game.json";
 
 async function loadState(): Promise<GameState> {
   if (!existsSync(DATA_FILE)) {
-    return { teams: [], tiles: generateDefaultTiles(), events: [] };
+    return {
+      teams: [],
+      tiles: generateDefaultTiles(),
+      events: [],
+      settings: normalizeRaceSettings(null),
+    };
   }
 
   try {
@@ -190,10 +212,15 @@ async function loadState(): Promise<GameState> {
 
     // لا نستعيد بنود التسجيل من game.json حتى لا تصبح نسخة Render القديمة
     // أسبق من Google Apps Script. الصفحة تقرأ البنود الرسمية من Google أولاً.
-    return { teams, tiles, events };
+    return { teams, tiles, events, settings: normalizeRaceSettings(saved?.settings) };
   } catch (err) {
     console.error("Failed to read game.json; starting with a safe empty dynamic state:", err);
-    return { teams: [], tiles: generateDefaultTiles(), events: [] };
+    return {
+      teams: [],
+      tiles: generateDefaultTiles(),
+      events: [],
+      settings: normalizeRaceSettings(null),
+    };
   }
 }
 
@@ -598,6 +625,16 @@ async function handleMessage(ws: any, msg: string) {
       break;
     }
 
+    case "setShipMoveStepMs": {
+      const nextSettings = normalizeRaceSettings({
+        shipMoveStepMs: data.stepMs,
+      });
+      state.settings = nextSettings;
+      addEvent(state, `🚢 تم تغيير سرعة حركة السفن إلى ${nextSettings.shipMoveStepMs} مللي ثانية`);
+      broadcastFullState();
+      break;
+    }
+
     case "resetGame": {
       // مهم: لا نرجع blue/red/green/purple.
       // نحافظ على هوية واسم وslot/version لكل فصل ونصفر بيانات السباق فقط.
@@ -621,6 +658,7 @@ async function handleMessage(ws: any, msg: string) {
           ),
         tiles: generateDefaultTiles(),
         events: [],
+        settings: state.settings,
       };
       addEvent(state, "🔄 تم إعادة ضبط اللعبة مع الاحتفاظ بالفصول");
       broadcastFullState();

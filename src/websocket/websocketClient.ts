@@ -261,6 +261,10 @@ export function adjustPoints(teamId: string, amount: number) {
   send({ type: "adjustPoints", teamId, amount });
 }
 
+export function setShipMoveStepMs(stepMs: number) {
+  send({ type: "setShipMoveStepMs", stepMs });
+}
+
 export function resetGame() {
   send({ type: "resetGame" });
 }
