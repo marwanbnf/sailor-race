@@ -107,7 +107,9 @@ const DISPLAY_EVENT_CHANNEL = "sailor-race-display-events";
 const APPS_SCRIPT_URL = String(import.meta.env.VITE_APPS_URL || "");
 
 function getRiyadhDateISO(offsetDays = 0): string {
-  const shifted = new Date(Date.now() + offsetDays * 24 * 60 * 60 * 1000);
+  // «اليوم الدراسي» يبدأ الساعة 6:00 صباحاً بتوقيت السعودية — نفس منطق صفحة التسجيل:
+  // قبل 6 صباحاً نعرض بيانات أمس الدراسي، وبعده تبدأ جلسة اليوم الجديد.
+  const shifted = new Date(Date.now() + offsetDays * 24 * 60 * 60 * 1000 - 6 * 60 * 60 * 1000);
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: "Asia/Riyadh",
     year: "numeric",

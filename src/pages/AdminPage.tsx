@@ -723,12 +723,16 @@ function regItemSummaryText(
 }
 
 function getRiyadhDateISO(): string {
+  // «اليوم الدراسي» يبدأ الساعة 6:00 صباحاً بتوقيت السعودية:
+  // قبل 6 صباحاً نحن ما زلنا في أمس الدراسي، فالتسجيل يُحسب لليوم السابق.
+  // (نطرح 6 ساعات من الوقت الحالي ثم نقرأ التاريخ بتوقيت السعودية)
+  const shifted = new Date(Date.now() - 6 * 60 * 60 * 1000);
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: "Asia/Riyadh",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  }).formatToParts(new Date());
+  }).formatToParts(shifted);
 
   const year = parts.find((p) => p.type === "year")?.value || "";
   const month = parts.find((p) => p.type === "month")?.value || "";
