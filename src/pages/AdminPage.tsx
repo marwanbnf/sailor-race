@@ -869,6 +869,8 @@ export default function AdminPage() {
   // عدّاد جلسة التسجيل: عدد المحفوظ في الشيت وعدد ما زال قيد الحفظ بالخلفية.
   const [sheetStats, setSheetStats] = useState<{ saved: number; pending: number }>({ saved: 0, pending: 0 });
   const [quickMode, setQuickMode] = useState(false);
+  const [rosterModalOpen, setRosterModalOpen] = useState(false);
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [quickPts, setQuickPts] = useState("");
   const [syncSheet, setSyncSheet] = useState(true);
   const [showReset, setShowReset] = useState(false);
@@ -1850,6 +1852,29 @@ export default function AdminPage() {
           </button>
 
           <button
+            onClick={() => setRosterModalOpen(true)}
+            className="smooth-btn"
+            style={{
+              minWidth: 0,
+              minHeight: 48,
+              background: "linear-gradient(180deg,#6366f1,#4338ca)",
+              border: "1px solid rgba(129,140,248,0.55)",
+              borderRadius: 999,
+              padding: "5px 3px",
+              cursor: "pointer",
+              color: "#fff",
+              fontSize: "clamp(8px,2.6vw,10.5px)",
+              lineHeight: 1.15,
+              fontWeight: 800,
+              fontFamily: "'Tajawal',sans-serif",
+              whiteSpace: "normal",
+              boxShadow: "0 3px 12px rgba(99,102,241,0.35), inset 0 1px 0 rgba(255,255,255,0.25)",
+            }}
+          >
+            👥 إدارة الحلقة
+          </button>
+
+          <button
             onClick={() => setStudentsReloadKey((v) => v + 1)}
             disabled={studentsLoading}
             className="smooth-btn"
@@ -2566,6 +2591,19 @@ export default function AdminPage() {
 
       {/* ── Main Card ── */}
       <div style={S.card}>
+        <RosterManager
+          open={rosterModalOpen}
+          onClose={() => setRosterModalOpen(false)}
+          schoolClasses={schoolClasses}
+          onClassesRefresh={() => setStudentsReloadKey((v) => v + 1)}
+          showToast={showToast}
+        />
+        <RegistrationsManager
+          open={historyModalOpen}
+          onClose={() => setHistoryModalOpen(false)}
+          schoolClasses={schoolClasses}
+          showToast={showToast}
+        />
         {/* Mode toggle — مفتاح مقسّم بنمط حبوب */}
         <div
           style={{
@@ -3868,6 +3906,32 @@ export default function AdminPage() {
           </div>
         )}
       </div>
+      <div style={{ height: 16 }} />
+
+      <button
+        onClick={() => setHistoryModalOpen(true)}
+        className="smooth-btn"
+        style={{
+          width: "100%",
+          maxWidth: 430,
+          padding: "15px 16px",
+          borderRadius: 18,
+          border: "1.5px solid rgba(56,189,248,0.4)",
+          background: "linear-gradient(180deg,rgba(14,165,233,0.22),rgba(2,132,199,0.18))",
+          color: "#bae6fd",
+          fontFamily: "'Tajawal',sans-serif",
+          fontSize: 14,
+          fontWeight: 800,
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 8,
+          boxShadow: "0 4px 18px rgba(14,165,233,0.18), inset 0 1px 0 rgba(255,255,255,0.1)",
+        }}
+      >
+        🗂️ التسجيلات
+      </button>
     </div>
   );
 }
@@ -3966,3 +4030,705 @@ const S: Record<string, React.CSSProperties> = {
     transition: "all 0.18s",
   },
 };
+// ═══════════════════════════════════════════════════════════════════════
+//  إدارة الحلقة: إضافة/حذف طلاب مباشرة من الموقع (تُكتب في الشيت والتقرير)
+// ═══════════════════════════════════════════════════════════════════════
+
+type ShowToastFn = (msg: string, ok?: boolean) => void;
+
+function RosterManager({
+  open,
+  onClose,
+  schoolClasses,
+  onClassesRefresh,
+  showToast,
+}: {
+  open: boolean;
+  onClose: () => void;
+  schoolClasses: SchoolClass[];
+  onClassesRefresh: () => void;
+  showToast: ShowToastFn;
+}) {
+  const [teamId, setTeamId] = useState("");
+  const [newName, setNewName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      setConfirmRemove(null);
+      if (!teamId && schoolClasses.length > 0) setTeamId(schoolClasses[0].classId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  const currentClass = schoolClasses.find((c) => c.classId === teamId) || null;
+
+  if (!open) return null;
+
+  const callAction = (action: string, params: Record<string, string>) =>
+    callAppsScriptJsonp(APPS_SCRIPT_URL, action, params, 30000);
+
+  const handleAdd = async () => {
+    const name = newName.trim().replace(/\s+/g, " ");
+    if (!teamId) {
+      showToast("❌ اختر الحلقة أولاً", false);
+      return;
+    }
+    if (!name) {
+      showToast("❌ اكتب اسم الطالب", false);
+      return;
+    }
+    setBusy(true);
+    try {
+      const result = await callAction("addStudent", { teamId, studentName: name });
+      if (result?.status === "error") throw new Error(result.message || "تعذر إضافة الطالب");
+      if (result?.status === "exists") {
+        showToast("ℹ️ " + (result.message || "الطالب موجود مسبقاً"), false);
+      } else {
+        showToast("✅ " + (result.message || "تمت إضافة الطالب وتحديث تقرير الحلقة"));
+      }
+      setNewName("");
+      onClassesRefresh();
+    } catch (e: any) {
+      showToast("❌ " + (e?.message ?? "خطأ"), false);
+    }
+    setBusy(false);
+  };
+
+  const handleRemove = async (name: string) => {
+    if (!teamId) return;
+    setBusy(true);
+    try {
+      const result = await callAction("removeStudent", { teamId, studentName: name });
+      if (result?.status === "error") throw new Error(result.message || "تعذر حذف الطالب");
+      showToast("🗑️ " + (result.message || "تم حذف الطالب من الحلقة والتقرير"));
+      setConfirmRemove(null);
+      onClassesRefresh();
+    } catch (e: any) {
+      showToast("❌ " + (e?.message ?? "خطأ"), false);
+    }
+    setBusy(false);
+  };
+
+  const chipStyle = (selected: boolean, c: SchoolClass): React.CSSProperties => ({
+    padding: "9px 13px",
+    borderRadius: 12,
+    border: `1.5px solid ${selected ? classColorBySlot(c.slot) : "rgba(255,255,255,0.12)"}`,
+    background: selected ? `${classColorBySlot(c.slot)}33` : "rgba(255,255,255,0.05)",
+    color: selected ? "#fff" : "rgba(255,255,255,0.55)",
+    fontSize: 12,
+    fontWeight: 800,
+    cursor: "pointer",
+  });
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 1200,
+        background: "rgba(0,0,0,0.78)",
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "center",
+      }}
+    >
+      <div
+        style={{
+          background: "#0f172a",
+          border: "1.5px solid rgba(129,140,248,0.4)",
+          borderRadius: "22px 22px 0 0",
+          width: "100%",
+          maxWidth: 430,
+          maxHeight: "88vh",
+          display: "flex",
+          flexDirection: "column",
+          padding: "18px 16px 30px",
+          fontFamily: "'Tajawal',sans-serif",
+          boxSizing: "border-box" as const,
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <div style={{ color: "#fff", fontWeight: 900, fontSize: 16 }}>👥 إدارة الحلقة</div>
+          <button onClick={onClose} className="smooth-btn" style={{ ...S.clearBtn, fontSize: 12 }}>
+            ✕ إغلاق
+          </button>
+        </div>
+
+        <label style={S.label}>اختر الحلقة</label>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
+          {schoolClasses.map((c) => (
+            <button
+              key={c.classId}
+              onClick={() => {
+                setTeamId(c.classId);
+                setConfirmRemove(null);
+              }}
+              className="smooth-btn"
+              style={chipStyle(teamId === c.classId, c)}
+            >
+              {c.name}
+            </button>
+          ))}
+          {schoolClasses.length === 0 && (
+            <div style={{ color: "#fca5a5", fontSize: 12 }}>
+              ⚠️ لا توجد حلقات محمّلة — تأكد من الاتصال ثم أعد فتح النافذة
+            </div>
+          )}
+        </div>
+
+        {currentClass && (
+          <>
+            <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+              <input
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleAdd();
+                }}
+                placeholder="اسم الطالب الجديد"
+                style={{ ...S.input, marginBottom: 0, flex: 1 }}
+              />
+              <button
+                onClick={handleAdd}
+                disabled={busy || !newName.trim()}
+                className="smooth-btn"
+                style={{
+                  padding: "0 18px",
+                  borderRadius: 14,
+                  border: "none",
+                  background: busy || !newName.trim() ? "rgba(255,255,255,0.08)" : "linear-gradient(180deg,#22c55e,#15803d)",
+                  color: busy || !newName.trim() ? "rgba(255,255,255,0.35)" : "#fff",
+                  fontSize: 13,
+                  fontWeight: 900,
+                  cursor: busy || !newName.trim() ? "not-allowed" : "pointer",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {busy ? "⏳" : "➕ إضافة"}
+              </button>
+            </div>
+
+            <label style={S.label}>الطلاب ({currentClass.students.length})</label>
+            <div style={{ overflowY: "auto", flex: 1, minHeight: 120 }}>
+              {currentClass.students.length === 0 && (
+                <div style={{ color: "rgba(255,255,255,0.35)", fontSize: 12, textAlign: "center", padding: 18 }}>
+                  لا يوجد طلاب بعد — أضف أول طالب من الأعلى
+                </div>
+              )}
+              {currentClass.students.map((name) => (
+                <div
+                  key={name}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 8,
+                    padding: "10px 12px",
+                    borderRadius: 12,
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    background: "rgba(255,255,255,0.04)",
+                    marginBottom: 6,
+                  }}
+                >
+                  <span style={{ color: "rgba(255,255,255,0.85)", fontSize: 13, fontWeight: 700 }}>{name}</span>
+                  {confirmRemove === name ? (
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <button
+                        onClick={() => handleRemove(name)}
+                        disabled={busy}
+                        className="smooth-btn"
+                        style={{
+                          padding: "6px 10px",
+                          borderRadius: 10,
+                          border: "1px solid rgba(239,68,68,0.5)",
+                          background: "rgba(239,68,68,0.25)",
+                          color: "#fecaca",
+                          fontSize: 11,
+                          fontWeight: 800,
+                          cursor: busy ? "not-allowed" : "pointer",
+                        }}
+                      >
+                        {busy ? "⏳" : "✓ تأكيد الحذف"}
+                      </button>
+                      <button
+                        onClick={() => setConfirmRemove(null)}
+                        className="smooth-btn"
+                        style={{ ...S.clearBtn, fontSize: 11, padding: "6px 10px" }}
+                      >
+                        إلغاء
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmRemove(name)}
+                      className="smooth-btn"
+                      style={{
+                        padding: "6px 10px",
+                        borderRadius: 10,
+                        border: "1px solid rgba(255,255,255,0.12)",
+                        background: "rgba(255,255,255,0.06)",
+                        color: "rgba(255,255,255,0.5)",
+                        fontSize: 11,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                      }}
+                    >
+                      🗑️ حذف
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  سجل التسجيلات: عرض/تعديل/حذف تسجيلات يوم محدد لحلقة محددة
+// ═══════════════════════════════════════════════════════════════════════
+
+interface HistoryEntry {
+  studentName: string;
+  hudur: string;
+  hifzFrom: string;
+  hifzTo: string;
+  hifzScore: string;
+  muraFrom: string;
+  muraTo: string;
+  muraScore: string;
+  haqiba: string;
+  istima: string;
+  total: number;
+  row: number;
+}
+
+function RegistrationsManager({
+  open,
+  onClose,
+  schoolClasses,
+  showToast,
+}: {
+  open: boolean;
+  onClose: () => void;
+  schoolClasses: SchoolClass[];
+  showToast: ShowToastFn;
+}) {
+  const [teamId, setTeamId] = useState("");
+  const [dateStr, setDateStr] = useState(getRiyadhDateISO());
+  const [entries, setEntries] = useState<HistoryEntry[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [editing, setEditing] = useState<HistoryEntry | null>(null);
+  const [editValues, setEditValues] = useState({
+    hifzFrom: "",
+    hifzTo: "",
+    hifzScore: "",
+    muraFrom: "",
+    muraTo: "",
+    muraScore: "",
+    haqiba: false,
+    istima: false,
+  });
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setConfirmDelete(null);
+    setEditing(null);
+    if (!teamId && schoolClasses.length > 0) setTeamId(schoolClasses[0].classId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || !teamId || !dateStr) return;
+    let active = true;
+    setLoading(true);
+    callAppsScriptJsonp(APPS_SCRIPT_URL, "getEntries", { teamId, date: dateStr }, 30000)
+      .then((result: any) => {
+        if (!active) return;
+        if (result?.status === "error") throw new Error(result.message || "تعذر جلب التسجيلات");
+        setEntries(Array.isArray(result?.entries) ? result.entries : []);
+      })
+      .catch((err: any) => {
+        if (active) {
+          setEntries([]);
+          showToast("❌ " + (err?.message ?? "تعذر جلب التسجيلات"), false);
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, teamId, dateStr]);
+
+  if (!open) return null;
+
+  const currentClass = schoolClasses.find((c) => c.classId === teamId) || null;
+
+  const startEdit = (entry: HistoryEntry) => {
+    setEditing(entry);
+    setEditValues({
+      hifzFrom: String(entry.hifzFrom || ""),
+      hifzTo: String(entry.hifzTo || ""),
+      hifzScore: String(entry.hifzScore || ""),
+      muraFrom: String(entry.muraFrom || ""),
+      muraTo: String(entry.muraTo || ""),
+      muraScore: String(entry.muraScore || ""),
+      haqiba: String(entry.haqiba || "") === "نعم",
+      istima: String(entry.istima || "") === "نعم",
+    });
+  };
+
+  const saveEdit = async () => {
+    if (!editing) return;
+    setSaving(true);
+    try {
+      const payload = {
+        studentName: editing.studentName,
+        teamId,
+        teamName: currentClass?.name || "",
+        date: dateStr,
+        hudur: true,
+        hifzFrom: editValues.hifzFrom.trim() || null,
+        hifzTo: editValues.hifzTo.trim() || null,
+        hifzScore: editValues.hifzScore.trim() || null,
+        muraFrom: editValues.muraFrom.trim() || null,
+        muraTo: editValues.muraTo.trim() || null,
+        muraScore: editValues.muraScore.trim() || null,
+        haqiba: editValues.haqiba ? "نعم" : "لا",
+        istima: editValues.istima ? "نعم" : "لا",
+        totalPoints: null,
+      };
+      const result = await callAppsScriptJsonp(
+        APPS_SCRIPT_URL,
+        "saveEntry",
+        { mode: "replace", payload: JSON.stringify(payload) },
+        30000,
+      );
+      if (result?.status === "error") throw new Error(result.message || "تعذر حفظ التعديل");
+      showToast("✅ تم حفظ التعديل وتحديث تقرير الحلقة بنفس التاريخ");
+      setEditing(null);
+      const refreshed = await callAppsScriptJsonp(APPS_SCRIPT_URL, "getEntries", { teamId, date: dateStr }, 30000);
+      if (refreshed?.status === "ok") setEntries(Array.isArray(refreshed?.entries) ? refreshed.entries : []);
+    } catch (e: any) {
+      showToast("❌ " + (e?.message ?? "خطأ"), false);
+    }
+    setSaving(false);
+  };
+
+  const handleDelete = async (name: string) => {
+    setSaving(true);
+    try {
+      const result = await callAppsScriptJsonp(
+        APPS_SCRIPT_URL,
+        "deleteEntry",
+        { teamId, date: dateStr, studentName: name },
+        30000,
+      );
+      if (result?.status === "error") throw new Error(result.message || "تعذر حذف التسجيل");
+      showToast("🗑️ " + (result.message || "تم حذف التسجيل وتحديث تقرير الحلقة"));
+      setConfirmDelete(null);
+      setEntries((prev) => prev.filter((e) => e.studentName !== name));
+    } catch (e: any) {
+      showToast("❌ " + (e?.message ?? "خطأ"), false);
+    }
+    setSaving(false);
+  };
+
+  const quickDate = (daysBack: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() - daysBack);
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Riyadh",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(d);
+    const y = parts.find((p) => p.type === "year")?.value || "";
+    const m = parts.find((p) => p.type === "month")?.value || "";
+    const day = parts.find((p) => p.type === "day")?.value || "";
+    setDateStr(`${y}-${m}-${day}`);
+  };
+
+  const chipStyle = (selected: boolean, c: SchoolClass): React.CSSProperties => ({
+    padding: "9px 13px",
+    borderRadius: 12,
+    border: `1.5px solid ${selected ? classColorBySlot(c.slot) : "rgba(255,255,255,0.12)"}`,
+    background: selected ? `${classColorBySlot(c.slot)}33` : "rgba(255,255,255,0.05)",
+    color: selected ? "#fff" : "rgba(255,255,255,0.55)",
+    fontSize: 12,
+    fontWeight: 800,
+    cursor: "pointer",
+  });
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 1200,
+        background: "rgba(0,0,0,0.78)",
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "center",
+      }}
+    >
+      <div
+        style={{
+          background: "#0f172a",
+          border: "1.5px solid rgba(56,189,248,0.4)",
+          borderRadius: "22px 22px 0 0",
+          width: "100%",
+          maxWidth: 430,
+          maxHeight: "88vh",
+          display: "flex",
+          flexDirection: "column",
+          padding: "18px 16px 30px",
+          fontFamily: "'Tajawal',sans-serif",
+          boxSizing: "border-box" as const,
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <div style={{ color: "#fff", fontWeight: 900, fontSize: 16 }}>🗂️ التسجيلات</div>
+          <button onClick={onClose} className="smooth-btn" style={{ ...S.clearBtn, fontSize: 12 }}>
+            ✕ إغلاق
+          </button>
+        </div>
+
+        <label style={S.label}>الحلقة</label>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+          {schoolClasses.map((c) => (
+            <button
+              key={c.classId}
+              onClick={() => setTeamId(c.classId)}
+              className="smooth-btn"
+              style={chipStyle(teamId === c.classId, c)}
+            >
+              {c.name}
+            </button>
+          ))}
+        </div>
+
+        <label style={S.label}>اليوم</label>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12, alignItems: "center" }}>
+          {[
+            { label: "اليوم", days: 0 },
+            { label: "أمس", days: 1 },
+            { label: "قبل أمس", days: 2 },
+          ].map((opt) => (
+            <button
+              key={opt.label}
+              onClick={() => quickDate(opt.days)}
+              className="smooth-btn"
+              style={{
+                padding: "8px 13px",
+                borderRadius: 12,
+                border: "1.5px solid rgba(255,255,255,0.12)",
+                background: "rgba(255,255,255,0.05)",
+                color: "rgba(255,255,255,0.55)",
+                fontSize: 12,
+                fontWeight: 800,
+                cursor: "pointer",
+              }}
+            >
+              {opt.label}
+            </button>
+          ))}
+          <input
+            type="date"
+            value={dateStr}
+            onChange={(e) => setDateStr(e.target.value)}
+            style={{
+              ...S.input,
+              marginBottom: 0,
+              padding: "8px 10px",
+              fontSize: 13,
+              width: "auto",
+              flex: 1,
+              minWidth: 130,
+              colorScheme: "dark",
+            }}
+          />
+        </div>
+
+        <label style={S.label}>
+          التسجيلات {currentClass ? `— ${currentClass.name}` : ""} {dateStr ? `(${dateStr})` : ""}
+        </label>
+        <div style={{ overflowY: "auto", flex: 1, minHeight: 140 }}>
+          {loading && (
+            <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, textAlign: "center", padding: 18 }}>
+              ⏳ جارٍ التحميل...
+            </div>
+          )}
+          {!loading && entries.length === 0 && (
+            <div style={{ color: "rgba(255,255,255,0.35)", fontSize: 12, textAlign: "center", padding: 18 }}>
+              لا توجد تسجيلات بهذا اليوم لهذه الحلقة
+            </div>
+          )}
+          {!loading &&
+            entries.map((entry) => (
+              <div
+                key={entry.studentName}
+                style={{
+                  padding: "10px 12px",
+                  borderRadius: 12,
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  background: "rgba(255,255,255,0.04)",
+                  marginBottom: 8,
+                }}
+              >
+                {editing?.studentName === entry.studentName ? (
+                  <>
+                    <div style={{ color: "#fff", fontWeight: 800, fontSize: 13, marginBottom: 8 }}>
+                      ✏️ تعديل: {entry.studentName}
+                    </div>
+                    {[
+                      { key: "hifzFrom", label: "حفظ من" },
+                      { key: "hifzTo", label: "حفظ إلى" },
+                      { key: "hifzScore", label: "درجة الحفظ" },
+                      { key: "muraFrom", label: "مراجعة من" },
+                      { key: "muraTo", label: "مراجعة إلى" },
+                      { key: "muraScore", label: "درجة المراجعة" },
+                    ].map((f) => (
+                      <div key={f.key} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                        <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontWeight: 700, width: 82, flexShrink: 0 }}>
+                          {f.label}
+                        </span>
+                        <input
+                          value={(editValues as any)[f.key]}
+                          onChange={(e) => setEditValues((v) => ({ ...v, [f.key]: e.target.value }))}
+                          style={{ ...S.input, marginBottom: 0, padding: "8px 10px", fontSize: 13, flex: 1 }}
+                        />
+                      </div>
+                    ))}
+                    <div style={{ display: "flex", gap: 14, margin: "10px 0" }}>
+                      {[
+                        { key: "haqiba", label: "حقيبة" },
+                        { key: "istima", label: "السمت" },
+                      ].map((f) => (
+                        <label
+                          key={f.key}
+                          style={{ display: "flex", alignItems: "center", gap: 6, color: "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={(editValues as any)[f.key]}
+                            onChange={(e) => setEditValues((v) => ({ ...v, [f.key]: e.target.checked }))}
+                            style={{ width: 16, height: 16, accentColor: "#38bdf8" }}
+                          />
+                          {f.label}: {String((editValues as any)[f.key] ? "نعم" : "لا")}
+                        </label>
+                      ))}
+                    </div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button
+                        onClick={saveEdit}
+                        disabled={saving}
+                        className="smooth-btn"
+                        style={{
+                          flex: 1,
+                          padding: "11px",
+                          borderRadius: 12,
+                          border: "none",
+                          background: saving ? "rgba(255,255,255,0.08)" : "linear-gradient(180deg,#22c55e,#15803d)",
+                          color: saving ? "rgba(255,255,255,0.35)" : "#fff",
+                          fontSize: 13,
+                          fontWeight: 900,
+                          cursor: saving ? "not-allowed" : "pointer",
+                        }}
+                      >
+                        {saving ? "⏳ جارٍ الحفظ..." : "💾 حفظ التعديل"}
+                      </button>
+                      <button onClick={() => setEditing(null)} className="smooth-btn" style={{ ...S.clearBtn, fontSize: 12 }}>
+                        إلغاء
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                      <span style={{ color: "#fff", fontWeight: 800, fontSize: 13 }}>{entry.studentName}</span>
+                      <span style={{ color: "#fde047", fontWeight: 900, fontSize: 13 }}>{entry.total} نقطة</span>
+                    </div>
+                    <div style={{ color: "rgba(255,255,255,0.45)", fontSize: 11, lineHeight: 1.7, marginBottom: 8 }}>
+                      حفظ: {entry.hifzFrom || "—"} → {entry.hifzTo || "—"} ({entry.hifzScore || "—"}) | مراجعة: {entry.muraFrom || "—"} → {entry.muraTo || "—"} ({entry.muraScore || "—"}) | حقيبة: {entry.haqiba || "—"} | سمت: {entry.istima || "—"}
+                    </div>
+                    {confirmDelete === entry.studentName ? (
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <button
+                          onClick={() => handleDelete(entry.studentName)}
+                          disabled={saving}
+                          className="smooth-btn"
+                          style={{
+                            flex: 1,
+                            padding: "9px",
+                            borderRadius: 10,
+                            border: "1px solid rgba(239,68,68,0.5)",
+                            background: "rgba(239,68,68,0.25)",
+                            color: "#fecaca",
+                            fontSize: 12,
+                            fontWeight: 800,
+                            cursor: saving ? "not-allowed" : "pointer",
+                          }}
+                        >
+                          {saving ? "⏳" : "✓ تأكيد الحذف"}
+                        </button>
+                        <button onClick={() => setConfirmDelete(null)} className="smooth-btn" style={{ ...S.clearBtn, fontSize: 12 }}>
+                          إلغاء
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <button
+                          onClick={() => startEdit(entry)}
+                          className="smooth-btn"
+                          style={{
+                            flex: 1,
+                            padding: "9px",
+                            borderRadius: 10,
+                            border: "1px solid rgba(56,189,248,0.35)",
+                            background: "rgba(56,189,248,0.12)",
+                            color: "#bae6fd",
+                            fontSize: 12,
+                            fontWeight: 800,
+                            cursor: "pointer",
+                          }}
+                        >
+                          ✏️ تعديل
+                        </button>
+                        <button
+                          onClick={() => setConfirmDelete(entry.studentName)}
+                          className="smooth-btn"
+                          style={{
+                            flex: 1,
+                            padding: "9px",
+                            borderRadius: 10,
+                            border: "1px solid rgba(255,255,255,0.12)",
+                            background: "rgba(255,255,255,0.06)",
+                            color: "rgba(255,255,255,0.5)",
+                            fontSize: 12,
+                            fontWeight: 700,
+                            cursor: "pointer",
+                          }}
+                        >
+                          🗑️ حذف
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            ))}
+        </div>
+      </div>
+    </div>
+  );
+}
