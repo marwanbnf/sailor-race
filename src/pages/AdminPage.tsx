@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import * as wsClient from "../websocket/websocketClient";
 
 
@@ -906,7 +907,7 @@ function SurahPickerModal({
         borderRadius: "24px 24px 0 0",
         width: "100%", maxWidth: 430,
         maxHeight: "85vh", display: "flex", flexDirection: "column",
-        padding: "20px 16px 30px",
+        padding: "20px 16px calc(30px + env(safe-area-inset-bottom, 0px))",
         fontFamily: "'Tajawal',sans-serif",
       }}>
         <div style={{ color: "#fff", fontWeight: 800, fontSize: 15, marginBottom: 12, textAlign: "center" }}>
@@ -2172,10 +2173,10 @@ export default function AdminPage() {
         <div
           style={{
             position: "fixed",
-            top: 20,
+            top: "calc(20px + env(safe-area-inset-top, 0px))",
             left: "50%",
             transform: "translateX(-50%)",
-            zIndex: 999,
+            zIndex: 4000,
             background: toast.ok ? "#166534" : "#7f1d1d",
             border: `1px solid ${toast.ok ? "#4ade80" : "#f87171"}`,
             color: "#fff",
@@ -2392,7 +2393,7 @@ export default function AdminPage() {
               maxHeight: "88vh",
               display: "flex",
               flexDirection: "column",
-              padding: "18px 16px 30px",
+              padding: "18px 16px calc(30px + env(safe-area-inset-bottom, 0px))",
               fontFamily: "'Tajawal',sans-serif",
               boxSizing: "border-box" as const,
             }}
@@ -3680,7 +3681,7 @@ export default function AdminPage() {
                   borderRadius: "24px 24px 0 0",
                   width: "100%", maxWidth: 430,
                   maxHeight: "85vh", display: "flex", flexDirection: "column",
-                  padding: "20px 16px 30px",
+                  padding: "20px 16px calc(30px + env(safe-area-inset-bottom, 0px))",
                   fontFamily: "'Tajawal',sans-serif",
                 }}>
                   <div style={{ color: "#fff", fontWeight: 800, fontSize: 15, marginBottom: 12, textAlign: "center" }}>
@@ -3756,7 +3757,7 @@ export default function AdminPage() {
                   borderRadius: "24px 24px 0 0",
                   width: "100%", maxWidth: 430,
                   maxHeight: "85vh", display: "flex", flexDirection: "column",
-                  padding: "20px 16px 30px",
+                  padding: "20px 16px calc(30px + env(safe-area-inset-bottom, 0px))",
                   fontFamily: "'Tajawal',sans-serif",
                 }}>
                   <div style={{ color: "#fff", fontWeight: 800, fontSize: 15, marginBottom: 12, textAlign: "center" }}>
@@ -4247,7 +4248,7 @@ const S: Record<string, React.CSSProperties> = {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    padding: "16px 12px 100px",
+    padding: "16px 12px calc(100px + env(safe-area-inset-bottom, 0px))",
     fontFamily: "'Tajawal',sans-serif",
     direction: "rtl",
     overflowY: "auto",
@@ -4506,7 +4507,7 @@ function RosterManager({
     cursor: "pointer",
   });
 
-  return (
+  return createPortal(
     <div
       style={{
         position: "fixed",
@@ -4528,7 +4529,7 @@ function RosterManager({
           maxHeight: "88vh",
           display: "flex",
           flexDirection: "column",
-          padding: "18px 16px 30px",
+          padding: "18px 16px calc(30px + env(safe-area-inset-bottom, 0px))",
           fontFamily: "'Tajawal',sans-serif",
           boxSizing: "border-box" as const,
         }}
@@ -4707,9 +4708,9 @@ function RosterManager({
                     marginBottom: 6,
                   }}
                 >
-                  <span style={{ color: "rgba(255,255,255,0.85)", fontSize: 13, fontWeight: 700 }}>{name}</span>
+                  <span style={{ color: "rgba(255,255,255,0.85)", fontSize: 13, fontWeight: 700, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</span>
                   {confirmRemove === name ? (
-                    <div style={{ display: "flex", gap: 6 }}>
+                    <div style={{ display: "flex", gap: 6, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
                       <button
                         onClick={() => handleRemove(name)}
                         disabled={busy}
@@ -4748,6 +4749,7 @@ function RosterManager({
                         fontSize: 11,
                         fontWeight: 700,
                         cursor: "pointer",
+                        flexShrink: 0,
                       }}
                     >
                       🗑️ حذف
@@ -4759,7 +4761,8 @@ function RosterManager({
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -5115,7 +5118,7 @@ function RegistrationsManager({
     cursor: "pointer",
   });
 
-  return (
+  return createPortal(
     <div
       style={{
         position: "fixed",
@@ -5137,7 +5140,7 @@ function RegistrationsManager({
           maxHeight: "88vh",
           display: "flex",
           flexDirection: "column",
-          padding: "18px 16px 30px",
+          padding: "18px 16px calc(30px + env(safe-area-inset-bottom, 0px))",
           fontFamily: "'Tajawal',sans-serif",
           boxSizing: "border-box" as const,
         }}
@@ -5623,6 +5626,7 @@ function RegistrationsManager({
             />
           );
         })()}
-    </div>
+    </div>,
+    document.body,
   );
 }
