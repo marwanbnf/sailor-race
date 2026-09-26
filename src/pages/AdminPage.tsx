@@ -476,7 +476,9 @@ function callAppsScriptJsonp(
 
     timer = window.setTimeout(() => {
       cleanup();
-      reject(new Error("انتهت مهلة تنفيذ أمر Google Sheets؛ تأكد من نشر Apps Script الجديد ثم جرّب مرة أخرى"));
+      const error: any = new Error("انتهت مهلة تنفيذ أمر Google Sheets؛ تأكد من نشر Apps Script الجديد ثم جرّب مرة أخرى");
+      error.code = "timeout";
+      reject(error);
     }, timeoutMs);
 
     (window as any)[callbackName] = (payload: any) => {
@@ -632,6 +634,17 @@ function writeCachedRegItems(items: RegItem[]) {
 }
 
 const APPS_SCRIPT_URL = String(import.meta.env.VITE_APPS_URL || "");
+
+// عمليات الكتابة في Apps Script (إضافة/حذف طلاب أو تسجيلات) تعيد بناء تقرير
+// الحلقة قبل أن تُرسل الرد، لذلك قد تتجاوز 30 ثانية بكثير. نمنحها مهلة أطول
+// حتى لا تُظهر رسالة فشل بينما العملية نجحت فعلاً في الشيت.
+const SHEET_WRITE_TIMEOUT_MS = 120000;
+const SHEET_READ_TIMEOUT_MS = 45000;
+
+// خطأ المهلة: نُميّزه لنعرف أن العملية قد تكون نجحت ويجب التحقق قبل إعلان الفشل.
+function isTimeoutError(error: any): boolean {
+  return error?.code === "timeout";
+}
 
 // ── Helpers ────────────────────────────────────────────────────────────
 function firstCircleTrackScore(value: FirstCircleScore): number {
@@ -827,8 +840,394 @@ function isSurahRangeComplete(range: SurahRange): boolean {
   );
 }
 
+// عكس formatSurahPoint: نقرأ النص المخزَّن في الشيت ونرجعه إلى سورة + آية
+// حتى يظهر الاختيار معبّأ عند تعديل تسجيل قديم. وإن كان النص حراً
+// (لا يطابق أي سورة) نرجع نقطة فارغة ونُبقي النص الأصلي كما هو.
+function parseSurahPoint(text: unknown): SurahPoint {
+  const raw = String(text ?? "").trim();
+  if (!raw) return emptySurahPoint();
+
+  const ayahMatch = raw.match(/آية\s*(\d+)\s*$/);
+  const ayah = ayahMatch ? Number(ayahMatch[1]) : null;
+  const namePart = (ayahMatch ? raw.slice(0, raw.length - ayahMatch[0].length) : raw).trim();
+
+  const index = SURAHS.findIndex((surah) => surah.name === namePart);
+  if (index < 0) return emptySurahPoint();
+
+  // نضبط رقم الآية داخل حدود السورة حتى لا يُرسل رقم غير صالح.
+  const safeAyah = ayah === null ? null : Math.max(1, Math.min(ayah, SURAHS[index].ayahs));
+  return { surahIndex: index, ayah: safeAyah };
+}
+
+// نافذة اختيار السورة والآية — مشتركة بين التسجيل العادي وشاشة التسجيلات.
+function SurahPickerModal({
+  open,
+  title,
+  point,
+  accentColor,
+  onSelectSurah,
+  onAyahChange,
+  onClearPoint,
+  onClose,
+  onConfirm,
+  confirmLabel = "✔ تأكيد",
+}: {
+  open: boolean;
+  title: string;
+  point: SurahPoint;
+  accentColor: string;
+  onSelectSurah: (surahIndex: number) => void;
+  onAyahChange: (ayah: number | null) => void;
+  onClearPoint: () => void;
+  onClose: () => void;
+  onConfirm?: () => void;
+  confirmLabel?: string;
+}) {
+  const [search, setSearch] = useState("");
+
+  // نبدأ البحث فارغاً في كل مرة تُفتح النافذة.
+  useEffect(() => {
+    if (open) setSearch("");
+  }, [open]);
+
+  if (!open) return null;
+
+  const surah = point.surahIndex !== null ? SURAHS[point.surahIndex] : null;
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 2000,
+      background: "rgba(0,0,0,0.82)",
+      display: "flex", alignItems: "flex-end", justifyContent: "center",
+    }}>
+      <div style={{
+        background: "#1e293b",
+        border: "1.5px solid rgba(255,255,255,0.12)",
+        borderRadius: "24px 24px 0 0",
+        width: "100%", maxWidth: 430,
+        maxHeight: "85vh", display: "flex", flexDirection: "column",
+        padding: "20px 16px 30px",
+        fontFamily: "'Tajawal',sans-serif",
+      }}>
+        <div style={{ color: "#fff", fontWeight: 800, fontSize: 15, marginBottom: 12, textAlign: "center" }}>
+          {title}
+        </div>
+
+        {/* رقم الآية (يظهر بعد اختيار السورة) */}
+        {surah && (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 13, fontWeight: 700, marginBottom: 10, textAlign: "center" }}>
+              سورة {surah.name} — أدخل رقم الآية (1 – {surah.ayahs})
+            </div>
+            <input
+              type="number" min={1} max={surah.ayahs}
+              value={point.ayah ?? ""}
+              inputMode="numeric"
+              onChange={(e) => {
+                if (e.target.value === "") {
+                  onAyahChange(null);
+                  return;
+                }
+                const v = Math.max(1, Math.min(Number(e.target.value), surah.ayahs));
+                onAyahChange(v);
+              }}
+              style={{ ...S.input, marginBottom: 12, fontSize: 20, textAlign: "center", letterSpacing: 2 }}
+              placeholder="مثال: 25"
+              autoFocus
+            />
+            <button
+              onClick={() => {
+                setSearch("");
+                onClearPoint();
+              }}
+              style={{ width: "100%", padding: "11px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)", fontFamily: "'Tajawal',sans-serif", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+            >
+              ↩️ تغيير السورة
+            </button>
+          </div>
+        )}
+
+        {/* البحث + قائمة السور */}
+        {!surah && (
+          <>
+            <input
+              autoFocus
+              type="text"
+              placeholder="ابحث عن سورة..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{ ...S.input, marginBottom: 10, fontSize: 14 }}
+            />
+            <div style={{ overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: 5 }}>
+              {PICKER_SURAHS.map((s) =>
+                s.name.includes(search) ? (
+                  <button key={s.index} onClick={() => { setSearch(""); onSelectSurah(s.index); }} style={{
+                    background: "rgba(255,255,255,0.06)",
+                    border: "1.5px solid rgba(255,255,255,0.1)",
+                    borderRadius: 10, padding: "10px 14px",
+                    color: "#fff", fontFamily: "'Tajawal',sans-serif",
+                    fontSize: 14, fontWeight: 700, cursor: "pointer",
+                    display: "flex", justifyContent: "space-between",
+                  }}>
+                    <span>{s.index + 1}. {s.name}</span>
+                    <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 12 }}>{s.ayahs} آية</span>
+                  </button>
+                ) : null
+              )}
+            </div>
+          </>
+        )}
+
+        {/* تأكيد + إلغاء */}
+        <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+          <button onClick={onClose}
+            style={{ flex: 1, padding: "15px", borderRadius: 14, border: "none",
+              background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)",
+              fontFamily: "'Tajawal',sans-serif", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
+            إلغاء
+          </button>
+          {surah && onConfirm && (
+            <button
+              onClick={onConfirm}
+              style={{ flex: 2, padding: "15px", borderRadius: 14, border: "none",
+                background: accentColor,
+                color: "#fff",
+                fontFamily: "'Tajawal',sans-serif", fontSize: 15, fontWeight: 800, cursor: "pointer",
+                boxShadow: `0 4px 18px ${accentColor}55`,
+                transition: "all 0.2s ease" }}>
+              {confirmLabel}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // نوع الـ picker المفتوح: أي بند من نوع «سورة من وإلى» وأي طرف نختار له
 type PickerTarget = { itemId: string; side: "from" | "to" } | null;
+
+// ── بند «حفظ» أو «مراجعة» في شاشة التسجيلات ──────────────────────────
+// يحمل الاختيار الحالي مع القيم القديمة كما هي في الشيت، حتى لا نُفقد
+// نصاً قديماً (غير مطابق لسورة) إذا لم يعدّله المعلم.
+interface RegRangeValue {
+  range: SurahRange;
+  absent: boolean;
+  score: number | null;
+  legacyFrom: string;
+  legacyTo: string;
+  legacyScore: string;
+  /** هل عدّل المعلم هذا البند في النموذج؟ إن لا، نُرسل القيم القديمة كما هي. */
+  touched: boolean;
+}
+
+const emptyRegRangeValue = (): RegRangeValue => ({
+  range: emptySurahRange(),
+  absent: false,
+  score: null,
+  legacyFrom: "",
+  legacyTo: "",
+  legacyScore: "",
+  touched: false,
+});
+
+// نبني حالة البند من صف تسجيل موجود في الشيت.
+function regRangeValueFromEntry(from: unknown, to: unknown, score: unknown): RegRangeValue {
+  const fromText = String(from ?? "").trim();
+  const toText = String(to ?? "").trim();
+  const scoreText = String(score ?? "").trim();
+  const numericScore = Number(scoreText);
+  return {
+    range: { from: parseSurahPoint(fromText), to: parseSurahPoint(toText) },
+    absent: scoreText === "لم يسمع",
+    score: scoreText !== "" && Number.isFinite(numericScore) ? numericScore : null,
+    legacyFrom: fromText,
+    legacyTo: toText,
+    legacyScore: scoreText,
+    touched: false,
+  };
+}
+
+// نحوّل حالة البند إلى أعمدة الحفظ/المراجعة في الشيت (نفس شكل التسجيل العادي).
+function serializeRegRange(
+  value: RegRangeValue,
+  maxPoints: number,
+): { from: string | null; to: string | null; score: number | string | null } {
+  if (!value.touched) {
+    return {
+      from: value.legacyFrom || null,
+      to: value.legacyTo || null,
+      score: value.legacyScore || null,
+    };
+  }
+  if (value.absent) return { from: null, to: null, score: "لم يسمع" };
+
+  const from = formatSurahPoint(value.range.from);
+  const to = formatSurahPoint(value.range.to);
+  if (!from && !to) return { from: null, to: null, score: null };
+
+  return { from: from || null, to: to || null, score: value.score ?? maxPoints };
+}
+
+// محرّر بند «سورة من وإلى» — نفس شكل بند الحفظ/المراجعة في التسجيل العادي.
+function SurahRangeField({
+  label,
+  value,
+  accentColor,
+  points,
+  onChange,
+  onOpenPicker,
+}: {
+  label: string;
+  value: RegRangeValue;
+  accentColor: string;
+  points: number;
+  onChange: (updater: (prev: RegRangeValue) => RegRangeValue) => void;
+  onOpenPicker: (side: "from" | "to") => void;
+}) {
+  const hasFrom = value.range.from.surahIndex !== null;
+  const hasTo = value.range.to.surahIndex !== null;
+  const rangeLabel = surahRangeLabel(value.range);
+
+  // تسجيلات قديمة قد تحمل نصاً حراً لا يطابق أي سورة (مثل «من أول البقرة»)؛
+  // نحتفظ به كما هو حتى لا نُفقده، ونعرضه للمعلم حتى يعرف ما هو محفوظ حالياً.
+  const legacyMismatch =
+    !value.touched &&
+    ((!!value.legacyFrom && formatSurahPoint(value.range.from) !== value.legacyFrom) ||
+      (!!value.legacyTo && formatSurahPoint(value.range.to) !== value.legacyTo));
+
+  return (
+    <div style={{ marginBottom: 12 }}>
+      <label style={S.label}>
+        📖 {label}
+        {value.absent && <span style={S.badge}>لم يسمع</span>}
+        {!value.absent && hasFrom && hasTo && (
+          <span style={S.badge}>+{value.score ?? points} ✔</span>
+        )}
+      </label>
+      <div
+        style={{
+          marginBottom: 8,
+          background: "rgba(255,255,255,0.03)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          borderRadius: 14,
+          padding: "10px 12px",
+          opacity: value.absent ? 0.45 : 1,
+        }}
+      >
+        {rangeLabel && !value.absent && (
+          <div style={{ color: accentColor, fontSize: 12, fontWeight: 700, marginBottom: 8, textAlign: "center" }}>
+            {rangeLabel}
+          </div>
+        )}
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            onClick={() => onOpenPicker("from")}
+            disabled={value.absent}
+            className="smooth-btn"
+            style={{
+              flex: 1,
+              padding: "9px 8px",
+              borderRadius: 10,
+              cursor: value.absent ? "not-allowed" : "pointer",
+              fontFamily: "'Tajawal',sans-serif",
+              fontSize: 12,
+              fontWeight: 700,
+              background: hasFrom ? `${accentColor}25` : "rgba(255,255,255,0.06)",
+              border: `1.5px solid ${hasFrom ? accentColor : "rgba(255,255,255,0.12)"}`,
+              color: hasFrom ? "#fff" : "rgba(255,255,255,0.4)",
+            }}
+          >
+            {hasFrom ? `من: ${formatSurahPoint(value.range.from)}` : "📍 من (سورة + آية)"}
+          </button>
+          <button
+            onClick={() => onOpenPicker("to")}
+            disabled={value.absent}
+            className="smooth-btn"
+            style={{
+              flex: 1,
+              padding: "9px 8px",
+              borderRadius: 10,
+              cursor: value.absent ? "not-allowed" : "pointer",
+              fontFamily: "'Tajawal',sans-serif",
+              fontSize: 12,
+              fontWeight: 700,
+              background: hasTo ? `${accentColor}25` : "rgba(255,255,255,0.06)",
+              border: `1.5px solid ${hasTo ? accentColor : "rgba(255,255,255,0.12)"}`,
+              color: hasTo ? "#fff" : "rgba(255,255,255,0.4)",
+            }}
+          >
+            {hasTo ? `إلى: ${formatSurahPoint(value.range.to)}` : "🏁 إلى (سورة + آية)"}
+          </button>
+          {(hasFrom || hasTo || value.absent) && (
+            <button
+              onClick={() => onChange(() => ({ ...emptyRegRangeValue(), touched: true }))}
+              className="smooth-btn"
+              style={{ ...S.clearBtn, padding: "8px 10px", fontSize: 11 }}
+            >
+              ✕
+            </button>
+          )}
+        </div>
+        {legacyMismatch && (
+          <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10.5, marginTop: 8, textAlign: "center" }}>
+            المحفوظ حالياً في الشيت: {value.legacyFrom || "—"} → {value.legacyTo || "—"}
+          </div>
+        )}
+        {hasFrom && hasTo && !value.absent && (
+          <div style={{ display: "flex", gap: 6, marginTop: 8, alignItems: "center" }}>
+            <span style={{ color: "rgba(255,255,255,0.45)", fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" }}>
+              النقاط:
+            </span>
+            {regItemRangePointsOptions(points).map((opt) => {
+              const selected = (value.score ?? points) === opt;
+              return (
+                <button
+                  key={opt}
+                  type="button"
+                  className="smooth-btn"
+                  onClick={() => onChange((prev) => ({ ...prev, score: opt, touched: true }))}
+                  style={{
+                    flex: 1,
+                    padding: "8px 4px",
+                    borderRadius: 10,
+                    cursor: "pointer",
+                    fontFamily: "'Tajawal',sans-serif",
+                    fontSize: 13,
+                    fontWeight: 900,
+                    background: selected
+                      ? "linear-gradient(180deg,#fbbf24,#d97706)"
+                      : "rgba(255,255,255,0.07)",
+                    color: selected ? "#fff" : "rgba(255,255,255,0.55)",
+                    border: `1.5px solid ${selected ? "#fbbf24" : "rgba(255,255,255,0.14)"}`,
+                    boxShadow: selected ? "0 4px 14px rgba(245,158,11,0.4)" : "none",
+                  }}
+                >
+                  {opt}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+      <OptionBtn
+        active={value.absent}
+        danger
+        accentColor={accentColor}
+        onClick={() =>
+          onChange((prev) => ({
+            ...prev,
+            absent: !prev.absent,
+            range: emptySurahRange(),
+            touched: true,
+          }))
+        }
+      >
+        ❌ لم يسمع
+      </OptionBtn>
+    </div>
+  );
+}
 
 // ── Main Component ─────────────────────────────────────────────────────
 export default function AdminPage() {
@@ -3425,160 +3824,60 @@ export default function AdminPage() {
             )}
 
             {/* ── Surah Picker Modal ── */}
-            {pickerTarget !== null && (() => {
-              const targetItem = regItems.find((item) => item.id === pickerTarget.itemId);
-              const isFrom = pickerTarget.side === "from";
-              const currentRange = targetItem
+            {(() => {
+              const targetItem = pickerTarget ? regItems.find((item) => item.id === pickerTarget.itemId) : null;
+              const isFrom = pickerTarget?.side === "from";
+              const currentRange = pickerTarget
                 ? (itemValues[pickerTarget.itemId]?.range ?? emptySurahRange())
                 : emptySurahRange();
               const setRange = (updater: (prev: SurahRange) => SurahRange) =>
                 setItemValues((prev) => {
+                  if (!pickerTarget) return prev;
                   const base = prev[pickerTarget.itemId] ?? emptyRegItemValue();
                   return { ...prev, [pickerTarget.itemId]: { ...base, range: updater(base.range) } };
                 });
-              const currentPoint = isFrom ? currentRange.from : currentRange.to;
-              const title = `${targetItem?.label ?? "البند"} — ${isFrom ? "من" : "إلى"}`;
 
               return (
-                <div style={{
-                  position: "fixed", inset: 0, zIndex: 2000,
-                  background: "rgba(0,0,0,0.82)",
-                  display: "flex", alignItems: "flex-end", justifyContent: "center",
-                }}>
-                  <div style={{
-                    background: "#1e293b",
-                    border: "1.5px solid rgba(255,255,255,0.12)",
-                    borderRadius: "24px 24px 0 0",
-                    width: "100%", maxWidth: 430,
-                    maxHeight: "85vh", display: "flex", flexDirection: "column",
-                    padding: "20px 16px 30px",
-                    fontFamily: "'Tajawal',sans-serif",
-                  }}>
-                    <div style={{ color: "#fff", fontWeight: 800, fontSize: 15, marginBottom: 12, textAlign: "center" }}>
-                      {title}
-                    </div>
-
-                    {/* Ayah number (if surah already chosen) */}
-                    {currentPoint.surahIndex !== null && (
-                      <div style={{ marginBottom: 16 }}>
-                        <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 13, fontWeight: 700, marginBottom: 10, textAlign: "center" }}>
-                          سورة {SURAHS[currentPoint.surahIndex].name} — أدخل رقم الآية (1 – {SURAHS[currentPoint.surahIndex].ayahs})
-                        </div>
-                        <input
-                          type="number" min={1} max={SURAHS[currentPoint.surahIndex].ayahs}
-                          value={currentPoint.ayah ?? ""}
-                          inputMode="numeric"
-                          onChange={(e) => {
-                            if (e.target.value === "") {
-                              setRange((prev) => isFrom
-                                ? { ...prev, from: { ...prev.from, ayah: null } }
-                                : { ...prev, to:   { ...prev.to,   ayah: null } }
-                              );
-                            } else {
-                              const v = Math.max(1, Math.min(Number(e.target.value), SURAHS[currentPoint.surahIndex!].ayahs));
-                              setRange((prev) => isFrom
-                                ? { ...prev, from: { ...prev.from, ayah: v } }
-                                : { ...prev, to:   { ...prev.to,   ayah: v } }
-                              );
-                            }
-                          }}
-                          style={{ ...S.input, marginBottom: 12, fontSize: 20, textAlign: "center", letterSpacing: 2 }}
-                          placeholder="مثال: 25"
-                          autoFocus
-                        />
-                        <button onClick={() => {
-                          setRange((prev) => isFrom
-                            ? { ...prev, from: emptySurahPoint(), to: emptySurahPoint() }
-                            : { ...prev, to:   emptySurahPoint() }
-                          );
-                        }} style={{ width: "100%", padding: "11px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)", fontFamily: "'Tajawal',sans-serif", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-                          ↩️ تغيير السورة
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Surah search + list */}
-                    {currentPoint.surahIndex === null && (
-                      <>
-                        <input
-                          autoFocus
-                          type="text"
-                          placeholder="ابحث عن سورة..."
-                          value={surahSearch}
-                          onChange={(e) => setSurahSearch(e.target.value)}
-                          style={{ ...S.input, marginBottom: 10, fontSize: 14 }}
-                        />
-                        <div style={{ overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: 5 }}>
-                          {PICKER_SURAHS.map((s) =>
-                            s.name.includes(surahSearch) ? (
-                              <button key={s.index} onClick={() => {
-                                setRange((prev) => {
-                                  const selectedPoint = { surahIndex: s.index, ayah: null };
-
-                                  // عند اختيار سورة "من"، نضع نفس السورة تلقائياً في "إلى"
-                                  // ويبقى رقم الآية في "إلى" فارغاً ليختاره المستخدم بسرعة.
-                                  if (isFrom) {
-                                    return {
-                                      ...prev,
-                                      from: selectedPoint,
-                                      to: { surahIndex: s.index, ayah: null },
-                                    };
-                                  }
-
-                                  return { ...prev, to: selectedPoint };
-                                });
-                                setSurahSearch("");
-                              }} style={{
-                                background: "rgba(255,255,255,0.06)",
-                                border: "1.5px solid rgba(255,255,255,0.1)",
-                                borderRadius: 10, padding: "10px 14px",
-                                color: "#fff", fontFamily: "'Tajawal',sans-serif",
-                                fontSize: 14, fontWeight: 700, cursor: "pointer",
-                                display: "flex", justifyContent: "space-between",
-                              }}>
-                                <span>{s.index + 1}. {s.name}</span>
-                                <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 12 }}>{s.ayahs} آية</span>
-                              </button>
-                            ) : null
-                          )}
-                        </div>
-                      </>
-                    )}
-
-                    {/* Confirm + Cancel */}
-                    <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-                      <button onClick={() => { setPickerTarget(null); setSurahSearch(""); }}
-                        style={{ flex: 1, padding: "15px", borderRadius: 14, border: "none",
-                          background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)",
-                          fontFamily: "'Tajawal',sans-serif", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
-                        إلغاء
-                      </button>
-                      {currentPoint.surahIndex !== null && (
-                        <button
-                          onClick={() => {
-                            setSurahSearch("");
-
-                            // بعد تأكيد «من» ننتقل تلقائياً إلى «إلى» لنفس القسم،
-                            // فلا يحتاج المعلم إلى إغلاق النافذة والضغط على زر «إلى» يدوياً.
-                            if (isFrom) {
-                              setPickerTarget({ itemId: pickerTarget.itemId, side: "to" });
-                              return;
-                            }
-
-                            setPickerTarget(null);
-                          }}
-                          style={{ flex: 2, padding: "15px", borderRadius: 14, border: "none",
-                            background: accentColor,
-                            color: "#fff",
-                            fontFamily: "'Tajawal',sans-serif", fontSize: 15, fontWeight: 800, cursor: "pointer",
-                            boxShadow: `0 4px 18px ${accentColor}55`,
-                            transition: "all 0.2s ease" }}>
-                          {isFrom ? "التالي: اختر «إلى»" : "✔ تأكيد"}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <SurahPickerModal
+                  key={pickerTarget ? `${pickerTarget.itemId}-${pickerTarget.side}` : "closed"}
+                  open={pickerTarget !== null}
+                  title={`${targetItem?.label ?? "البند"} — ${isFrom ? "من" : "إلى"}`}
+                  point={isFrom ? currentRange.from : currentRange.to}
+                  accentColor={accentColor}
+                  onSelectSurah={(surahIndex) =>
+                    setRange((prev) =>
+                      isFrom
+                        ? { ...prev, from: { surahIndex, ayah: null }, to: { surahIndex, ayah: null } }
+                        : { ...prev, to: { surahIndex, ayah: null } },
+                    )
+                  }
+                  onAyahChange={(ayah) =>
+                    setRange((prev) =>
+                      isFrom
+                        ? { ...prev, from: { ...prev.from, ayah } }
+                        : { ...prev, to: { ...prev.to, ayah } },
+                    )
+                  }
+                  onClearPoint={() =>
+                    setRange((prev) =>
+                      isFrom
+                        ? { ...prev, from: emptySurahPoint(), to: emptySurahPoint() }
+                        : { ...prev, to: emptySurahPoint() },
+                    )
+                  }
+                  onClose={() => setPickerTarget(null)}
+                  onConfirm={() => {
+                    if (!pickerTarget) return;
+                    // بعد تأكيد «من» ننتقل تلقائياً إلى «إلى» لنفس البند،
+                    // فلا يحتاج المعلم إلى إغلاق النافذة والضغط على زر «إلى» يدوياً.
+                    if (isFrom) {
+                      setPickerTarget({ itemId: pickerTarget.itemId, side: "to" });
+                      return;
+                    }
+                    setPickerTarget(null);
+                  }}
+                  confirmLabel={isFrom ? "التالي: اختر «إلى»" : "✔ تأكيد"}
+                />
               );
             })()}
 
@@ -4086,8 +4385,21 @@ function RosterManager({
 
   if (!open) return null;
 
+  // عمليات الكتابة تُعيد بناء تقرير الحلقة قبل الرد، لذلك نمنحها مهلة أطول.
   const callAction = (action: string, params: Record<string, string>) =>
-    callAppsScriptJsonp(APPS_SCRIPT_URL, action, params, 30000);
+    callAppsScriptJsonp(APPS_SCRIPT_URL, action, params, SHEET_WRITE_TIMEOUT_MS);
+
+  // نقرأ أسماء الحلقة مباشرة من الشيت للتحقق من نتيجة عملية كتابة
+  // تأخر ردها أو فشلت، حتى لا نُعرض رسالة خطأ والعملية نجحت فعلاً.
+  const namesInRoster = async (): Promise<string[] | null> => {
+    try {
+      const classes = await loadClassesFromSheets(APPS_SCRIPT_URL);
+      const target = classes.find((c) => c.classId === teamId);
+      return target ? target.students : null;
+    } catch {
+      return null;
+    }
+  };
 
   const handleAdd = async () => {
     const name = newName.trim().replace(/\s+/g, " ");
@@ -4111,7 +4423,14 @@ function RosterManager({
       setNewName("");
       onClassesRefresh();
     } catch (e: any) {
-      showToast("❌ " + (e?.message ?? "خطأ"), false);
+      const roster = await namesInRoster();
+      if (roster?.includes(name)) {
+        showToast("✅ تمت إضافة الطالب (تأخر رد Google Sheets فقط)");
+        setNewName("");
+        onClassesRefresh();
+      } else {
+        showToast("❌ " + (e?.message ?? "خطأ"), false);
+      }
     }
     setBusy(false);
   };
@@ -4134,7 +4453,21 @@ function RosterManager({
       setBulkNames([""]);
       onClassesRefresh();
     } catch (e: any) {
-      showToast("❌ " + (e?.message ?? "خطأ"), false);
+      // الأسماء تُكتب أولاً في الشيت، ثم يُبنى التقرير؛ فقد ينتهي الوقت
+      // وتكون الإضافة قد نجحت. نتحقق من الشيت قبل إعلان أي فشل.
+      const roster = await namesInRoster();
+      const added = roster ? names.filter((n) => roster.includes(n)) : [];
+      if (roster && added.length === names.length) {
+        showToast("✅ تمت إضافة الطلاب وتحديث التقرير (تأخر رد Google Sheets فقط)");
+        setBulkNames([""]);
+        onClassesRefresh();
+      } else if (added.length > 0) {
+        showToast(`⚠️ تمت إضافة ${added.length} من ${names.length}؛ البقية أعد إضافتها`, false);
+        setBulkNames(bulkNames.filter((n) => !added.includes(n.trim().replace(/\s+/g, " "))));
+        onClassesRefresh();
+      } else {
+        showToast("❌ " + (e?.message ?? "خطأ"), false);
+      }
     }
     setBusy(false);
   };
@@ -4149,7 +4482,15 @@ function RosterManager({
       setConfirmRemove(null);
       onClassesRefresh();
     } catch (e: any) {
-      showToast("❌ " + (e?.message ?? "خطأ"), false);
+      // الحذف أيضاً يعيد بناء التقرير، فقد يتأخر الرد بعد نجاح الحذف.
+      const roster = await namesInRoster();
+      if (roster && !roster.includes(name)) {
+        showToast("🗑️ تم حذف الطالب من الحلقة والتقرير (تأخر رد Google Sheets فقط)");
+        setConfirmRemove(null);
+        onClassesRefresh();
+      } else {
+        showToast("❌ " + (e?.message ?? "خطأ"), false);
+      }
     }
     setBusy(false);
   };
@@ -4441,6 +4782,42 @@ interface HistoryEntry {
   row: number;
 }
 
+// نموذج تسجيل واحد داخل شاشة التسجيلات (إضافة أو تعديل).
+interface HistoryFormValues {
+  hifz: RegRangeValue;
+  mura: RegRangeValue;
+  haqiba: boolean;
+  istima: boolean;
+}
+
+const emptyHistoryForm = (): HistoryFormValues => ({
+  hifz: emptyRegRangeValue(),
+  mura: emptyRegRangeValue(),
+  haqiba: false,
+  istima: false,
+});
+
+// نُجهّز نموذج التعديل من صف الشيت: نحوّل «حفظ من/إلى/الدرجة» إلى اختيار
+// سورة + آية مع الاحتفاظ بالنص الأصلي كما هو إن لم يعدّله المعلم.
+function historyFormFromEntry(entry: HistoryEntry): HistoryFormValues {
+  return {
+    hifz: regRangeValueFromEntry(entry.hifzFrom, entry.hifzTo, entry.hifzScore),
+    mura: regRangeValueFromEntry(entry.muraFrom, entry.muraTo, entry.muraScore),
+    haqiba: String(entry.haqiba || "") === "نعم",
+    istima: String(entry.istima || "") === "نعم",
+  };
+}
+
+// الحد الأعلى لدرجة الحفظ/المراجعة في التسجيل العادي (30 = 30/25/20).
+const HIFZ_MURA_MAX_POINTS = 30;
+
+// أي طرف نختار له في نافذة السورة داخل شاشة التسجيلات.
+type HistoryPickerTarget = {
+  form: "add" | "edit";
+  field: "hifz" | "mura";
+  side: "from" | "to";
+} | null;
+
 function RegistrationsManager({
   open,
   onClose,
@@ -4457,40 +4834,25 @@ function RegistrationsManager({
   const [entries, setEntries] = useState<HistoryEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState<HistoryEntry | null>(null);
-  const [editValues, setEditValues] = useState({
-    hifzFrom: "",
-    hifzTo: "",
-    hifzScore: "",
-    muraFrom: "",
-    muraTo: "",
-    muraScore: "",
-    haqiba: false,
-    istima: false,
-  });
+  const [editValues, setEditValues] = useState<HistoryFormValues>(emptyHistoryForm());
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   // إضافة تسجيل ليوم محدد (حتى لو كان اليوم بعيداً بأسبوع أو أكثر).
-  const emptyAddValues = () => ({
-    hifzFrom: "",
-    hifzTo: "",
-    hifzScore: "",
-    muraFrom: "",
-    muraTo: "",
-    muraScore: "",
-    haqiba: false,
-    istima: false,
-  });
   const [adding, setAdding] = useState(false);
   const [pickStudent, setPickStudent] = useState("");
   const [manualName, setManualName] = useState("");
-  const [addValues, setAddValues] = useState(emptyAddValues());
+  const [addValues, setAddValues] = useState<HistoryFormValues>(emptyHistoryForm());
+
+  // ── نافذة اختيار السورة/الآية (نفس التسجيل العادي) ──
+  const [pickTarget, setPickTarget] = useState<HistoryPickerTarget>(null);
 
   useEffect(() => {
     if (!open) return;
     setConfirmDelete(null);
     setEditing(null);
     setAdding(false);
+    setPickTarget(null);
     if (!teamId && schoolClasses.length > 0) setTeamId(schoolClasses[0].classId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -4500,7 +4862,8 @@ function RegistrationsManager({
     let active = true;
     setLoading(true);
     setAdding(false);
-    callAppsScriptJsonp(APPS_SCRIPT_URL, "getEntries", { teamId, date: dateStr }, 30000)
+    setPickTarget(null);
+    callAppsScriptJsonp(APPS_SCRIPT_URL, "getEntries", { teamId, date: dateStr }, SHEET_READ_TIMEOUT_MS)
       .then((result: any) => {
         if (!active) return;
         if (result?.status === "error") throw new Error(result.message || "تعذر جلب التسجيلات");
@@ -4525,53 +4888,132 @@ function RegistrationsManager({
 
   const currentClass = schoolClasses.find((c) => c.classId === teamId) || null;
 
+  const accentColor = currentClass ? classColorBySlot(currentClass.slot) : "#6366f1";
+
+  // نقرأ التسجيلات الحقيقية من الشيت — نستعملها أيضاً للتحقق بعد أي مهلة/خطأ
+  // في عملية كتابة قد تكون نجحت فعلاً، حتى لا نُظهر فشلاً كاذباً للمعلم.
+  const readEntries = async (): Promise<HistoryEntry[] | null> => {
+    try {
+      const result = await callAppsScriptJsonp(
+        APPS_SCRIPT_URL,
+        "getEntries",
+        { teamId, date: dateStr },
+        SHEET_READ_TIMEOUT_MS,
+      );
+      if (result?.status !== "ok") return null;
+      return Array.isArray(result?.entries) ? result.entries : [];
+    } catch {
+      return null;
+    }
+  };
+
+  const refreshEntries = async () => {
+    const fresh = await readEntries();
+    if (fresh) setEntries(fresh);
+    return fresh;
+  };
+
   const startEdit = (entry: HistoryEntry) => {
     setEditing(entry);
-    setEditValues({
-      hifzFrom: String(entry.hifzFrom || ""),
-      hifzTo: String(entry.hifzTo || ""),
-      hifzScore: String(entry.hifzScore || ""),
-      muraFrom: String(entry.muraFrom || ""),
-      muraTo: String(entry.muraTo || ""),
-      muraScore: String(entry.muraScore || ""),
-      haqiba: String(entry.haqiba || "") === "نعم",
-      istima: String(entry.istima || "") === "نعم",
-    });
+    setEditValues(historyFormFromEntry(entry));
+    setPickTarget(null);
+  };
+
+  // نُحدّث بند «حفظ» أو «مراجعة» في نموذج الإضافة أو التعديل.
+  const patchRange = (
+    form: "add" | "edit",
+    field: "hifz" | "mura",
+    updater: (prev: RegRangeValue) => RegRangeValue,
+  ) => {
+    if (form === "add") {
+      setAddValues((prev) =>
+        field === "hifz" ? { ...prev, hifz: updater(prev.hifz) } : { ...prev, mura: updater(prev.mura) },
+      );
+      return;
+    }
+    setEditValues((prev) =>
+      field === "hifz" ? { ...prev, hifz: updater(prev.hifz) } : { ...prev, mura: updater(prev.mura) },
+    );
+  };
+
+  // نفس أعمدة التسجيل العادي: الحفظ/المراجعة تُكتب «اسم السورة آية رقم» مع الدرجة.
+  const buildEntryPayload = (values: HistoryFormValues, targetName: string) => {
+    const hifz = serializeRegRange(values.hifz, HIFZ_MURA_MAX_POINTS);
+    const mura = serializeRegRange(values.mura, HIFZ_MURA_MAX_POINTS);
+    return {
+      studentName: targetName,
+      teamId,
+      teamName: currentClass?.name || "",
+      date: dateStr,
+      hudur: true,
+      hifzFrom: hifz.from,
+      hifzTo: hifz.to,
+      hifzScore: hifz.score,
+      muraFrom: mura.from,
+      muraTo: mura.to,
+      muraScore: mura.score,
+      haqiba: values.haqiba ? "نعم" : "لا",
+      istima: values.istima ? "نعم" : "لا",
+      totalPoints: null,
+    };
+  };
+
+  // هل الطالب موجود فعلاً في تسجيلات هذا اليوم؟ (للتحقق بعد فشل الحذف)
+  const entryExists = async (name: string): Promise<boolean | null> => {
+    const fresh = await readEntries();
+    if (!fresh) return null;
+    setEntries(fresh);
+    return fresh.some((entry) => entry.studentName === name);
+  };
+
+  // هل وصلت القيم التي أرسلناها فعلاً إلى الشيت؟ نتحقق منها قبل إظهار أي فشل،
+  // لأن عملية الكتابة قد تنجح في الشيت ثم يتأخر الرد (أو ينتهي الوقت) فيظهر خطأ كاذب.
+  const entrySaved = async (
+    name: string,
+    payload: ReturnType<typeof buildEntryPayload>,
+  ): Promise<boolean | null> => {
+    const fresh = await readEntries();
+    if (!fresh) return null;
+    setEntries(fresh);
+    const found = fresh.find((entry) => entry.studentName === name);
+    if (!found) return false;
+    const same = (stored: unknown, sent: unknown) =>
+      String(stored ?? "").trim() === String(sent ?? "").trim();
+    return (
+      same(found.hifzFrom, payload.hifzFrom) &&
+      same(found.hifzTo, payload.hifzTo) &&
+      same(found.hifzScore, payload.hifzScore) &&
+      same(found.muraFrom, payload.muraFrom) &&
+      same(found.muraTo, payload.muraTo) &&
+      same(found.muraScore, payload.muraScore)
+    );
   };
 
   const saveEdit = async () => {
     if (!editing) return;
     setSaving(true);
+    const name = editing.studentName;
+    const payload = buildEntryPayload(editValues, name);
     try {
-      const payload = {
-        studentName: editing.studentName,
-        teamId,
-        teamName: currentClass?.name || "",
-        date: dateStr,
-        hudur: true,
-        hifzFrom: editValues.hifzFrom.trim() || null,
-        hifzTo: editValues.hifzTo.trim() || null,
-        hifzScore: editValues.hifzScore.trim() || null,
-        muraFrom: editValues.muraFrom.trim() || null,
-        muraTo: editValues.muraTo.trim() || null,
-        muraScore: editValues.muraScore.trim() || null,
-        haqiba: editValues.haqiba ? "نعم" : "لا",
-        istima: editValues.istima ? "نعم" : "لا",
-        totalPoints: null,
-      };
       const result = await callAppsScriptJsonp(
         APPS_SCRIPT_URL,
         "saveEntry",
         { mode: "replace", payload: JSON.stringify(payload) },
-        30000,
+        SHEET_WRITE_TIMEOUT_MS,
       );
       if (result?.status === "error") throw new Error(result.message || "تعذر حفظ التعديل");
       showToast("✅ تم حفظ التعديل وتحديث تقرير الحلقة بنفس التاريخ");
       setEditing(null);
-      const refreshed = await callAppsScriptJsonp(APPS_SCRIPT_URL, "getEntries", { teamId, date: dateStr }, 30000);
-      if (refreshed?.status === "ok") setEntries(Array.isArray(refreshed?.entries) ? refreshed.entries : []);
+      await refreshEntries();
     } catch (e: any) {
-      showToast("❌ " + (e?.message ?? "خطأ"), false);
+      if (await entrySaved(name, payload)) {
+        showToast("✅ تم حفظ التعديل (تأخر رد Google Sheets فقط)");
+        setEditing(null);
+      } else if (isTimeoutError(e)) {
+        showToast("⚠️ تعذر تأكيد حفظ التعديل؛ أعد المحاولة بعد لحظات", false);
+      } else {
+        showToast("❌ " + (e?.message ?? "خطأ"), false);
+      }
     }
     setSaving(false);
   };  // إضافة تسجيل ليوم مختار: يُكتب بنفس التاريخ المختار (حتى لو كان قبل أسبوع)،
@@ -4587,39 +5029,33 @@ function RegistrationsManager({
       return;
     }
     setSaving(true);
+    const payload = buildEntryPayload(addValues, name);
     try {
-      const payload = {
-        studentName: name,
-        teamId,
-        teamName: currentClass?.name || "",
-        date: dateStr,
-        hudur: true,
-        hifzFrom: addValues.hifzFrom.trim() || null,
-        hifzTo: addValues.hifzTo.trim() || null,
-        hifzScore: addValues.hifzScore.trim() || null,
-        muraFrom: addValues.muraFrom.trim() || null,
-        muraTo: addValues.muraTo.trim() || null,
-        muraScore: addValues.muraScore.trim() || null,
-        haqiba: addValues.haqiba ? "نعم" : "لا",
-        istima: addValues.istima ? "نعم" : "لا",
-        totalPoints: null,
-      };
       const result = await callAppsScriptJsonp(
         APPS_SCRIPT_URL,
         "saveEntry",
         { mode: "replace", payload: JSON.stringify(payload) },
-        30000,
+        SHEET_WRITE_TIMEOUT_MS,
       );
       if (result?.status === "error") throw new Error(result.message || "تعذر إضافة التسجيل");
       showToast(`✅ تم إضافة تسجيل ${name} ليوم ${dateStr} وتحديث التقرير`);
       setAdding(false);
       setPickStudent("");
       setManualName("");
-      setAddValues(emptyAddValues());
-      const refreshed = await callAppsScriptJsonp(APPS_SCRIPT_URL, "getEntries", { teamId, date: dateStr }, 30000);
-      if (refreshed?.status === "ok") setEntries(Array.isArray(refreshed?.entries) ? refreshed.entries : []);
+      setAddValues(emptyHistoryForm());
+      await refreshEntries();
     } catch (e: any) {
-      showToast("❌ " + (e?.message ?? "خطأ"), false);
+      if (await entrySaved(name, payload)) {
+        showToast(`✅ تم إضافة تسجيل ${name} ليوم ${dateStr} (تأخر رد Google Sheets فقط)`);
+        setAdding(false);
+        setPickStudent("");
+        setManualName("");
+        setAddValues(emptyHistoryForm());
+      } else if (isTimeoutError(e)) {
+        showToast("⚠️ تعذر تأكيد حفظ التسجيل؛ أعد المحاولة بعد لحظات", false);
+      } else {
+        showToast("❌ " + (e?.message ?? "خطأ"), false);
+      }
     }
     setSaving(false);
   };
@@ -4631,14 +5067,24 @@ function RegistrationsManager({
         APPS_SCRIPT_URL,
         "deleteEntry",
         { teamId, date: dateStr, studentName: name },
-        30000,
+        SHEET_WRITE_TIMEOUT_MS,
       );
       if (result?.status === "error") throw new Error(result.message || "تعذر حذف التسجيل");
       showToast("🗑️ " + (result.message || "تم حذف التسجيل وتحديث تقرير الحلقة"));
       setConfirmDelete(null);
       setEntries((prev) => prev.filter((e) => e.studentName !== name));
     } catch (e: any) {
-      showToast("❌ " + (e?.message ?? "خطأ"), false);
+      // الحذف أيضاً يعيد بناء التقرير، فقد ينجح ثم يتأخر الرد.
+      const exists = await entryExists(name);
+      if (exists === false) {
+        showToast("🗑️ تم حذف التسجيل وتحديث تقرير الحلقة (تأخر رد Google Sheets فقط)");
+        setConfirmDelete(null);
+        setEntries((prev) => prev.filter((entry) => entry.studentName !== name));
+      } else if (isTimeoutError(e)) {
+        showToast("⚠️ تعذر تأكيد حذف التسجيل؛ أعد المحاولة بعد لحظات", false);
+      } else {
+        showToast("❌ " + (e?.message ?? "خطأ"), false);
+      }
     }
     setSaving(false);
   };
@@ -4779,7 +5225,7 @@ function RegistrationsManager({
                     setAdding(true);
                     setPickStudent(currentClass.students[0] || "");
                     setManualName("");
-                    setAddValues(emptyAddValues());
+                    setAddValues(emptyHistoryForm());
                   }}
                   className="smooth-btn"
                   style={{
@@ -4805,7 +5251,7 @@ function RegistrationsManager({
                 setAdding(true);
                 setPickStudent(currentClass.students[0] || "");
                 setManualName("");
-                setAddValues(emptyAddValues());
+                setAddValues(emptyHistoryForm());
               }}
               className="smooth-btn"
               style={{
@@ -4877,44 +5323,46 @@ function RegistrationsManager({
                 style={{ ...S.input, marginBottom: 10, padding: "9px 10px", fontSize: 12 }}
               />
 
-              {[
-                { key: "hifzFrom", label: "حفظ من" },
-                { key: "hifzTo", label: "حفظ إلى" },
-                { key: "hifzScore", label: "درجة الحفظ" },
-                { key: "muraFrom", label: "مراجعة من" },
-                { key: "muraTo", label: "مراجعة إلى" },
-                { key: "muraScore", label: "درجة المراجعة" },
-              ].map((f) => (
-                <div key={f.key} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                  <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontWeight: 700, width: 82, flexShrink: 0 }}>
-                    {f.label}
-                  </span>
-                  <input
-                    value={(addValues as any)[f.key]}
-                    onChange={(e) => setAddValues((v) => ({ ...v, [f.key]: e.target.value }))}
-                    style={{ ...S.input, marginBottom: 0, padding: "8px 10px", fontSize: 13, flex: 1 }}
-                  />
-                </div>
-              ))}
+              <SurahRangeField
+                label="الحفظ"
+                value={addValues.hifz}
+                accentColor={accentColor}
+                points={HIFZ_MURA_MAX_POINTS}
+                onChange={(updater) => patchRange("add", "hifz", updater)}
+                onOpenPicker={(side) => setPickTarget({ form: "add", field: "hifz", side })}
+              />
+              <SurahRangeField
+                label="المراجعة"
+                value={addValues.mura}
+                accentColor={accentColor}
+                points={HIFZ_MURA_MAX_POINTS}
+                onChange={(updater) => patchRange("add", "mura", updater)}
+                onOpenPicker={(side) => setPickTarget({ form: "add", field: "mura", side })}
+              />
 
               <div style={{ display: "flex", gap: 14, margin: "10px 0" }}>
-                {[
-                  { key: "haqiba", label: "حقيبة" },
-                  { key: "istima", label: "السمت" },
-                ].map((f) => (
-                  <label
-                    key={f.key}
-                    style={{ display: "flex", alignItems: "center", gap: 6, color: "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={(addValues as any)[f.key]}
-                      onChange={(e) => setAddValues((v) => ({ ...v, [f.key]: e.target.checked }))}
-                      style={{ width: 16, height: 16, accentColor: "#38bdf8" }}
-                    />
-                    {f.label}: {String((addValues as any)[f.key] ? "نعم" : "لا")}
-                  </label>
-                ))}
+                <label
+                  style={{ display: "flex", alignItems: "center", gap: 6, color: "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={addValues.haqiba}
+                    onChange={(e) => setAddValues((v) => ({ ...v, haqiba: e.target.checked }))}
+                    style={{ width: 16, height: 16, accentColor: "#38bdf8" }}
+                  />
+                  حقيبة: {addValues.haqiba ? "نعم" : "لا"}
+                </label>
+                <label
+                  style={{ display: "flex", alignItems: "center", gap: 6, color: "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={addValues.istima}
+                    onChange={(e) => setAddValues((v) => ({ ...v, istima: e.target.checked }))}
+                    style={{ width: 16, height: 16, accentColor: "#38bdf8" }}
+                  />
+                  السمت: {addValues.istima ? "نعم" : "لا"}
+                </label>
               </div>
 
               <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10.5, marginBottom: 8 }}>
@@ -4944,7 +5392,8 @@ function RegistrationsManager({
                   onClick={() => {
                     setAdding(false);
                     setManualName("");
-                    setAddValues(emptyAddValues());
+                    setAddValues(emptyHistoryForm());
+                    setPickTarget(null);
                   }}
                   className="smooth-btn"
                   style={{ ...S.clearBtn, fontSize: 12 }}
@@ -4972,43 +5421,45 @@ function RegistrationsManager({
                     <div style={{ color: "#fff", fontWeight: 800, fontSize: 13, marginBottom: 8 }}>
                       ✏️ تعديل: {entry.studentName}
                     </div>
-                    {[
-                      { key: "hifzFrom", label: "حفظ من" },
-                      { key: "hifzTo", label: "حفظ إلى" },
-                      { key: "hifzScore", label: "درجة الحفظ" },
-                      { key: "muraFrom", label: "مراجعة من" },
-                      { key: "muraTo", label: "مراجعة إلى" },
-                      { key: "muraScore", label: "درجة المراجعة" },
-                    ].map((f) => (
-                      <div key={f.key} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                        <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontWeight: 700, width: 82, flexShrink: 0 }}>
-                          {f.label}
-                        </span>
-                        <input
-                          value={(editValues as any)[f.key]}
-                          onChange={(e) => setEditValues((v) => ({ ...v, [f.key]: e.target.value }))}
-                          style={{ ...S.input, marginBottom: 0, padding: "8px 10px", fontSize: 13, flex: 1 }}
-                        />
-                      </div>
-                    ))}
+                    <SurahRangeField
+                      label="الحفظ"
+                      value={editValues.hifz}
+                      accentColor={accentColor}
+                      points={HIFZ_MURA_MAX_POINTS}
+                      onChange={(updater) => patchRange("edit", "hifz", updater)}
+                      onOpenPicker={(side) => setPickTarget({ form: "edit", field: "hifz", side })}
+                    />
+                    <SurahRangeField
+                      label="المراجعة"
+                      value={editValues.mura}
+                      accentColor={accentColor}
+                      points={HIFZ_MURA_MAX_POINTS}
+                      onChange={(updater) => patchRange("edit", "mura", updater)}
+                      onOpenPicker={(side) => setPickTarget({ form: "edit", field: "mura", side })}
+                    />
                     <div style={{ display: "flex", gap: 14, margin: "10px 0" }}>
-                      {[
-                        { key: "haqiba", label: "حقيبة" },
-                        { key: "istima", label: "السمت" },
-                      ].map((f) => (
-                        <label
-                          key={f.key}
-                          style={{ display: "flex", alignItems: "center", gap: 6, color: "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={(editValues as any)[f.key]}
-                            onChange={(e) => setEditValues((v) => ({ ...v, [f.key]: e.target.checked }))}
-                            style={{ width: 16, height: 16, accentColor: "#38bdf8" }}
-                          />
-                          {f.label}: {String((editValues as any)[f.key] ? "نعم" : "لا")}
-                        </label>
-                      ))}
+                      <label
+                        style={{ display: "flex", alignItems: "center", gap: 6, color: "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={editValues.haqiba}
+                          onChange={(e) => setEditValues((v) => ({ ...v, haqiba: e.target.checked }))}
+                          style={{ width: 16, height: 16, accentColor: "#38bdf8" }}
+                        />
+                        حقيبة: {editValues.haqiba ? "نعم" : "لا"}
+                      </label>
+                      <label
+                        style={{ display: "flex", alignItems: "center", gap: 6, color: "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={editValues.istima}
+                          onChange={(e) => setEditValues((v) => ({ ...v, istima: e.target.checked }))}
+                          style={{ width: 16, height: 16, accentColor: "#38bdf8" }}
+                        />
+                        السمت: {editValues.istima ? "نعم" : "لا"}
+                      </label>
                     </div>
                     <div style={{ display: "flex", gap: 8 }}>
                       <button
@@ -5029,7 +5480,14 @@ function RegistrationsManager({
                       >
                         {saving ? "⏳ جارٍ الحفظ..." : "💾 حفظ التعديل"}
                       </button>
-                      <button onClick={() => setEditing(null)} className="smooth-btn" style={{ ...S.clearBtn, fontSize: 12 }}>
+                      <button
+                        onClick={() => {
+                          setEditing(null);
+                          setPickTarget(null);
+                        }}
+                        className="smooth-btn"
+                        style={{ ...S.clearBtn, fontSize: 12 }}
+                      >
                         إلغاء
                       </button>
                     </div>
@@ -5111,6 +5569,60 @@ function RegistrationsManager({
             ))}
         </div>
       </div>
+
+      {/* ── نافذة اختيار السورة والآية (نفس التسجيل العادي) ── */}
+      {pickTarget &&
+        (() => {
+          const isAdd = pickTarget.form === "add";
+          const fieldValue = (isAdd ? addValues : editValues)[pickTarget.field];
+          const isFrom = pickTarget.side === "from";
+          const label = pickTarget.field === "hifz" ? "الحفظ" : "المراجعة";
+
+          return (
+            <SurahPickerModal
+              key={`${pickTarget.form}-${pickTarget.field}-${pickTarget.side}`}
+              open
+              title={`${label} — ${isFrom ? "من" : "إلى"}`}
+              point={isFrom ? fieldValue.range.from : fieldValue.range.to}
+              accentColor={accentColor}
+              onSelectSurah={(surahIndex) =>
+                patchRange(pickTarget.form, pickTarget.field, (prev) =>
+                  isFrom
+                    ? {
+                        ...prev,
+                        touched: true,
+                        range: { from: { surahIndex, ayah: null }, to: { surahIndex, ayah: null } },
+                      }
+                    : { ...prev, touched: true, range: { ...prev.range, to: { surahIndex, ayah: null } } },
+                )
+              }
+              onAyahChange={(ayah) =>
+                patchRange(pickTarget.form, pickTarget.field, (prev) =>
+                  isFrom
+                    ? { ...prev, touched: true, range: { ...prev.range, from: { ...prev.range.from, ayah } } }
+                    : { ...prev, touched: true, range: { ...prev.range, to: { ...prev.range.to, ayah } } },
+                )
+              }
+              onClearPoint={() =>
+                patchRange(pickTarget.form, pickTarget.field, (prev) =>
+                  isFrom
+                    ? { ...prev, touched: true, range: { from: emptySurahPoint(), to: emptySurahPoint() } }
+                    : { ...prev, touched: true, range: { ...prev.range, to: emptySurahPoint() } },
+                )
+              }
+              onClose={() => setPickTarget(null)}
+              onConfirm={() => {
+                // بعد تأكيد «من» ننتقل تلقائياً إلى «إلى»، وبعده نغلق النافذة.
+                if (isFrom) {
+                  setPickTarget({ ...pickTarget, side: "to" });
+                  return;
+                }
+                setPickTarget(null);
+              }}
+              confirmLabel={isFrom ? "التالي: اختر «إلى»" : "✔ تأكيد"}
+            />
+          );
+        })()}
     </div>
   );
 }
