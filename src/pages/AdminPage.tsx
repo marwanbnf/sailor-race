@@ -4529,12 +4529,30 @@ function RosterManager({
           maxHeight: "88vh",
           display: "flex",
           flexDirection: "column",
-          padding: "18px 16px calc(30px + env(safe-area-inset-bottom, 0px))",
+          // النافذة نفسها هي منطقة التمرير: بدون ذلك يدفع النموذج الطويل القائمة خارج الشاشة
+          overflowY: "auto",
+          overflowX: "hidden",
+          overscrollBehavior: "contain",
+          // الحشوة العلوية على الرأس نفسه حتى يلتصق بأعلى النافذة عند التمرير دون فراغ
+          padding: "0 16px calc(30px + env(safe-area-inset-bottom, 0px))",
           fontFamily: "'Tajawal',sans-serif",
           boxSizing: "border-box" as const,
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            // رأس ثابت: يبقى زر الإغلاق ظاهراً أثناء التمرير، والخلفية تغطي ما يمر تحته
+            position: "sticky",
+            top: 0,
+            zIndex: 2,
+            background: "#0f172a",
+            margin: "0 -16px 12px",
+            padding: "18px 16px 12px",
+          }}
+        >
           <div style={{ color: "#fff", fontWeight: 900, fontSize: 16 }}>👥 إدارة الحلقة</div>
           <button onClick={onClose} className="smooth-btn" style={{ ...S.clearBtn, fontSize: 12 }}>
             ✕ إغلاق
@@ -4687,7 +4705,7 @@ function RosterManager({
             )}
 
             <label style={S.label}>الطلاب ({currentClass.students.length})</label>
-            <div style={{ overflowY: "auto", flex: 1, minHeight: 120 }}>
+            <div>
               {currentClass.students.length === 0 && (
                 <div style={{ color: "rgba(255,255,255,0.35)", fontSize: 12, textAlign: "center", padding: 18 }}>
                   لا يوجد طلاب بعد — أضف أول طالب من الأعلى
@@ -5140,12 +5158,30 @@ function RegistrationsManager({
           maxHeight: "88vh",
           display: "flex",
           flexDirection: "column",
-          padding: "18px 16px calc(30px + env(safe-area-inset-bottom, 0px))",
+          // النافذة نفسها هي منطقة التمرير: بدون ذلك يدفع النموذج الطويل القائمة خارج الشاشة
+          overflowY: "auto",
+          overflowX: "hidden",
+          overscrollBehavior: "contain",
+          // الحشوة العلوية على الرأس نفسه حتى يلتصق بأعلى النافذة عند التمرير دون فراغ
+          padding: "0 16px calc(30px + env(safe-area-inset-bottom, 0px))",
           fontFamily: "'Tajawal',sans-serif",
           boxSizing: "border-box" as const,
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            // رأس ثابت: يبقى زر الإغلاق ظاهراً أثناء التمرير، والخلفية تغطي ما يمر تحته
+            position: "sticky",
+            top: 0,
+            zIndex: 2,
+            background: "#0f172a",
+            margin: "0 -16px 12px",
+            padding: "18px 16px 12px",
+          }}
+        >
           <div style={{ color: "#fff", fontWeight: 900, fontSize: 16 }}>🗂️ التسجيلات</div>
           <button onClick={onClose} className="smooth-btn" style={{ ...S.clearBtn, fontSize: 12 }}>
             ✕ إغلاق
@@ -5211,7 +5247,7 @@ function RegistrationsManager({
         <label style={S.label}>
           التسجيلات {currentClass ? `— ${currentClass.name}` : ""} {dateStr ? `(${dateStr})` : ""}
         </label>
-        <div style={{ overflowY: "auto", flex: 1, minHeight: 140 }}>
+        <div>
           {loading && (
             <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, textAlign: "center", padding: 18 }}>
               ⏳ جارٍ التحميل...
@@ -5291,7 +5327,7 @@ function RegistrationsManager({
               <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontWeight: 700, marginBottom: 6 }}>
                 اختر الطالب
               </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8, maxHeight: 132, overflowY: "auto" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
                 {currentClass.students.map((name) => (
                   <button
                     key={name}
