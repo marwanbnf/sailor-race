@@ -4057,14 +4057,30 @@ function RosterManager({
   const [newName, setNewName] = useState("");
   const [busy, setBusy] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
+  // وضع إضافة مجموعة طلاب: قائمة حقول، اسم في كل سطر، تُضاف كلها مرة واحدة.
+  const [bulkMode, setBulkMode] = useState(false);
+  const [bulkNames, setBulkNames] = useState<string[]>([""]);
 
   useEffect(() => {
     if (open) {
       setConfirmRemove(null);
+      setBulkNames([""]);
       if (!teamId && schoolClasses.length > 0) setTeamId(schoolClasses[0].classId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+
+  const modeBtnStyle = (selected: boolean): React.CSSProperties => ({
+    flex: 1,
+    padding: "9px 10px",
+    borderRadius: 12,
+    border: `1.5px solid ${selected ? "#818cf8" : "rgba(255,255,255,0.12)"}`,
+    background: selected ? "rgba(129,140,248,0.22)" : "rgba(255,255,255,0.05)",
+    color: selected ? "#fff" : "rgba(255,255,255,0.5)",
+    fontSize: 12,
+    fontWeight: 800,
+    cursor: "pointer",
+  });
 
   const currentClass = schoolClasses.find((c) => c.classId === teamId) || null;
 
@@ -4093,6 +4109,29 @@ function RosterManager({
         showToast("✅ " + (result.message || "تمت إضافة الطالب وتحديث تقرير الحلقة"));
       }
       setNewName("");
+      onClassesRefresh();
+    } catch (e: any) {
+      showToast("❌ " + (e?.message ?? "خطأ"), false);
+    }
+    setBusy(false);
+  };
+
+  const handleAddBulk = async () => {
+    if (!teamId) {
+      showToast("❌ اختر الحلقة أولاً", false);
+      return;
+    }
+    const names = bulkNames.map((n) => n.trim().replace(/\s+/g, " ")).filter(Boolean);
+    if (!names.length) {
+      showToast("❌ اكتب اسم طالب واحداً على الأقل", false);
+      return;
+    }
+    setBusy(true);
+    try {
+      const result = await callAction("addStudents", { teamId, names: JSON.stringify(names) });
+      if (result?.status === "error") throw new Error(result.message || "تعذر إضافة الطلاب");
+      showToast("✅ " + (result.message || "تمت إضافة الطلاب وتحديث تقرير الحلقة"));
+      setBulkNames([""]);
       onClassesRefresh();
     } catch (e: any) {
       showToast("❌ " + (e?.message ?? "خطأ"), false);
@@ -4184,35 +4223,126 @@ function RosterManager({
 
         {currentClass && (
           <>
-            <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-              <input
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleAdd();
-                }}
-                placeholder="اسم الطالب الجديد"
-                style={{ ...S.input, marginBottom: 0, flex: 1 }}
-              />
+            <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+              <button onClick={() => setBulkMode(false)} className="smooth-btn" style={modeBtnStyle(!bulkMode)}>
+                ➕ طالب واحد
+              </button>
               <button
-                onClick={handleAdd}
-                disabled={busy || !newName.trim()}
-                className="smooth-btn"
-                style={{
-                  padding: "0 18px",
-                  borderRadius: 14,
-                  border: "none",
-                  background: busy || !newName.trim() ? "rgba(255,255,255,0.08)" : "linear-gradient(180deg,#22c55e,#15803d)",
-                  color: busy || !newName.trim() ? "rgba(255,255,255,0.35)" : "#fff",
-                  fontSize: 13,
-                  fontWeight: 900,
-                  cursor: busy || !newName.trim() ? "not-allowed" : "pointer",
-                  whiteSpace: "nowrap",
+                onClick={() => {
+                  setBulkMode(true);
+                  setBulkNames((prev) => (prev.length ? prev : [""]));
                 }}
+                className="smooth-btn"
+                style={modeBtnStyle(bulkMode)}
               >
-                {busy ? "⏳" : "➕ إضافة"}
+                ➕➕ مجموعة طلاب
               </button>
             </div>
+
+            {!bulkMode ? (
+              <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+                <input
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleAdd();
+                  }}
+                  placeholder="اسم الطالب الجديد"
+                  style={{ ...S.input, marginBottom: 0, flex: 1 }}
+                />
+                <button
+                  onClick={handleAdd}
+                  disabled={busy || !newName.trim()}
+                  className="smooth-btn"
+                  style={{
+                    padding: "0 18px",
+                    borderRadius: 14,
+                    border: "none",
+                    background: busy || !newName.trim() ? "rgba(255,255,255,0.08)" : "linear-gradient(180deg,#22c55e,#15803d)",
+                    color: busy || !newName.trim() ? "rgba(255,255,255,0.35)" : "#fff",
+                    fontSize: 13,
+                    fontWeight: 900,
+                    cursor: busy || !newName.trim() ? "not-allowed" : "pointer",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {busy ? "⏳" : "➕ إضافة"}
+                </button>
+              </div>
+            ) : (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, fontWeight: 700, marginBottom: 6 }}>
+                  اكتب اسم الطالب في كل سطر — تُضاف كلها مرة واحدة
+                </div>
+                {bulkNames.map((name, idx) => (
+                  <div key={idx} style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 6 }}>
+                    <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 11, fontWeight: 800, width: 16, textAlign: "center" }}>
+                      {idx + 1}
+                    </span>
+                    <input
+                      value={name}
+                      onChange={(e) => setBulkNames((prev) => prev.map((v, i) => (i === idx ? e.target.value : v)))}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          setBulkNames((prev) => [...prev.slice(0, idx + 1), "", ...prev.slice(idx + 1)]);
+                        }
+                      }}
+                      placeholder={`اسم الطالب ${idx + 1}`}
+                      style={{ ...S.input, marginBottom: 0, flex: 1 }}
+                    />
+                    {bulkNames.length > 1 && (
+                      <button
+                        onClick={() => setBulkNames((prev) => prev.filter((_, i) => i !== idx))}
+                        className="smooth-btn"
+                        style={{ ...S.clearBtn, fontSize: 11, padding: "7px 10px" }}
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  onClick={() => setBulkNames((prev) => [...prev, ""])}
+                  className="smooth-btn"
+                  style={{
+                    width: "100%",
+                    padding: "9px",
+                    borderRadius: 12,
+                    border: "1px dashed rgba(129,140,248,0.45)",
+                    background: "rgba(129,140,248,0.08)",
+                    color: "#c7d2fe",
+                    fontSize: 12,
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    marginBottom: 8,
+                  }}
+                >
+                  ➕ سطر جديد
+                </button>
+                <button
+                  onClick={handleAddBulk}
+                  disabled={busy || !bulkNames.some((n) => n.trim())}
+                  className="smooth-btn"
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    borderRadius: 14,
+                    border: "none",
+                    background:
+                      busy || !bulkNames.some((n) => n.trim())
+                        ? "rgba(255,255,255,0.08)"
+                        : "linear-gradient(180deg,#22c55e,#15803d)",
+                    color: busy || !bulkNames.some((n) => n.trim()) ? "rgba(255,255,255,0.35)" : "#fff",
+                    fontSize: 13,
+                    fontWeight: 900,
+                    cursor: busy || !bulkNames.some((n) => n.trim()) ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {busy ? "⏳ جارٍ الإضافة..." : `➕ إضافة الكل (${bulkNames.filter((n) => n.trim()).length})`}
+                </button>
+              </div>
+            )}
 
             <label style={S.label}>الطلاب ({currentClass.students.length})</label>
             <div style={{ overflowY: "auto", flex: 1, minHeight: 120 }}>
@@ -4340,10 +4470,27 @@ function RegistrationsManager({
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  // إضافة تسجيل ليوم محدد (حتى لو كان اليوم بعيداً بأسبوع أو أكثر).
+  const emptyAddValues = () => ({
+    hifzFrom: "",
+    hifzTo: "",
+    hifzScore: "",
+    muraFrom: "",
+    muraTo: "",
+    muraScore: "",
+    haqiba: false,
+    istima: false,
+  });
+  const [adding, setAdding] = useState(false);
+  const [pickStudent, setPickStudent] = useState("");
+  const [manualName, setManualName] = useState("");
+  const [addValues, setAddValues] = useState(emptyAddValues());
+
   useEffect(() => {
     if (!open) return;
     setConfirmDelete(null);
     setEditing(null);
+    setAdding(false);
     if (!teamId && schoolClasses.length > 0) setTeamId(schoolClasses[0].classId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -4352,6 +4499,7 @@ function RegistrationsManager({
     if (!open || !teamId || !dateStr) return;
     let active = true;
     setLoading(true);
+    setAdding(false);
     callAppsScriptJsonp(APPS_SCRIPT_URL, "getEntries", { teamId, date: dateStr }, 30000)
       .then((result: any) => {
         if (!active) return;
@@ -4420,6 +4568,54 @@ function RegistrationsManager({
       if (result?.status === "error") throw new Error(result.message || "تعذر حفظ التعديل");
       showToast("✅ تم حفظ التعديل وتحديث تقرير الحلقة بنفس التاريخ");
       setEditing(null);
+      const refreshed = await callAppsScriptJsonp(APPS_SCRIPT_URL, "getEntries", { teamId, date: dateStr }, 30000);
+      if (refreshed?.status === "ok") setEntries(Array.isArray(refreshed?.entries) ? refreshed.entries : []);
+    } catch (e: any) {
+      showToast("❌ " + (e?.message ?? "خطأ"), false);
+    }
+    setSaving(false);
+  };  // إضافة تسجيل ليوم مختار: يُكتب بنفس التاريخ المختار (حتى لو كان قبل أسبوع)،
+  // ويُحدّث تقرير الحلقة لصف الطالب في ذلك اليوم مباشرة.
+  const saveNewEntry = async () => {
+    if (!teamId) {
+      showToast("❌ اختر الحلقة أولاً", false);
+      return;
+    }
+    const name = (manualName.trim() || pickStudent).trim().replace(/\s+/g, " ");
+    if (!name) {
+      showToast("❌ اختر الطالب أو اكتب اسمه", false);
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload = {
+        studentName: name,
+        teamId,
+        teamName: currentClass?.name || "",
+        date: dateStr,
+        hudur: true,
+        hifzFrom: addValues.hifzFrom.trim() || null,
+        hifzTo: addValues.hifzTo.trim() || null,
+        hifzScore: addValues.hifzScore.trim() || null,
+        muraFrom: addValues.muraFrom.trim() || null,
+        muraTo: addValues.muraTo.trim() || null,
+        muraScore: addValues.muraScore.trim() || null,
+        haqiba: addValues.haqiba ? "نعم" : "لا",
+        istima: addValues.istima ? "نعم" : "لا",
+        totalPoints: null,
+      };
+      const result = await callAppsScriptJsonp(
+        APPS_SCRIPT_URL,
+        "saveEntry",
+        { mode: "replace", payload: JSON.stringify(payload) },
+        30000,
+      );
+      if (result?.status === "error") throw new Error(result.message || "تعذر إضافة التسجيل");
+      showToast(`✅ تم إضافة تسجيل ${name} ليوم ${dateStr} وتحديث التقرير`);
+      setAdding(false);
+      setPickStudent("");
+      setManualName("");
+      setAddValues(emptyAddValues());
       const refreshed = await callAppsScriptJsonp(APPS_SCRIPT_URL, "getEntries", { teamId, date: dateStr }, 30000);
       if (refreshed?.status === "ok") setEntries(Array.isArray(refreshed?.entries) ? refreshed.entries : []);
     } catch (e: any) {
@@ -4572,11 +4768,193 @@ function RegistrationsManager({
               ⏳ جارٍ التحميل...
             </div>
           )}
-          {!loading && entries.length === 0 && (
-            <div style={{ color: "rgba(255,255,255,0.35)", fontSize: 12, textAlign: "center", padding: 18 }}>
-              لا توجد تسجيلات بهذا اليوم لهذه الحلقة
+          {!loading && entries.length === 0 && !adding && (
+            <div style={{ textAlign: "center", padding: "16px 12px" }}>
+              <div style={{ color: "rgba(255,255,255,0.35)", fontSize: 12, marginBottom: 12 }}>
+                لا توجد تسجيلات بهذا اليوم لهذه الحلقة
+              </div>
+              {currentClass && (
+                <button
+                  onClick={() => {
+                    setAdding(true);
+                    setPickStudent(currentClass.students[0] || "");
+                    setManualName("");
+                    setAddValues(emptyAddValues());
+                  }}
+                  className="smooth-btn"
+                  style={{
+                    padding: "12px 20px",
+                    borderRadius: 14,
+                    border: "none",
+                    background: "linear-gradient(180deg,#22c55e,#15803d)",
+                    color: "#fff",
+                    fontSize: 13,
+                    fontWeight: 900,
+                    cursor: "pointer",
+                  }}
+                >
+                  ➕ أضف التسجيل
+                </button>
+              )}
             </div>
           )}
+
+          {!loading && entries.length > 0 && !adding && currentClass && (
+            <button
+              onClick={() => {
+                setAdding(true);
+                setPickStudent(currentClass.students[0] || "");
+                setManualName("");
+                setAddValues(emptyAddValues());
+              }}
+              className="smooth-btn"
+              style={{
+                width: "100%",
+                padding: "11px",
+                borderRadius: 12,
+                border: "1px dashed rgba(34,197,94,0.5)",
+                background: "rgba(34,197,94,0.1)",
+                color: "#bbf7d0",
+                fontSize: 12,
+                fontWeight: 800,
+                cursor: "pointer",
+                marginBottom: 10,
+              }}
+            >
+              ➕ أضف تسجيلاً آخر لهذا اليوم
+            </button>
+          )}
+
+          {adding && currentClass && (
+            <div
+              style={{
+                padding: "12px",
+                borderRadius: 12,
+                border: "1.5px solid rgba(34,197,94,0.35)",
+                background: "rgba(34,197,94,0.07)",
+                marginBottom: 10,
+              }}
+            >
+              <div style={{ color: "#fff", fontWeight: 900, fontSize: 13, marginBottom: 8 }}>
+                ➕ إضافة تسجيل ليوم {dateStr}
+              </div>
+
+              <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontWeight: 700, marginBottom: 6 }}>
+                اختر الطالب
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8, maxHeight: 132, overflowY: "auto" }}>
+                {currentClass.students.map((name) => (
+                  <button
+                    key={name}
+                    onClick={() => {
+                      setPickStudent(name);
+                      setManualName("");
+                    }}
+                    className="smooth-btn"
+                    style={{
+                      padding: "7px 11px",
+                      borderRadius: 10,
+                      border: `1.5px solid ${pickStudent === name && !manualName.trim() ? "#22c55e" : "rgba(255,255,255,0.12)"}`,
+                      background: pickStudent === name && !manualName.trim() ? "rgba(34,197,94,0.25)" : "rgba(255,255,255,0.05)",
+                      color: pickStudent === name && !manualName.trim() ? "#fff" : "rgba(255,255,255,0.55)",
+                      fontSize: 12,
+                      fontWeight: 800,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {name}
+                  </button>
+                ))}
+                {currentClass.students.length === 0 && (
+                  <div style={{ color: "rgba(255,255,255,0.35)", fontSize: 11 }}>لا يوجد طلاب في هذه الحلقة</div>
+                )}
+              </div>
+
+              <input
+                value={manualName}
+                onChange={(e) => setManualName(e.target.value)}
+                placeholder="أو اكتب اسم طالب جديد (يُضاف للحلقة)"
+                style={{ ...S.input, marginBottom: 10, padding: "9px 10px", fontSize: 12 }}
+              />
+
+              {[
+                { key: "hifzFrom", label: "حفظ من" },
+                { key: "hifzTo", label: "حفظ إلى" },
+                { key: "hifzScore", label: "درجة الحفظ" },
+                { key: "muraFrom", label: "مراجعة من" },
+                { key: "muraTo", label: "مراجعة إلى" },
+                { key: "muraScore", label: "درجة المراجعة" },
+              ].map((f) => (
+                <div key={f.key} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                  <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontWeight: 700, width: 82, flexShrink: 0 }}>
+                    {f.label}
+                  </span>
+                  <input
+                    value={(addValues as any)[f.key]}
+                    onChange={(e) => setAddValues((v) => ({ ...v, [f.key]: e.target.value }))}
+                    style={{ ...S.input, marginBottom: 0, padding: "8px 10px", fontSize: 13, flex: 1 }}
+                  />
+                </div>
+              ))}
+
+              <div style={{ display: "flex", gap: 14, margin: "10px 0" }}>
+                {[
+                  { key: "haqiba", label: "حقيبة" },
+                  { key: "istima", label: "السمت" },
+                ].map((f) => (
+                  <label
+                    key={f.key}
+                    style={{ display: "flex", alignItems: "center", gap: 6, color: "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={(addValues as any)[f.key]}
+                      onChange={(e) => setAddValues((v) => ({ ...v, [f.key]: e.target.checked }))}
+                      style={{ width: 16, height: 16, accentColor: "#38bdf8" }}
+                    />
+                    {f.label}: {String((addValues as any)[f.key] ? "نعم" : "لا")}
+                  </label>
+                ))}
+              </div>
+
+              <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10.5, marginBottom: 8 }}>
+                يُحسب الحضور تلقائياً (+10) — ويُحدّث صف هذا اليوم بنفس التاريخ في تقرير الحلقة.
+              </div>
+
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  onClick={saveNewEntry}
+                  disabled={saving}
+                  className="smooth-btn"
+                  style={{
+                    flex: 1,
+                    padding: "11px",
+                    borderRadius: 12,
+                    border: "none",
+                    background: saving ? "rgba(255,255,255,0.08)" : "linear-gradient(180deg,#22c55e,#15803d)",
+                    color: saving ? "rgba(255,255,255,0.35)" : "#fff",
+                    fontSize: 13,
+                    fontWeight: 900,
+                    cursor: saving ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {saving ? "⏳ جارٍ الحفظ..." : "💾 إضافة التسجيل"}
+                </button>
+                <button
+                  onClick={() => {
+                    setAdding(false);
+                    setManualName("");
+                    setAddValues(emptyAddValues());
+                  }}
+                  className="smooth-btn"
+                  style={{ ...S.clearBtn, fontSize: 12 }}
+                >
+                  إلغاء
+                </button>
+              </div>
+            </div>
+          )}
+
           {!loading &&
             entries.map((entry) => (
               <div
