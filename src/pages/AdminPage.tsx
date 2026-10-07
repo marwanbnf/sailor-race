@@ -1275,6 +1275,8 @@ export default function AdminPage() {
   const [quickMode, setQuickMode] = useState(false);
   const [rosterModalOpen, setRosterModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  // يزيد عند إغلاق نافذة التسجيلات حتى تُعاد قراءة «نجوم الأسبوع» بعد أي تعديل.
+  const [historyClosedCount, setHistoryClosedCount] = useState(0);
   const [quickPts, setQuickPts] = useState("");
   const [syncSheet, setSyncSheet] = useState(true);
   const [showReset, setShowReset] = useState(false);
@@ -1315,10 +1317,8 @@ export default function AdminPage() {
     classById.get(teamId)?.className || LEGACY_TEAM_NAMES[teamId] || fallback || teamId;
   const visibleClassTeams = classTeams;
   const accentColor = classTeams.find((t) => t.id === selectedTeam)?.color || "#6366f1";
-  // نسخة واحدة: نعرض أفضل ثلاثة فصول من الفصول الخمسة.
-  const ranked = [...classTeams]
-    .sort((a, b) => getTeamLocationPoints(b) - getTeamLocationPoints(a))
-    .slice(0, 3);
+  // نعرض كل الحلقات مرتبة حسب النقاط.
+  const ranked = [...classTeams].sort((a, b) => getTeamLocationPoints(b) - getTeamLocationPoints(a));
 
   // بنود «سورة من وإلى»: يمنع التسجيل إذا اختار طرفاً واحداً فقط.
   const incompleteRangeItems = regItems.filter(
@@ -2961,6 +2961,12 @@ export default function AdminPage() {
         </div>
       </div>
 
+      <WeeklyStars
+        schoolClasses={schoolClasses}
+        refreshKey={sheetStats.saved + studentsReloadKey}
+        fullRefreshKey={historyClosedCount}
+      />
+
       {/* ── Undo Button ── */}
       {lastAction && (
         <button
@@ -3004,7 +3010,10 @@ export default function AdminPage() {
         />
         <RegistrationsManager
           open={historyModalOpen}
-          onClose={() => setHistoryModalOpen(false)}
+          onClose={() => {
+            setHistoryModalOpen(false);
+            setHistoryClosedCount((v) => v + 1);
+          }}
           schoolClasses={schoolClasses}
           showToast={showToast}
         />
@@ -4838,6 +4847,221 @@ type HistoryPickerTarget = {
   field: "hifz" | "mura";
   side: "from" | "to";
 } | null;
+
+// ── نجوم الأسبوع ──────────────────────────────────────────────────────
+// أفضل طالبين في كل حلقة بمجموع نقاط الأسبوع الحالي (من الأحد)، ويُعرض كل من
+// تعادل مع صاحب المركز الثاني. القائمة تبدأ من الصفر تلقائياً مع كل أسبوع جديد.
+const WEEKLY_STARS_CACHE_KEY = "sailor-race:weekly-stars-v1";
+const WEEKLY_STARS_TOP = 2;
+
+interface WeeklyStar {
+  name: string;
+  total: number;
+  rank: number;
+}
+
+// تواريخ الأسبوع الدراسي الحالي من الأحد حتى اليوم (بنفس منطق «اليوم يبدأ 6 صباحاً»).
+function currentWeekDates(): string[] {
+  const today = getRiyadhDateISO();
+  const [y, m, d] = today.split("-").map(Number);
+  const base = new Date(Date.UTC(y, m - 1, d));
+  const dayOfWeek = base.getUTCDay(); // الأحد = 0
+  return Array.from({ length: dayOfWeek + 1 }, (_, i) => {
+    const day = new Date(base.getTime() - (dayOfWeek - i) * 86400000);
+    return day.toISOString().slice(0, 10);
+  });
+}
+
+function rankWeeklyStars(totals: Map<string, number>): WeeklyStar[] {
+  const sorted = [...totals.entries()]
+    .filter(([, total]) => total > 0)
+    .sort((a, b) => b[1] - a[1]);
+  if (sorted.length === 0) return [];
+  const cutoff = sorted[Math.min(WEEKLY_STARS_TOP, sorted.length) - 1][1];
+  let rank = 0;
+  let prev = Number.NaN;
+  return sorted
+    .filter(([, total]) => total >= cutoff)
+    .map(([name, total]) => {
+      if (total !== prev) rank += 1;
+      prev = total;
+      return { name, total, rank };
+    });
+}
+
+type WeeklyDayCache = Record<string, Record<string, Record<string, number>>>; // يوم ← حلقة ← طالب ← نقاط
+
+function readWeeklyCache(weekStart: string): WeeklyDayCache {
+  try {
+    const raw = JSON.parse(localStorage.getItem(WEEKLY_STARS_CACHE_KEY) || "null");
+    return raw && raw.weekStart === weekStart && raw.days ? raw.days : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeWeeklyCache(weekStart: string, days: WeeklyDayCache) {
+  try {
+    localStorage.setItem(WEEKLY_STARS_CACHE_KEY, JSON.stringify({ weekStart, days }));
+  } catch {
+    // التخزين المحلي اختياري
+  }
+}
+
+function WeeklyStars({
+  schoolClasses,
+  refreshKey,
+  fullRefreshKey,
+}: {
+  schoolClasses: SchoolClass[];
+  refreshKey: number; // تسجيل جديد: نحدّث اليوم الحالي فقط
+  fullRefreshKey: number; // تعديل تسجيلات أيام سابقة: نعيد قراءة الأسبوع كله
+}) {
+  const weekDates = currentWeekDates();
+  const weekStart = weekDates[0];
+  const [days, setDays] = useState<WeeklyDayCache>(() => readWeeklyCache(weekStart));
+  const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [forceAll, setForceAll] = useState(0);
+  const lastFullRef = useRef(`${forceAll}|${fullRefreshKey}`);
+
+  const classIds = schoolClasses.map((c) => c.classId).join(",");
+
+  useEffect(() => {
+    if (!classIds) return;
+    let active = true;
+    const today = weekDates[weekDates.length - 1];
+    const cached = readWeeklyCache(weekStart);
+    const fullKey = `${forceAll}|${fullRefreshKey}`;
+    const full = fullKey !== lastFullRef.current;
+    lastFullRef.current = fullKey;
+    // الأيام السابقة تُقرأ مرة واحدة ثم تُحفظ، واليوم الحالي يُحدَّث مع كل تسجيل جديد.
+    const jobs: Array<{ date: string; teamId: string }> = [];
+    weekDates.forEach((date) => {
+      schoolClasses.forEach(({ classId }) => {
+        if (full || date === today || !cached[date]?.[classId]) jobs.push({ date, teamId: classId });
+      });
+    });
+    setLoading(true);
+    setFailed(false);
+    const next: WeeklyDayCache = JSON.parse(JSON.stringify(cached));
+    let anyFailed = false;
+    const run = async () => {
+      // أربعة طلبات في نفس الوقت كحد أقصى حتى لا نُثقل Apps Script.
+      for (let i = 0; i < jobs.length; i += 4) {
+        await Promise.all(
+          jobs.slice(i, i + 4).map(async ({ date, teamId }) => {
+            try {
+              const result = await callAppsScriptJsonp(
+                APPS_SCRIPT_URL,
+                "getEntries",
+                { teamId, date },
+                SHEET_READ_TIMEOUT_MS,
+              );
+              if (result?.status === "error") throw new Error(result.message);
+              const perStudent: Record<string, number> = {};
+              (Array.isArray(result?.entries) ? result.entries : []).forEach((entry: HistoryEntry) => {
+                const name = String(entry.studentName || "").trim().replace(/\s+/g, " ");
+                if (name) perStudent[name] = (perStudent[name] || 0) + safeNumber(entry.total);
+              });
+              next[date] = { ...(next[date] || {}), [teamId]: perStudent };
+            } catch {
+              anyFailed = true;
+            }
+          }),
+        );
+      }
+      if (!active) return;
+      writeWeeklyCache(weekStart, next);
+      setDays(next);
+      setFailed(anyFailed);
+      setLoading(false);
+    };
+    run();
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classIds, weekStart, refreshKey, forceAll, fullRefreshKey]);
+
+  const starsByClass = schoolClasses.map((schoolClass) => {
+    const totals = new Map<string, number>();
+    weekDates.forEach((date) => {
+      const perStudent = days[date]?.[schoolClass.classId] || {};
+      Object.entries(perStudent).forEach(([name, pts]) => totals.set(name, (totals.get(name) || 0) + pts));
+    });
+    return { schoolClass, stars: rankWeeklyStars(totals) };
+  });
+
+  return (
+    <div style={{ ...S.card, padding: "14px 16px", marginBottom: 14 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+        <div style={{ ...S.sectionTitle, marginBottom: 0 }}>⭐ نجوم الأسبوع</div>
+        <button
+          onClick={() => setForceAll((v) => v + 1)}
+          disabled={loading}
+          className="smooth-btn"
+          style={{
+            background: "rgba(255,255,255,0.06)",
+            border: "1px solid rgba(255,255,255,0.12)",
+            borderRadius: 10,
+            color: "rgba(255,255,255,0.7)",
+            fontSize: 11,
+            fontWeight: 700,
+            padding: "4px 10px",
+            cursor: loading ? "default" : "pointer",
+          }}
+        >
+          {loading ? "⏳ تحديث..." : "🔄 تحديث"}
+        </button>
+      </div>
+      <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, marginBottom: 10 }}>
+        مجموع نقاط الأسبوع من الأحد · تبدأ من جديد كل أسبوع
+        {failed && <span style={{ color: "#fbbf24" }}> · تعذر تحميل بعض الأيام</span>}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {starsByClass.map(({ schoolClass, stars }) => {
+          const color = classColorBySlot(schoolClass.slot, schoolClass.version);
+          return (
+            <div
+              key={schoolClass.classId}
+              style={{
+                borderRadius: 12,
+                border: `1px solid ${color}40`,
+                background: `${color}12`,
+                padding: "8px 12px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: stars.length ? 6 : 0 }}>
+                <div style={{ width: 9, height: 9, borderRadius: "50%", background: color, boxShadow: `0 0 6px ${color}` }} />
+                <span style={{ color: "#fff", fontWeight: 800, fontSize: 13 }}>{schoolClass.className}</span>
+                {!stars.length && (
+                  <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 11, marginInlineStart: "auto" }}>
+                    {loading ? "..." : "لا توجد تسجيلات بعد"}
+                  </span>
+                )}
+              </div>
+              {stars.map((star) => (
+                <div
+                  key={star.name}
+                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "3px 0" }}
+                >
+                  <span style={{ color: "#fff", fontSize: 13, fontWeight: 700 }}>
+                    <span style={{ marginInlineEnd: 6 }}>{MEDALS[star.rank - 1] || "🏅"}</span>
+                    {star.name}
+                  </span>
+                  <span style={{ color: "#fde047", fontWeight: 800, fontSize: 12, fontFamily: "monospace" }}>
+                    {formatPoints(star.total)} نقطة
+                  </span>
+                </div>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 function RegistrationsManager({
   open,
