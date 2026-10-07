@@ -559,14 +559,14 @@ const PICKER_SURAHS = SURAHS
   .reverse();
 
 // ── بنود التسجيل الثابتة ─────────────────────────────────────────────
-// التسجيل ثابت على أربعة بنود فقط: الحفظ، المراجعة، السمت، إحضار الحقيبة.
+// التسجيل ثابت على أربعة بنود فقط: الحفظ، المراجعة، الاستماع، إحضار الحقيبة.
 // الحضور تلقائي: أي طالب يُسجَّل يُحسب حاضراً (+10 نقاط) بدون بند في النموذج.
 const ATTENDANCE_LABEL = "الحضور";
 const ATTENDANCE_POINTS = 10;
 const FIXED_REG_ITEMS: RegItem[] = [
   { id: "hifz", label: "الحفظ", type: "range", points: 30 },
   { id: "murajaa", label: "المراجعة", type: "range", points: 30 },
-  { id: "istima", label: "السمت", type: "yesno", points: 20 },
+  { id: "istima", label: "الاستماع", type: "yesno", points: 20 },
   { id: "haqiba", label: "إحضار الحقيبة", type: "yesno", points: 10 },
 ];
 const DEFAULT_REG_ITEMS: RegItem[] = FIXED_REG_ITEMS;
@@ -1403,7 +1403,7 @@ export default function AdminPage() {
       setTeamStudents(cachedStudents);
     }
 
-    // بنود التسجيل ثابتة الآن (الحفظ، المراجعة، السمت، إحضار الحقيبة)
+    // بنود التسجيل ثابتة الآن (الحفظ، المراجعة، الاستماع، إحضار الحقيبة)
     // ولا تُقرأ من إعدادات الإدارة، مع الحضور التلقائي +10 عند كل تسجيل.
     setRegItems(FIXED_REG_ITEMS.map((item) => ({ ...item })));
 
@@ -1705,7 +1705,7 @@ export default function AdminPage() {
     }
 
     // المسار القياسي: البنود الثابتة تُترجم إلى أعمدة البيانات الرسمية
-    // (الحفظ / المراجعة / السمت / إحضار الحقيبة) حتى تظهر مباشرة في تقرير الحلقة.
+    // (الحفظ / المراجعة / الاستماع / إحضار الحقيبة) حتى تظهر مباشرة في تقرير الحلقة.
     const valueOf = (id: string) => itemValues[id] ?? emptyRegItemValue();
     const hifzItem = regItems.find((item) => item.id === "hifz");
     const murajaaItem = regItems.find((item) => item.id === "murajaa");
@@ -5400,7 +5400,7 @@ function RegistrationsManager({
                     onChange={(e) => setAddValues((v) => ({ ...v, istima: e.target.checked }))}
                     style={{ width: 16, height: 16, accentColor: "#38bdf8" }}
                   />
-                  السمت: {addValues.istima ? "نعم" : "لا"}
+                  الاستماع: {addValues.istima ? "نعم" : "لا"}
                 </label>
               </div>
 
@@ -5497,7 +5497,7 @@ function RegistrationsManager({
                           onChange={(e) => setEditValues((v) => ({ ...v, istima: e.target.checked }))}
                           style={{ width: 16, height: 16, accentColor: "#38bdf8" }}
                         />
-                        السمت: {editValues.istima ? "نعم" : "لا"}
+                        الاستماع: {editValues.istima ? "نعم" : "لا"}
                       </label>
                     </div>
                     <div style={{ display: "flex", gap: 8 }}>
@@ -5538,7 +5538,7 @@ function RegistrationsManager({
                       <span style={{ color: "#fde047", fontWeight: 900, fontSize: 13 }}>{entry.total} نقطة</span>
                     </div>
                     <div style={{ color: "rgba(255,255,255,0.45)", fontSize: 11, lineHeight: 1.7, marginBottom: 8 }}>
-                      حفظ: {entry.hifzFrom || "—"} → {entry.hifzTo || "—"} ({entry.hifzScore || "—"}) | مراجعة: {entry.muraFrom || "—"} → {entry.muraTo || "—"} ({entry.muraScore || "—"}) | حقيبة: {entry.haqiba || "—"} | سمت: {entry.istima || "—"}
+                      حفظ: {entry.hifzFrom || "—"} → {entry.hifzTo || "—"} ({entry.hifzScore || "—"}) | مراجعة: {entry.muraFrom || "—"} → {entry.muraTo || "—"} ({entry.muraScore || "—"}) | حقيبة: {entry.haqiba || "—"} | استماع: {entry.istima || "—"}
                     </div>
                     {confirmDelete === entry.studentName ? (
                       <div style={{ display: "flex", gap: 6 }}>
