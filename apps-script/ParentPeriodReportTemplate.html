@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>تقرير الفترة الأولى للطالب</title>
+  <!-- نسخة مصححة V6: تكبير بطاقات الحضور والانضباط لملء مساحة القسم -->
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800;900&display=swap');
+
+    :root{
+      --teal:#087a75;
+      --teal-dark:#076762;
+      --teal-deep:#07534f;
+      --teal-soft:#e8f3f0;
+      --gold:#c99a3e;
+      --gold-dark:#a87624;
+      --gold-soft:#f4ead6;
+      --paper:#f8f6f0;
+      --cream:#f5f1e8;
+      --ink:#0b4c52;
+      --muted:#5d7779;
+      --line:#ded1b7;
+      --green:#397a4e;
+      --white:#fff;
+    }
+
+    *{box-sizing:border-box}
+    @page{size:A4 portrait;margin:0}
+    html,body{margin:0;padding:0;background:#e4ebe8;font-family:'Tajawal',Arial,sans-serif;color:var(--ink)}
+
+    .toolbar{
+      position:sticky;top:0;z-index:80;display:flex;justify-content:center;gap:8px;flex-wrap:wrap;
+      padding:10px;background:rgba(255,255,255,.96);border-bottom:1px solid #ddd;backdrop-filter:blur(8px)
+    }
+    .toolbar button{border:0;border-radius:11px;padding:10px 16px;font:800 13px 'Tajawal';cursor:pointer}
+    .pdf-btn{background:var(--teal);color:#fff}.image-btn{background:var(--gold);color:#fff}.back-btn{background:#ececec;color:#333}
+    .toolbar button:disabled{opacity:.55;cursor:wait}
+
+    .page{
+      width:210mm;height:297mm;margin:14px auto;padding:4.4mm 12.6mm 2mm;position:relative;overflow:hidden;
+      background:
+        radial-gradient(circle at 50% 16%,rgba(255,255,255,.96),rgba(255,255,255,0) 42%),
+        linear-gradient(135deg,#faf8f3 0%,var(--paper) 58%,#f6f3eb 100%);
+      box-shadow:0 16px 46px rgba(0,0,0,.16);border-radius:0;isolation:isolate
+    }
+
+    /* الزخارف الكبيرة المطابقة لفكرة النموذج المعتمد */
+    .corner-top-left-gold,.corner-top-left-cream,.corner-top-left,.corner-bottom-right,.corner-bottom-left{position:absolute;pointer-events:none;z-index:0}
+    .corner-top-left-gold{left:-24mm;top:-27mm;width:91mm;height:67mm;border-radius:0 0 96% 0 / 0 0 100% 0;background:var(--gold);transform:rotate(-3deg)}
+    .corner-top-left-cream{left:-23.2mm;top:-26.2mm;width:88mm;height:64mm;border-radius:0 0 96% 0 / 0 0 100% 0;background:#fff7e8;transform:rotate(-3deg)}
+    .corner-top-left{
+      left:-22.5mm;top:-25.5mm;width:80mm;height:58mm;
+      border-radius:0 0 92% 0 / 0 0 100% 0;
+      background-color:var(--teal);
+      background-image:linear-gradient(145deg,var(--teal-deep),var(--teal));
+      transform:rotate(-3deg);
+      box-shadow:none
+    }
+    .corner-top-left:before{
+      content:"";position:absolute;right:-19mm;bottom:-13mm;width:77mm;height:45mm;
+      border:1.4px solid rgba(208,161,73,.35);border-radius:0 0 100% 0 / 0 0 100% 0;
+      transform:rotate(-2deg)
+    }
+    .corner-top-left:after,.corner-bottom-right:after{
+      content:"";position:absolute;inset:0;opacity:.27;
+      background-image:radial-gradient(circle at 50% 50%,transparent 0 15px,rgba(255,255,255,.55) 16px 17px,transparent 18px),radial-gradient(circle at 0 100%,transparent 0 20px,rgba(255,255,255,.45) 21px 22px,transparent 23px);
+      background-size:34px 34px
+    }
+    .corner-bottom-right{
+      right:-20mm;bottom:-24mm;width:54mm;height:71mm;
+      border-radius:100% 0 0 0 / 76% 0 0 0;
+      background-color:var(--teal);
+      background-image:linear-gradient(155deg,var(--teal),var(--teal-deep));
+      box-shadow:-5px -5px 0 #fff7e8,-8px -8px 0 #efd8ad,-10px -10px 0 var(--gold)
+    }
+    .corner-bottom-left{left:-20mm;bottom:-20mm;width:46mm;height:42mm;border-radius:0 78% 0 0;border:1.2px solid rgba(208,161,73,.35);opacity:.7;background:repeating-radial-gradient(circle at 100% 0,transparent 0 9px,rgba(208,161,73,.25) 10px 11px)}
+
+    .pattern-top-right{position:absolute;right:-2mm;top:-2mm;width:72mm;height:46mm;opacity:.22;z-index:0;background-image:linear-gradient(30deg,transparent 47%,rgba(201,154,62,.42) 48% 50%,transparent 51%),linear-gradient(-30deg,transparent 47%,rgba(201,154,62,.34) 48% 50%,transparent 51%);background-size:18px 30px}
+
+    .page-content{position:relative;z-index:3;width:100%;left:50%;transform:translateX(-50%) scale(1);transform-origin:top center}
+
+    .header{position:relative;text-align:center;min-height:53mm;margin-bottom:1.2mm}
+    .rabi-logo{width:37mm;max-height:24mm;object-fit:contain;display:block;margin:.2mm auto .8mm}
+    h1{margin:0;color:var(--teal-dark);font-size:34px;line-height:1.08;font-weight:900;letter-spacing:-.3px}
+    .subtitle{margin-top:.5mm;color:var(--gold-dark);font-size:16px;font-weight:900}
+    .date-range{display:inline-flex;align-items:center;justify-content:center;gap:1.6mm;margin-top:1.5mm;padding:1mm 4mm;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.88);font-size:10.6px;font-weight:800;color:var(--ink);box-shadow:0 1px 5px rgba(34,76,76,.035)}
+    .date-icon{width:5mm;height:5mm;border-radius:50%;display:grid;place-items:center;background:var(--teal-soft);color:var(--teal-dark);font-size:10px}
+
+    .student-grid{display:grid;grid-template-columns:1fr 1fr;gap:3mm;margin:0 auto 2mm;max-width:133mm}
+    .student-card{display:grid;grid-template-columns:14mm 1fr;align-items:center;gap:2mm;min-height:19mm;padding:1.6mm 3.5mm;border:1px solid var(--line);border-radius:11px;background:rgba(255,255,255,.90);box-shadow:0 2px 8px rgba(34,76,76,.035)}
+    .student-card .badge{width:13.5mm;height:13.5mm;border-radius:50%;display:grid;place-items:center;background-color:var(--teal);background-image:linear-gradient(145deg,var(--teal),var(--teal-dark));color:#f8cd70;border:1px solid rgba(255,255,255,.7)}
+    .student-card .badge svg{width:8mm;height:8mm}
+    .student-card .label{font-size:10.2px;color:var(--teal-dark);font-weight:800;margin-bottom:.3mm}
+    .student-card .value{font-size:17px;color:var(--ink);font-weight:900;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+    .summary{
+      position:relative;display:grid;direction:ltr;
+      grid-template-columns:1.28fr 1fr;align-items:center;
+      min-height:40.5mm;padding:2.2mm 4.5mm;margin-bottom:1.8mm;
+      border:0;background:var(--teal);
+      clip-path:polygon(1.4% 0,98.6% 0,100% 8%,100% 92%,98.6% 100%,1.4% 100%,0 92%,0 8%);
+      box-shadow:none
+    }
+    .summary:before{content:"";position:absolute;inset:1.5px;background:rgba(248,246,240,.98);clip-path:inherit;pointer-events:none;z-index:0}
+    .summary:after{content:"";position:absolute;inset:4px;border:1px solid rgba(201,154,62,.67);clip-path:inherit;pointer-events:none;z-index:1}
+    .summary-block{position:relative;text-align:center;z-index:2;padding:0 2.5mm;direction:rtl}
+    .summary-block + .summary-block{border-left:1px solid rgba(11,141,134,.35)}
+
+    .result-title{color:var(--teal-dark);font-size:16.5px;font-weight:900}.result-points{margin-top:1mm;color:var(--gold-dark);font-size:29px;font-weight:900;line-height:1}.result-points span{font-size:14px}.result-percent{margin-top:1.2mm;color:var(--teal-dark);font-size:36px;line-height:1;font-weight:900}
+    .summary-message .icon-circle{width:22mm;height:22mm;margin:0 auto 1.2mm;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#fff,var(--gold-soft));border:1px solid var(--line);color:var(--teal-dark)}
+    .summary-message .icon-circle svg{width:14mm;height:14mm}.summary-message b{display:block;font-size:12.2px;color:var(--ink);margin:.5mm 0}.summary-message span{display:block;font-size:9.8px;line-height:1.45;color:var(--ink)}
+
+    .section{margin-bottom:1.35mm}
+    .section-title{height:8.2mm;display:flex;align-items:center;justify-content:center;gap:2mm;border-radius:9px 9px 0 0;background-color:var(--teal);background-image:linear-gradient(90deg,var(--teal-dark),var(--teal));color:#fff;font-size:14px;font-weight:900}
+    .section-title svg{width:5.8mm;height:5.8mm;color:#ffe08c}.section-body{position:relative;border:1px solid var(--line);border-top:0;border-radius:0 0 10px 10px;background:rgba(255,255,255,.92);padding:2mm}
+
+    .week-progress{position:relative;display:grid;direction:ltr;grid-template-columns:3.25fr .92fr;gap:2mm;align-items:stretch}
+    .week-chart{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2mm;min-width:0}
+    .week-card,.trend-card{position:relative;z-index:2;min-height:26mm;border:1px solid var(--line);border-radius:9px;background:rgba(255,253,248,.96);text-align:center;padding:2.1mm 1.2mm}
+    .week-card{padding-bottom:10mm}
+    .week-card .week-title{font-size:11.2px;font-weight:900;color:var(--ink);margin-bottom:1.3mm}
+    .week-card .week-score{font-size:25px;line-height:1.08;font-weight:900;color:var(--teal-dark);margin:1.2mm 0 0}
+    .trend-card{display:grid;place-items:center;background:linear-gradient(145deg,#fff,var(--gold-soft))}
+    .trend-card .trend-icon{width:16mm;height:16mm;margin:auto;color:var(--teal)}
+    .trend-card b{display:block;margin-top:.7mm;font-size:10px;line-height:1.35;color:var(--ink)}
+    .trend-line{position:absolute;left:0;right:0;bottom:3.3mm;width:100%;height:9.5mm;z-index:3;pointer-events:none;overflow:visible}
+    .trend-line polyline{fill:none;stroke:var(--teal-dark);stroke-width:2.25;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+    .trend-line circle{fill:var(--teal-dark);stroke:#fff;stroke-width:1.35;vector-effect:non-scaling-stroke}
+
+    .metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:1.5mm}.metric{border:1px solid var(--line);border-radius:9px;background:rgba(255,255,255,.88);padding:1.4mm .5mm;text-align:center}.metric-label{min-height:4mm;color:var(--teal-dark);font-size:10.1px;font-weight:900;line-height:1.1}.ring{width:21.5mm;height:21.5mm;margin:.7mm auto 0;position:relative;display:grid;place-items:center}.ring svg{width:100%;height:100%;display:block}.ring .track{fill:none;stroke:#e8e4db;stroke-width:10}.ring .progress{fill:none;stroke:var(--teal);stroke-width:10;transform:rotate(-90deg);transform-origin:50% 50%}.ring .hole{fill:#fbfaf6}.ring strong{position:absolute;inset:0;display:grid;place-items:center;color:var(--teal-dark);font-size:11.7px;font-weight:900}
+
+    .details-grid{display:grid;grid-template-columns:1fr 1fr;gap:2mm;margin-bottom:1.35mm}.detail-box{border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.88);overflow:hidden}.detail-head{height:7.4mm;display:flex;align-items:center;justify-content:center;gap:1.5mm;background-color:var(--teal);background-image:linear-gradient(90deg,var(--teal-dark),var(--teal));color:#fff;font-size:12.8px;font-weight:900}.detail-head svg{width:5mm;height:5mm;color:#ffe08c}.detail-content{min-height:27mm;padding:1.4mm 2.4mm}
+    .stats-mini{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(2,1fr);gap:1.4mm;min-height:24.2mm}.mini{display:grid;grid-template-columns:1fr auto;align-items:center;gap:1mm;min-height:11mm;padding:1.8mm 2mm;border-radius:7px;background:var(--cream);border:1px solid #f1e4ce;font-size:10.7px}.mini b{color:var(--teal-dark);font-weight:900}.mini span{font-weight:800;color:var(--ink)}
+    .assignment-grid{display:grid;grid-template-columns:1fr 1fr;gap:2mm;min-height:26.5mm;align-items:center}.assignment{padding:1.8mm 2mm;text-align:center;border-left:1px solid var(--line)}.assignment:last-child{border-left:0}.assignment b{display:block;color:var(--teal-dark);font-size:11.7px;margin-bottom:1mm}.assignment span{font-size:12.4px;line-height:1.45;color:var(--ink);font-weight:600}
+
+    .feedback-grid{display:grid;direction:rtl;grid-template-columns:1fr 1fr;gap:2mm;margin-bottom:1.35mm}.feedback-box{display:grid;grid-template-columns:22mm 1fr;align-items:center;min-height:24mm;border:1px solid var(--line);border-radius:10px;padding:1.7mm 3mm;background:rgba(255,255,255,.88)}.feedback-box.good{border-color:#77a787}.feedback-box.need{border-color:#d7b46d}.feedback-icon{width:21mm;height:21mm;display:grid;place-items:center;border-radius:50%;background:var(--teal-soft);color:var(--green)}.feedback-box.need .feedback-icon{background:var(--gold-soft);color:var(--gold-dark)}.feedback-icon svg{width:14.5mm;height:14.5mm}.feedback-box h3{margin:0 0 .8mm;text-align:center;font-size:13px}.feedback-box.good h3{color:var(--green)}.feedback-box.need h3{color:var(--gold-dark)}.feedback-box ul{margin:0;padding-right:5mm}.feedback-box li{font-size:10.6px;line-height:1.45;margin:.35mm 0}
+
+    .goal{display:grid;grid-template-columns:18mm 1fr;align-items:center;gap:2mm;min-height:11.5mm;margin:0 9mm 1.15mm;padding:1.4mm 4mm;color:#fff;border-radius:11px;background-color:var(--teal);background-image:linear-gradient(90deg,var(--teal-dark),var(--teal));box-shadow:inset 0 0 0 1px rgba(255,255,255,.16)}.goal-icon{width:12mm;height:12mm;display:grid;place-items:center;border-radius:50%;color:#ffdf89}.goal-icon svg{width:10mm;height:10mm}.goal b{display:block;text-align:center;color:#ffe08c;font-size:12.5px;margin-bottom:.3mm}.goal span{display:block;text-align:center;font-size:11px;line-height:1.35}
+    .note{display:grid;grid-template-columns:17mm 1fr;align-items:center;min-height:13.8mm;margin:0 15mm;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.88);padding:1.4mm 4mm}.note-icon{width:11mm;height:8mm;color:#2e7b56}.note-icon svg{width:100%;height:100%}.note b{display:block;text-align:center;color:var(--gold-dark);font-size:11.8px;margin-bottom:.6mm}.note div{font-size:9.9px;line-height:1.4;text-align:center}.warning{display:none;margin-top:.8mm;color:#b35b24;font-size:8px;font-weight:700}.footer{margin-top:.55mm;text-align:center;color:var(--teal);font-size:7.2px;font-weight:700}
+
+    .student-card,.week-card,.trend-card,.metric,.detail-box,.feedback-box,.note{box-shadow:0 2px 7px rgba(25,88,83,.045)}
+    .section-body{box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
+    .goal{clip-path:polygon(2% 0,98% 0,100% 50%,98% 100%,2% 100%,0 50%)}
+
+    .pdf-export-host{position:fixed;left:-20000px;top:0;width:210mm;height:297mm;overflow:hidden;z-index:-9999;background:var(--paper)}
+
+    @media(max-width:850px){
+      body{background:#fff}.page{width:100%;height:auto;min-height:100vh;margin:0;padding:15px 10px 30px;border-radius:0;box-shadow:none;overflow:visible}.page-content{left:0;transform:none!important}.rabi-logo{width:96px}.header{min-height:170px}h1{font-size:24px}.student-grid{grid-template-columns:1fr;margin:0 auto 12px;max-width:100%}.summary{grid-template-columns:1fr;direction:rtl}.summary-block + .summary-block{border-left:0;border-top:1px solid rgba(11,141,134,.25);padding-top:10px}.week-progress,.week-chart{grid-template-columns:1fr}.trend-line{display:none}.metrics{grid-template-columns:repeat(2,1fr)}.details-grid,.feedback-grid{grid-template-columns:1fr}.assignment-grid{grid-template-columns:1fr}.assignment{border-left:0;border-bottom:1px solid var(--line)}.goal,.note{margin-left:0;margin-right:0}.toolbar button{flex:1 1 140px}}
+    @media print{.toolbar{display:none!important}html,body{background:#fff}.page{margin:0;box-shadow:none;border-radius:0}}
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <button type="button" class="pdf-btn" id="downloadPdfBtn" onclick="downloadReportPdf()">تحميل PDF بجودة عالية</button>
+    <button type="button" class="image-btn" id="downloadImageBtn" onclick="downloadReportImage()">تحميل صورة بجودة عالية</button>
+    <button type="button" class="back-btn" onclick="goBackToReports()">العودة للتقارير</button>
+  </div>
+
+  <main class="page" id="reportPage">
+    <div class="corner-top-left-gold"></div><div class="corner-top-left-cream"></div><div class="corner-top-left"></div><div class="corner-bottom-right"></div><div class="corner-bottom-left"></div><div class="pattern-top-right"></div>
+    <div class="page-content" id="pageContent">
+      <header class="header">
+        <img id="rabiLogo" class="rabi-logo" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="ربيع القلوب">
+        <h1>تقرير الفترة الأولى للطالب</h1>
+        <div class="subtitle">البرنامج الصيفي — الفترة الأولى</div>
+        <div class="date-range"><span class="date-icon">▣</span><span id="dateRange"></span></div>
+      </header>
+
+      <section class="student-grid">
+        <div class="student-card">
+          <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21c.5-5 3.5-8 8-8s7.5 3 8 8"/></svg></div>
+          <div><div class="label">اسم الطالب</div><div class="value" id="studentName"></div></div>
+        </div>
+        <div class="student-card">
+          <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 5.5c3-1.5 6-1.5 9 0v14c-3-1.5-6-1.5-9 0z"/><path d="M21 5.5c-3-1.5-6-1.5-9 0v14c3-1.5 6-1.5 9 0z"/></svg></div>
+          <div><div class="label">الحلقة</div><div class="value" id="teamName"></div></div>
+        </div>
+      </section>
+
+      <section class="summary">
+        <div class="summary-block">
+          <div class="result-title">النتيجة الإجمالية</div>
+          <div class="result-points"><b id="points"></b> <span id="target"></span></div>
+          <div class="result-percent" id="overall"></div>
+        </div>
+        <div class="summary-block summary-message">
+          <div class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 5.5c3-1.5 6-1.5 9 0v13c-3-1.5-6-1.5-9 0z"/><path d="M21 5.5c-3-1.5-6-1.5-9 0v13c3-1.5 6-1.5 9 0z"/><path d="M8 3l4 3 4-3"/></svg></div>
+          <b id="summaryHeading"></b><span id="summaryMessage"></span>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-title">التطور خلال أسابيع السنة <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 18l5-5 4 3 7-8"/><path d="M15 8h5v5"/></svg></div>
+        <div class="section-body"><div class="week-progress" id="weeks"></div></div>
+      </section>
+
+      <section class="section">
+        <div class="section-title">ملخص الأداء العام <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 6 7 .9-5 4.8 1.3 7-6.3-3.3-6.3 3.3 1.3-7-5-4.8L9 8z"/></svg></div>
+        <div class="section-body"><div class="metrics" id="metrics"></div></div>
+      </section>
+
+      <section class="details-grid">
+        <div class="detail-box"><div class="detail-head">الحضور والانضباط <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></div><div class="detail-content"><div class="stats-mini"><div class="mini"><b>الحضور</b><span id="attendanceCount"></span></div><div class="mini"><b>الغياب</b><span id="absenceCount"></span></div><div class="mini"><b>إحضار الحقيبة</b><span id="bagCount"></span></div><div class="mini"><b>الاستماع</b><span id="listeningCount"></span></div></div></div></div>
+        <div class="detail-box"><div class="detail-head">الإنجاز خلال الفترة <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3h8v5a4 4 0 01-8 0z"/><path d="M6 5H3v2a5 5 0 005 5M18 5h3v2a5 5 0 01-5 5M12 12v5M8 21h8M9 17h6"/></svg></div><div class="detail-content"><div class="assignment-grid"><div class="assignment"><b>الحفظ</b><span id="hifzAchievement"></span></div><div class="assignment"><b>المراجعة</b><span id="reviewAchievement"></span></div></div></div></div>
+      </section>
+
+      <section class="feedback-grid">
+        <div class="feedback-box need"><div class="feedback-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="M12 12l7-7M16 5h3v3"/></svg></div><div><h3>ما يحتاج متابعة</h3><ul id="improvements"></ul></div></div>
+        <div class="feedback-box good"><div class="feedback-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2l8 4v6c0 5-3.2 8.2-8 10-4.8-1.8-8-5-8-10V6z"/><path d="M8 12l2.5 2.5L16 9"/></svg></div><div><h3>نقاط القوة</h3><ul id="positives"></ul></div></div>
+      </section>
+
+      <section class="goal"><div class="goal-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="M12 12l7-7M16 5h3v3"/></svg></div><div><b>هدف الفترة القادمة</b><span id="periodGoal"></span></div></section>
+      <section class="note"><div class="note-icon"><svg viewBox="0 0 24 18" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="1" y="1" width="22" height="16" rx="2"/><path d="M2 3l10 7L22 3"/></svg></div><div><b>رسالة المعلم لولي الأمر</b><div id="teacherNote"></div><div class="warning" id="warning"></div></div></section>
+      <div class="footer">ربيع القلوب — بناء جيل قرآني عامر بالإيمان</div>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+    const report = <?!= reportJson ?>;
+    const rabiLogoDataUrl = <?!= JSON.stringify(rabiLogoDataUrl) ?>;
+    const dashboardUrl = <?!= JSON.stringify(dashboardUrl || '') ?>;
+    const $ = id => document.getElementById(id);
+    function escapeHtml(value){return String(value??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')}
+
+    $('rabiLogo').src=rabiLogoDataUrl;$('dateRange').textContent=report.dateRange||'';$('studentName').textContent=report.studentName||'';$('teamName').textContent=report.teamName||'';$('points').textContent=report.pointsTotal||0;$('target').textContent='من '+(report.target||0);$('overall').textContent=(report.metrics.overall||0)+'%';
+    const overall=Number(report.metrics.overall||0);$('summaryHeading').textContent=overall>=80?'تقدير الأداء':'أداء يحتاج متابعة';$('summaryMessage').textContent=overall>=80?'أداء متميز وجهود مباركة، استمر على هذا التميز.':'بالمتابعة اليومية والتشجيع المستمر سيصل إلى نتائج أجمل بإذن الله.';
+
+    function weekPointY(value,series){const values=(series||[]).map(v=>Math.max(0,Math.min(100,Number(v)||0))),n=Math.max(0,Math.min(100,Number(value)||0)),min=Math.min(...values),max=Math.max(...values);return max===min?20:31-(((n-min)/(max-min))*22)}
+    const weeks=(report.weeks||[]);
+    /* ترتيب الأسابيع بصرياً: الأول يساراً، والثاني في الوسط، والثالث يميناً. */
+    const orderedWeeks=[weeks[0],weeks[1],weeks[2]].filter(Boolean);
+    const weekValues=orderedWeeks.map(week=>week.percent);
+    const weekCards=orderedWeeks.map(week=>`<div class="week-card"><div class="week-title">${escapeHtml(week.title)}</div><div class="week-score">${Number(week.percent||0)}%</div></div>`).join('');
+    const trendLine=(orderedWeeks.length===3)?`<svg class="trend-line" viewBox="0 0 600 40" preserveAspectRatio="none"><polyline points="100,${weekPointY(orderedWeeks[0].percent,weekValues)} 300,${weekPointY(orderedWeeks[1].percent,weekValues)} 500,${weekPointY(orderedWeeks[2].percent,weekValues)}"/><circle cx="100" cy="${weekPointY(orderedWeeks[0].percent,weekValues)}" r="4.6"/><circle cx="300" cy="${weekPointY(orderedWeeks[1].percent,weekValues)}" r="4.6"/><circle cx="500" cy="${weekPointY(orderedWeeks[2].percent,weekValues)}" r="4.6"/></svg>`:'';
+    const trendCard=`<div class="trend-card"><div><svg class="trend-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 18l5-5 4 3 7-8"/><path d="M15 8h5v5"/></svg><b>${escapeHtml(report.trend.label)}</b></div></div>`;
+    $('weeks').innerHTML=`<div class="week-chart">${weekCards}${trendLine}</div>${trendCard}`;
+
+    function metricRing(label,value){const safe=Math.max(0,Math.min(100,Number(value)||0));const c=263.89;const o=c*(1-safe/100);return `<div class="metric"><div class="metric-label">${escapeHtml(label)}</div><div class="ring"><svg viewBox="0 0 100 100"><circle class="track" cx="50" cy="50" r="42"></circle><circle class="progress" cx="50" cy="50" r="42" stroke-dasharray="${c}" stroke-dashoffset="${o}"></circle><circle class="hole" cx="50" cy="50" r="31"></circle></svg><strong>${safe}%</strong></div></div>`}
+    const metricDefs=[['الحضور',report.metrics.attendance],['الحفظ',report.metrics.hifz],['المراجعة',report.metrics.review],['إحضار الحقيبة',report.metrics.bag],['الاستماع',report.metrics.listening]];$('metrics').innerHTML=metricDefs.map(x=>metricRing(x[0],x[1])).join('');
+    $('attendanceCount').textContent=`${report.presentCount} من ${report.totalDays} يوماً`;$('absenceCount').textContent=`${report.absentCount} يوم`;$('bagCount').textContent=`${report.bagCount} من ${report.totalDays}`;$('listeningCount').textContent=`${report.listeningCount} من ${report.totalDays}`;$('hifzAchievement').textContent=report.achievement.hifz||'—';$('reviewAchievement').textContent=report.achievement.review||'—';$('positives').innerHTML=(report.positives||[]).map(i=>`<li>${escapeHtml(i)}</li>`).join('');$('improvements').innerHTML=(report.improvements||[]).map(i=>`<li>${escapeHtml(i)}</li>`).join('');$('periodGoal').textContent=report.periodGoal||'';$('teacherNote').textContent=report.teacherNote||'لا توجد ملاحظة إضافية لهذه الفترة.';if(!report.hasAnyRecord){$('warning').style.display='block';$('warning').textContent='لا توجد تسجيلات للطالب خلال الفترة الأولى.'}
+
+    function resetPageFit(){const c=$('pageContent');c.style.left='50%';c.style.transform='translateX(-50%) scale(1)'}
+    function fitReportToSinglePage(){if(innerWidth<=850)return 1;const p=$('reportPage'),c=$('pageContent');resetPageFit();const s=getComputedStyle(p);const aw=p.clientWidth-parseFloat(s.paddingLeft)-parseFloat(s.paddingRight),ah=p.clientHeight-parseFloat(s.paddingTop)-parseFloat(s.paddingBottom);const scale=Math.max(.72,Math.min(1,aw/c.scrollWidth,ah/c.scrollHeight));c.style.transform=`translateX(-50%) scale(${scale})`;return scale}
+    function sanitizeFileName(v){return String(v||'').replace(/[\\/:*?"<>|]/g,'-').replace(/\s+/g,' ').trim()}
+    function setImportantStyle(el,p,v){el.style.setProperty(p,v,'important')}
+    async function waitForImages(root){const imgs=Array.from(root.querySelectorAll('img'));await Promise.all(imgs.map(img=>img.complete&&img.naturalWidth>0?Promise.resolve():new Promise(r=>{img.addEventListener('load',r,{once:true});img.addEventListener('error',r,{once:true})})))}
+    function createExportClone(){const source=$('reportPage'),host=document.createElement('div');host.className='pdf-export-host';const clone=source.cloneNode(true);clone.removeAttribute('id');setImportantStyle(clone,'width','210mm');setImportantStyle(clone,'height','297mm');setImportantStyle(clone,'min-height','297mm');setImportantStyle(clone,'margin','0');setImportantStyle(clone,'padding','4.4mm 12.6mm 2mm');setImportantStyle(clone,'border-radius','0');setImportantStyle(clone,'box-shadow','none');setImportantStyle(clone,'overflow','hidden');const content=clone.querySelector('.page-content');setImportantStyle(content,'left','0');setImportantStyle(content,'width','100%');setImportantStyle(content,'margin','0');setImportantStyle(content,'transform-origin','top center');setImportantStyle(content,'transform','scale(1)');host.appendChild(clone);document.body.appendChild(host);const s=getComputedStyle(clone),aw=clone.clientWidth-parseFloat(s.paddingLeft)-parseFloat(s.paddingRight),ah=clone.clientHeight-parseFloat(s.paddingTop)-parseFloat(s.paddingBottom);const scale=Math.max(.70,Math.min(1,aw/content.scrollWidth,ah/content.scrollHeight));setImportantStyle(content,'transform',`scale(${scale})`);return{host,clone}}
+    async function createHighQualityCanvas(){if(!window.html2canvas)throw new Error('تعذر تحميل أداة إنشاء الصورة');if(document.fonts&&document.fonts.ready)await document.fonts.ready;const p=createExportClone();try{await waitForImages(p.clone);await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const w=p.clone.clientWidth,h=p.clone.clientHeight;return await html2canvas(p.clone,{scale:3,useCORS:true,allowTaint:false,backgroundColor:'#fffdf8',logging:false,imageTimeout:20000,removeContainer:true,scrollX:0,scrollY:0,width:w,height:h,windowWidth:w,windowHeight:h})}finally{if(p.host&&p.host.parentNode)p.host.parentNode.removeChild(p.host)}}
+    function canvasToBlob(canvas,type='image/png',quality){return new Promise((res,rej)=>canvas.toBlob(b=>b?res(b):rej(new Error('تعذر إنشاء الصورة')),type,quality))}
+    async function saveGeneratedBlob(blob,fileName,mimeType,shareText){const file=new File([blob],fileName,{type:mimeType});const ios=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);if(ios&&navigator.share&&navigator.canShare){try{if(navigator.canShare({files:[file]})){await navigator.share({files:[file],title:fileName,text:shareText});return}}catch(e){if(e&&e.name==='AbortError')return}}const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=fileName;a.rel='noopener';a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),120000)}
+    async function downloadReportPdf(){const pb=$('downloadPdfBtn'),ib=$('downloadImageBtn'),old=pb.textContent;pb.disabled=ib.disabled=true;pb.textContent='جاري تجهيز PDF...';try{const canvas=await createHighQualityCanvas();const{jsPDF}=window.jspdf;const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});pdf.addImage(canvas.toDataURL('image/png'),'PNG',0,0,210,297,undefined,'SLOW');await saveGeneratedBlob(pdf.output('blob'),`تقرير الفترة الأولى - ${sanitizeFileName(report.studentName||'الطالب')}.pdf`,'application/pdf','تقرير الفترة الأولى');pb.textContent='تم تحميل PDF ✓';setTimeout(()=>pb.textContent=old,1800)}catch(e){console.error(e);alert('تعذر تحميل ملف PDF. تأكد من اتصال الإنترنت ثم جرّب مرة أخرى.');pb.textContent=old}finally{pb.disabled=ib.disabled=false}}
+    async function downloadReportImage(){const ib=$('downloadImageBtn'),pb=$('downloadPdfBtn'),old=ib.textContent;ib.disabled=pb.disabled=true;ib.textContent='جاري تجهيز الصورة...';try{const canvas=await createHighQualityCanvas();const blob=await canvasToBlob(canvas,'image/png');await saveGeneratedBlob(blob,`تقرير الفترة الأولى - ${sanitizeFileName(report.studentName||'الطالب')}.png`,'image/png','صورة تقرير الفترة الأولى');ib.textContent='تم تحميل الصورة ✓';setTimeout(()=>ib.textContent=old,1800)}catch(e){console.error(e);alert('تعذر تحميل الصورة. تأكد من اتصال الإنترنت ثم جرّب مرة أخرى.');ib.textContent=old}finally{ib.disabled=pb.disabled=false}}
+    function goBackToReports(){if(document.referrer&&history.length>1){history.back();return}if(dashboardUrl)location.href=dashboardUrl}
+    addEventListener('load',()=>requestAnimationFrame(()=>requestAnimationFrame(fitReportToSinglePage)));addEventListener('resize',()=>{if(innerWidth>850)fitReportToSinglePage()});
+  </script>
+</body>
+</html>

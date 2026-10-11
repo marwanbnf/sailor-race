@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
+
+    :root {
+      --teal:#16968f;
+      --teal-dark:#0d7772;
+      --teal-soft:#e8f5f2;
+      --paper:#fffdfa;
+      --beige:#d6bc95;
+      --beige-soft:#f3e6d2;
+      --gold:#d4ad68;
+      --text:#1f3c3f;
+      --muted:#6f7f7f;
+      --green:#2b8a67;
+      --border:#eadcc8;
+    }
+
+    * { box-sizing:border-box; }
+
+    html, body {
+      margin:0;
+      padding:0;
+      background:#e9eeec;
+      font-family:'Tajawal',Arial,sans-serif;
+      color:var(--text);
+    }
+
+    .toolbar {
+      position:sticky;
+      top:0;
+      z-index:30;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      justify-content:center;
+      padding:10px;
+      background:rgba(255,255,255,.95);
+      border-bottom:1px solid #ddd;
+      backdrop-filter:blur(8px);
+    }
+
+    .toolbar button {
+      border:0;
+      border-radius:11px;
+      padding:9px 16px;
+      font:700 13px 'Tajawal';
+      cursor:pointer;
+    }
+
+    .print-btn { background:var(--teal); color:#fff; }
+    .image-btn { background:var(--gold); color:#173b42; }
+    .close-btn { background:#eee; color:#333; }
+
+    .page {
+      width:210mm;
+      height:297mm;
+      margin:14px auto;
+      padding:7mm 8.5mm 4mm;
+      background:var(--paper);
+      position:relative;
+      overflow:hidden;
+      border-radius:4px;
+      box-shadow:0 14px 45px rgba(0,0,0,.14);
+    }
+
+    .page-content {
+      position:relative;
+      z-index:2;
+      width:100%;
+      margin:0 auto;
+      left:0;
+      transform-origin:top center;
+    }
+
+    .corner { position:absolute; border-radius:50%; z-index:0; }
+    .corner.top-left { width:82mm; height:48mm; left:-43mm; top:-30mm; background:linear-gradient(145deg,#d9b783,#f5dfbc); }
+    .corner.top-right { width:72mm; height:46mm; right:-38mm; top:-31mm; background:var(--teal); }
+    .corner.bottom-left { width:68mm; height:47mm; left:-43mm; bottom:-31mm; background:var(--teal); }
+    .corner.bottom-right { width:70mm; height:43mm; right:-46mm; bottom:-29mm; border:2px solid var(--beige); opacity:.55; }
+
+    .leaf { position:absolute; color:var(--teal); opacity:.45; font-size:22px; z-index:1; }
+    .leaf.a { right:12mm; top:7mm; }
+    .leaf.b { left:11mm; bottom:18mm; }
+    .leaf.c { right:8mm; bottom:12mm; }
+
+    header { text-align:center; margin-bottom:3mm; }
+    .logo { width:29mm; max-height:18mm; object-fit:contain; margin-bottom:.5mm; }
+    h1 { font-size:25px; color:var(--teal-dark); margin:0; font-weight:800; line-height:1.15; }
+    .week { font-size:14.5px; font-weight:700; color:var(--teal-dark); margin-top:1px; }
+    .dates { font-size:11.5px; color:var(--muted); }
+
+    .info-grid {
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:1.7mm;
+      margin:2.2mm 0 2mm;
+    }
+
+    .info-card {
+      background:rgba(255,255,255,.9);
+      border:1px solid var(--border);
+      border-radius:11px;
+      padding:1.8mm 1.6mm;
+      text-align:center;
+      box-shadow:0 2px 0 rgba(212,188,149,.25);
+      min-height:13mm;
+    }
+
+    .info-card .label { font-size:11.5px; color:var(--teal-dark); font-weight:700; margin-bottom:.5mm; }
+    .info-card .value { font-size:16px; font-weight:800; min-height:5mm; }
+
+    .info-grid.two-cards {
+      grid-template-columns:repeat(2,1fr);
+      max-width:100%;
+    }
+
+    .program-pill {
+      width:max-content;
+      margin:0 auto 2.5mm;
+      padding:1.2mm 7mm;
+      background:#fff7ed;
+      border:1px solid var(--border);
+      border-radius:999px;
+      color:var(--teal-dark);
+      font-size:10px;
+      font-weight:700;
+    }
+
+    .summary {
+      display:grid;
+      grid-template-columns:.75fr 1.25fr 1fr;
+      gap:1.6mm;
+      align-items:center;
+      background:rgba(255,255,255,.92);
+      border:1px solid #bdd6d0;
+      border-radius:14px;
+      padding:2mm 2.4mm;
+      margin-bottom:2.8mm;
+      min-height:23.5mm;
+    }
+
+    .grade-seal {
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex-direction:column;
+      border:3px double var(--teal);
+      border-radius:50%;
+      width:24mm;
+      height:24mm;
+      margin:auto;
+      color:var(--teal-dark);
+      background:#fffaf4;
+      box-shadow:0 0 0 3px #e7f3f1;
+    }
+
+    .grade-seal small { font-size:8px; font-weight:700; }
+    .grade-seal strong { font-size:14px; margin-top:.3mm; }
+
+    .score-box {
+      text-align:center;
+      border-left:1px solid var(--border);
+      border-right:1px solid var(--border);
+      padding:0 2mm;
+    }
+
+    .score-box .title { font-weight:800; color:var(--teal-dark); font-size:13px; }
+    .score-main { font-size:25px; font-weight:800; color:var(--teal); margin:.5mm 0 0; line-height:1.1; }
+    .score-main span { font-size:12px; color:var(--text); }
+    .percent { font-size:18px; font-weight:800; color:var(--teal-dark); line-height:1.1; }
+    .message { display:flex; align-items:center; justify-content:center; text-align:center; font-size:12px; font-weight:700; line-height:1.45; }
+
+    .section-title {
+      display:flex;
+      align-items:center;
+      gap:2mm;
+      justify-content:center;
+      font-size:14px;
+      font-weight:800;
+      color:var(--teal-dark);
+      margin:2mm 0 1.5mm;
+      line-height:1;
+    }
+
+    .section-title:before,
+    .section-title:after {
+      content:"";
+      height:1px;
+      background:linear-gradient(90deg,transparent,var(--gold));
+      flex:1;
+    }
+
+    .section-title:after { background:linear-gradient(90deg,var(--gold),transparent); }
+
+    .metrics {
+      display:grid;
+      grid-template-columns:repeat(5,1fr);
+      gap:1.3mm;
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:1.7mm;
+      background:rgba(255,255,255,.82);
+    }
+
+    .metric {
+      text-align:center;
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:1.45mm .35mm;
+      background:#fff;
+    }
+
+    .metric .m-label {
+      font-size:10.5px;
+      font-weight:700;
+      color:var(--teal-dark);
+      min-height:5mm;
+      line-height:1.1;
+    }
+
+    .ring {
+      --p:0;
+      display:grid;
+      place-items:center;
+      width:18.8mm;
+      height:18.8mm;
+      margin:auto;
+      position:relative;
+    }
+
+    .ring svg {
+      width:100%;
+      height:100%;
+      display:block;
+      overflow:visible;
+    }
+
+    .ring-track {
+      fill:none;
+      stroke:var(--beige-soft);
+      stroke-width:10;
+    }
+
+    .ring-progress {
+      fill:none;
+      stroke:var(--teal);
+      stroke-width:10;
+      stroke-linecap:butt;
+      transform:rotate(-90deg);
+      transform-origin:50% 50%;
+      stroke-dasharray: var(--circumference, 263.89);
+      stroke-dashoffset: calc(var(--circumference, 263.89) * (1 - (var(--p, 0) / 100)));
+    }
+
+    .ring-hole {
+      fill:#fff;
+    }
+
+    .ring strong {
+      position:absolute;
+      inset:0;
+      display:grid;
+      place-items:center;
+      z-index:1;
+      color:var(--teal-dark);
+      font-size:11.6px;
+    }
+
+    .details {
+      border:1px solid var(--border);
+      border-radius:11px;
+      overflow:hidden;
+      background:white;
+    }
+
+    table { border-collapse:collapse; width:100%; table-layout:fixed; font-size:10px; }
+    th {
+      background:linear-gradient(180deg,var(--teal),var(--teal-dark));
+      color:#fff;
+      padding:1.6mm .5mm;
+      font-weight:700;
+      line-height:1.1;
+    }
+    td {
+      padding:1.15mm .35mm;
+      text-align:center;
+      border-bottom:1px solid #eee;
+      border-left:1px solid #eee;
+      line-height:1.25;
+      word-break:break-word;
+    }
+    tbody tr:nth-child(even) { background:#f8fcfb; }
+    td small { font-size:8.3px; }
+    .present,.yes { color:var(--green); font-weight:700; }
+    .absent,.no { color:#c14e3f; font-weight:700; }
+    .dash { color:#999; }
+    .points { font-weight:800; color:var(--teal-dark); }
+
+    .assignment {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:1.3mm;
+      margin-top:1.3mm;
+    }
+
+    .assignment .mini {
+      border:1px solid var(--border);
+      border-radius:9px;
+      padding:1.45mm 1.6mm;
+      text-align:center;
+      background:#fff;
+      font-size:10.5px;
+      line-height:1.35;
+      min-height:12mm;
+    }
+
+    .mini b { display:block; color:var(--teal-dark); margin-bottom:.5mm; font-size:10.8px; }
+
+    .lower {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:1.3mm;
+      margin-top:1.7mm;
+    }
+
+    .box {
+      border:1px solid var(--border);
+      border-radius:10px;
+      background:rgba(255,255,255,.9);
+      overflow:hidden;
+      min-height:23.5mm;
+    }
+
+    .box h3 { margin:0; padding:1.5mm 2.5mm; color:#fff; font-size:11.5px; }
+    .box.good h3 { background:linear-gradient(90deg,var(--teal),#31aaa1); }
+    .box.need h3 { background:linear-gradient(90deg,#d9b783,#c99a58); }
+    .box ul { margin:1.4mm 4mm 1.8mm; padding-right:4mm; font-size:10.2px; line-height:1.55; }
+    .box li { margin-bottom:.5mm; }
+
+    .note {
+      margin-top:2.4mm;
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:1.6mm 2.2mm;
+      background:rgba(255,255,255,.9);
+      font-size:10.5px;
+      line-height:1.45;
+      min-height:14.5mm;
+    }
+
+    .note h3 { margin:0 0 .7mm; color:var(--teal-dark); font-size:11.6px; }
+    .warning { margin-top:1mm; color:#b55a31; font-weight:700; font-size:9.8px; }
+    .footer { text-align:center; color:var(--teal); font-weight:700; margin-top:2.4mm; font-size:8.5px; }
+
+    .print-btn:disabled,
+    .image-btn:disabled {
+      cursor:wait;
+      opacity:.75;
+    }
+
+    .pdf-export-host {
+      position:fixed;
+      left:-12000px;
+      top:0;
+      width:210mm;
+      height:297mm;
+      overflow:hidden;
+      background:#fffdfa;
+      pointer-events:none;
+      z-index:-9999;
+    }
+
+    @media (max-width:900px) {
+      body { background:#fff; }
+      .page {
+        width:100%;
+        height:auto;
+        min-height:100vh;
+        margin:0;
+        border-radius:0;
+        box-shadow:none;
+        padding:14px 10px;
+        overflow:visible;
+      }
+      .page-content { transform:none !important; width:100% !important; left:0 !important; margin:0 auto !important; }
+      .summary { grid-template-columns:.75fr 1.2fr 1fr; }
+      .toolbar { position:relative; }
+      .toolbar button { flex:1 1 180px; max-width:280px; }
+    }
+
+    @page { size:A4 portrait; margin:0; }
+
+    @media print {
+      html, body {
+        width:210mm;
+        height:297mm;
+        background:#fff;
+        overflow:hidden;
+      }
+
+      .toolbar { display:none !important; }
+
+      .page {
+        width:210mm;
+        height:297mm;
+        min-height:297mm;
+        margin:0;
+        padding:7mm 8.5mm 4mm;
+        border-radius:0;
+        box-shadow:none;
+        overflow:hidden;
+        page-break-before:avoid;
+        page-break-after:avoid;
+        break-after:avoid-page;
+      }
+
+      .page-content,
+      .corner,
+      .leaf,
+      * {
+        print-color-adjust:exact;
+        -webkit-print-color-adjust:exact;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <button class="print-btn" id="downloadPdfBtn" onclick="downloadReportPdf()">تحميل PDF بجودة عالية</button>
+    <button class="image-btn" id="downloadImageBtn" onclick="downloadReportImage()">تحميل صورة بجودة عالية</button>
+    <button class="close-btn" onclick="goBackToReports()">العودة للتقارير</button>
+  </div>
+
+  <main class="page" id="reportPage">
+    <div class="corner top-left"></div>
+    <div class="corner top-right"></div>
+    <div class="corner bottom-left"></div>
+    <div class="corner bottom-right"></div>
+    <div class="leaf a">❧</div>
+    <div class="leaf b">❧</div>
+    <div class="leaf c">❧</div>
+
+    <div class="page-content" id="pageContent">
+      <header>
+        <img id="logo" class="logo" alt="ربيع القلوب">
+        <h1>التقرير الأسبوعي للطالب</h1>
+        <div class="week" id="weekTitle"></div>
+        <div class="dates" id="dateRange"></div>
+      </header>
+
+      <section class="info-grid two-cards">
+        <div class="info-card"><div class="label">اسم الطالب</div><div class="value" id="studentName"></div></div>
+        <div class="info-card"><div class="label">الحلقة</div><div class="value" id="teamName"></div></div>
+      </section>
+
+      <section class="summary">
+        <div class="grade-seal"><small>التقدير</small><strong id="grade"></strong></div>
+        <div class="score-box">
+          <div class="title">النتيجة الإجمالية</div>
+          <div class="score-main"><b id="points"></b> <span id="target"></span></div>
+          <div class="percent" id="overall"></div>
+        </div>
+        <div class="message" id="message"></div>
+      </section>
+
+      <div class="section-title">ملخص الأداء</div>
+      <section class="metrics" id="metrics"></section>
+
+      <div class="section-title">تفصيل الأداء الأسبوعي</div>
+      <section class="details">
+        <table>
+          <thead>
+            <tr>
+              <th>اليوم</th>
+              <th>الحضور</th>
+              <th>الحفظ</th>
+              <th>المراجعة</th>
+              <th>إحضار الحقيبة</th>
+              <th>الاستماع</th>
+              <th>النقاط</th>
+            </tr>
+          </thead>
+          <tbody id="days"></tbody>
+        </table>
+      </section>
+
+      <div class="section-title">الحفظ والمراجعة هذا الأسبوع</div>
+      <section class="assignment">
+        <div class="mini"><b>الحفظ</b><span id="hifzAssignment"></span></div>
+        <div class="mini"><b>المراجعة</b><span id="reviewAssignment"></span></div>
+      </section>
+
+      <section class="lower">
+        <div class="box good"><h3>نقاط التميز</h3><ul id="positives"></ul></div>
+        <div class="box need"><h3>ما يحتاج متابعة</h3><ul id="improvements"></ul></div>
+      </section>
+
+      <section class="note">
+        <h3>ملاحظة المعلم لولي الأمر</h3>
+        <div id="teacherNote"></div>
+        <div class="warning" id="warning"></div>
+      </section>
+
+      <div class="footer">ربيع القلوب — بناء جيل قرآني عامر بالإيمان</div>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+    const report = <?!= reportJson ?>;
+    const logoDataUrl = <?!= JSON.stringify(logoDataUrl) ?>;
+    const dashboardUrl = <?!= JSON.stringify(dashboardUrl || '') ?>;
+    const $ = id => document.getElementById(id);
+
+    $('logo').src = logoDataUrl;
+    $('weekTitle').textContent = report.weekTitle;
+    $('dateRange').textContent = report.dateRange;
+    $('studentName').textContent = report.studentName;
+    $('teamName').textContent = report.teamName;
+    $('grade').textContent = report.grade;
+    $('points').textContent = report.pointsTotal;
+    $('target').textContent = 'من ' + report.target;
+    $('overall').textContent = report.metrics.overall + '%';
+    $('message').textContent = report.metrics.overall >= 80
+      ? 'نعتز بجهودك الرائعة، استمر في التقدم والتميز.'
+      : 'بالمتابعة اليومية والتشجيع المستمر ستصل إلى نتائج أجمل بإذن الله.';
+
+    const metricDefs = [
+      ['الحضور', report.metrics.attendance],
+      ['الحفظ', report.metrics.hifz],
+      ['المراجعة', report.metrics.review],
+      ['إحضار الحقيبة', report.metrics.bag],
+      ['الاستماع', report.metrics.listening]
+    ];
+
+    function buildMetricRing(label, value) {
+      const safeValue = Math.max(0, Math.min(100, Number(value) || 0));
+      return `
+        <div class="metric">
+          <div class="m-label">${label}</div>
+          <div class="ring" style="--p:${safeValue}; --circumference:263.89;">
+            <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+              <circle class="ring-track" cx="50" cy="50" r="42"></circle>
+              <circle class="ring-progress" cx="50" cy="50" r="42"></circle>
+              <circle class="ring-hole" cx="50" cy="50" r="31"></circle>
+            </svg>
+            <strong>${safeValue}%</strong>
+          </div>
+        </div>`;
+    }
+
+    $('metrics').innerHTML = metricDefs.map(([label,val]) => buildMetricRing(label, val)).join('');
+
+    const cls = value => {
+      if (value === 'حاضر' || value === 'نعم') return 'present';
+      if (value === 'غائب' || value === 'لا') return 'absent';
+      return 'dash';
+    };
+
+    const scoreText = value => {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : 0;
+    };
+
+    // نحافظ على الدرجة الرقمية في Google Sheets، ونحوّلها إلى تقدير لفظي في تقرير ولي الأمر فقط.
+    // يدعم القيم الخام مثل 0 و30، وكذلك القيم المنسقة مثل 0/30 و30/30.
+    const evaluationText = value => {
+      const text = value === null || value === undefined ? '' : String(value).trim();
+
+      if (!text) return '—';
+      if (text === 'لم يسمع') return 'لم يسمع';
+
+      // نأخذ الرقم الموجود قبل الشرطة المائلة إن كانت القيمة مثل 0/30.
+      const scorePart = text.split('/')[0].trim();
+      const n = Number(scorePart);
+
+      if (Number.isFinite(n)) {
+        if (n === 0) return 'لم يسمع';
+        if (n === 30) return 'ممتاز';
+        if (n === 25) return 'جيد جدًا';
+        if (n === 20) return 'جيد';
+        return `${n}/30`;
+      }
+
+      return text;
+    };
+
+    $('days').innerHTML = report.days.map(day => `
+      <tr>
+        <td><b>${day.dayName}</b><br><small>${day.displayDate}</small></td>
+        <td class="${cls(day.hudur)}">${day.hudur || '—'}</td>
+        <td>${evaluationText(day.hifzScore)}</td>
+        <td>${evaluationText(day.muraScore)}</td>
+        <td class="${cls(day.haqiba)}">${day.haqiba || '—'}</td>
+        <td class="${cls(day.istima)}">${day.istima || '—'}</td>
+        <td class="points">${scoreText(day.total)}/100</td>
+      </tr>
+    `).join('');
+
+    $('hifzAssignment').textContent = report.assignment.hifz;
+    $('reviewAssignment').textContent = report.assignment.review;
+    $('positives').innerHTML = report.positives.map(item => `<li>${item}</li>`).join('');
+    $('improvements').innerHTML = report.improvements.map(item => `<li>${item}</li>`).join('');
+    $('teacherNote').textContent = report.teacherNote || '';
+    $('warning').textContent = report.hasAnyRecord ? '' : 'تنبيه: لم يتم العثور على تسجيلات لهذا الطالب في الأسبوع المختار.';
+
+    function resetPageFit() {
+      const content = $('pageContent');
+      content.style.width = '100%';
+      content.style.left = '50%';
+      content.style.marginLeft = '0';
+      content.style.marginRight = '0';
+      content.style.transform = 'translateX(-50%) scale(1)';
+    }
+
+    function fitReportToSinglePage() {
+      const page = $('reportPage');
+      const content = $('pageContent');
+      resetPageFit();
+
+      const pageStyles = getComputedStyle(page);
+      const availableWidth = page.clientWidth - (parseFloat(pageStyles.paddingLeft) + parseFloat(pageStyles.paddingRight));
+      const availableHeight = page.clientHeight - (parseFloat(pageStyles.paddingTop) + parseFloat(pageStyles.paddingBottom));
+
+      const requiredWidth = content.scrollWidth;
+      const requiredHeight = content.scrollHeight;
+
+      const widthFitScale = availableWidth / requiredWidth;
+      const heightFitScale = availableHeight / requiredHeight;
+
+      let scale;
+      if (requiredHeight > availableHeight || requiredWidth > availableWidth) {
+        scale = Math.max(0.72, Math.min(1, widthFitScale, heightFitScale));
+      } else {
+        const targetFillHeight = availableHeight * 0.965;
+        const upscaleByHeight = targetFillHeight / requiredHeight;
+        const maxSafeUpscaleByWidth = (availableWidth * 0.985) / requiredWidth;
+        scale = Math.min(1.06, upscaleByHeight, maxSafeUpscaleByWidth);
+        if (!isFinite(scale) || scale < 1) scale = 1;
+      }
+
+      content.style.transform = `translateX(-50%) scale(${scale})`;
+      return scale;
+    }
+
+    function sanitizeFileName(value) {
+      return String(value || '')
+        .replace(/[\\/:*?"<>|]/g, '-')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function setImportantStyle(element, property, value) {
+      element.style.setProperty(property, value, 'important');
+    }
+
+    async function waitForImages(root) {
+      const images = Array.from(root.querySelectorAll('img'));
+      await Promise.all(images.map(img => {
+        if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+        return new Promise(resolve => {
+          img.addEventListener('load', resolve, { once:true });
+          img.addEventListener('error', resolve, { once:true });
+        });
+      }));
+    }
+
+    function createPdfExportClone() {
+      const sourcePage = $('reportPage');
+      const host = document.createElement('div');
+      host.className = 'pdf-export-host';
+
+      const clone = sourcePage.cloneNode(true);
+      clone.removeAttribute('id');
+      setImportantStyle(clone, 'width', '210mm');
+      setImportantStyle(clone, 'height', '297mm');
+      setImportantStyle(clone, 'min-height', '297mm');
+      setImportantStyle(clone, 'margin', '0');
+      setImportantStyle(clone, 'padding', '7mm 8.5mm 4mm');
+      setImportantStyle(clone, 'border-radius', '0');
+      setImportantStyle(clone, 'box-shadow', 'none');
+      setImportantStyle(clone, 'overflow', 'hidden');
+      setImportantStyle(clone, 'background', '#fffdfa');
+
+      const content = clone.querySelector('.page-content');
+      setImportantStyle(content, 'width', '100%');
+      // لا نستخدم left:50% أثناء التصدير؛ لأنه يوسّع scrollWidth ويزيح صورة التقرير داخل PDF.
+      setImportantStyle(content, 'left', '0');
+      setImportantStyle(content, 'margin', '0');
+      setImportantStyle(content, 'transform-origin', 'top center');
+      setImportantStyle(content, 'transform', 'scale(1)');
+
+      host.appendChild(clone);
+      document.body.appendChild(host);
+
+      const cloneStyles = getComputedStyle(clone);
+      const availableWidth = clone.clientWidth - (
+        parseFloat(cloneStyles.paddingLeft) + parseFloat(cloneStyles.paddingRight)
+      );
+      const availableHeight = clone.clientHeight - (
+        parseFloat(cloneStyles.paddingTop) + parseFloat(cloneStyles.paddingBottom)
+      );
+      const requiredWidth = content.scrollWidth;
+      const requiredHeight = content.scrollHeight;
+      const widthScale = availableWidth / requiredWidth;
+      const heightScale = availableHeight / requiredHeight;
+      const scale = Math.max(0.70, Math.min(1, widthScale, heightScale));
+
+      // التحجيم حول منتصف العنصر يحافظ على تمركز التقرير من دون إزاحة أفقية.
+      setImportantStyle(content, 'transform', `scale(${scale})`);
+      return { host, clone };
+    }
+
+    async function saveGeneratedBlob(blob, fileName, mimeType, shareText) {
+      const file = new File([blob], fileName, { type: mimeType });
+      const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+      // على الآيفون نستخدم نافذة المشاركة لتسهيل الحفظ في الصور أو الملفات.
+      if (isIos && navigator.share && navigator.canShare) {
+        try {
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: fileName,
+              text: shareText
+            });
+            return;
+          }
+        } catch (shareError) {
+          if (shareError && shareError.name === 'AbortError') return;
+          console.warn('Native share failed:', shareError);
+        }
+      }
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      link.rel = 'noopener';
+      link.style.display = 'none';
+      document.body.appendChild(link);
+
+      try {
+        link.click();
+      } catch (clickError) {
+        window.location.href = url;
+      }
+
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 120000);
+    }
+
+    function canvasToBlob(canvas, type = 'image/png', quality) {
+      return new Promise((resolve, reject) => {
+        canvas.toBlob(blob => {
+          if (blob) resolve(blob);
+          else reject(new Error('تعذر إنشاء ملف الصورة'));
+        }, type, quality);
+      });
+    }
+
+    async function createHighQualityReportCanvas() {
+      if (!window.html2canvas) {
+        throw new Error('تعذر تحميل أداة إنشاء الصورة');
+      }
+
+      if (document.fonts && document.fonts.ready) {
+        await document.fonts.ready;
+      }
+
+      const prepared = createPdfExportClone();
+      try {
+        await waitForImages(prepared.clone);
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+        // نلتقط مقاس A4 الظاهر فقط حتى يبقى التقرير في المنتصف.
+        const exportWidth = prepared.clone.clientWidth;
+        const exportHeight = prepared.clone.clientHeight;
+
+        // scale 3 يعطي صورة تقارب 2380 × 3370 بكسل، مناسبة للإرسال والطباعة.
+        return await window.html2canvas(prepared.clone, {
+          scale: 3,
+          useCORS: true,
+          allowTaint: false,
+          backgroundColor: '#fffdfa',
+          logging: false,
+          imageTimeout: 20000,
+          removeContainer: true,
+          scrollX: 0,
+          scrollY: 0,
+          width: exportWidth,
+          height: exportHeight,
+          windowWidth: exportWidth,
+          windowHeight: exportHeight
+        });
+      } finally {
+        if (prepared.host && prepared.host.parentNode) {
+          prepared.host.parentNode.removeChild(prepared.host);
+        }
+      }
+    }
+
+    function goBackToReports() {
+      if (document.referrer && window.history.length > 1) {
+        window.history.back();
+        return;
+      }
+      if (dashboardUrl) window.location.href = dashboardUrl;
+    }
+
+    async function downloadReportPdf() {
+      const button = $('downloadPdfBtn');
+      const imageButton = $('downloadImageBtn');
+      const originalText = button.textContent;
+      button.disabled = true;
+      imageButton.disabled = true;
+      button.textContent = 'جاري تجهيز PDF...';
+
+      try {
+        if (!window.jspdf || !window.jspdf.jsPDF) {
+          throw new Error('تعذر تحميل أداة إنشاء PDF');
+        }
+
+        const canvas = await createHighQualityReportCanvas();
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4',
+          compress: true
+        });
+
+        // PNG يحافظ على وضوح الخطوط والجداول داخل ملف PDF.
+        const imageData = canvas.toDataURL('image/png');
+        pdf.addImage(imageData, 'PNG', 0, 0, 210, 297, undefined, 'SLOW');
+
+        const student = sanitizeFileName(report.studentName || 'الطالب');
+        const week = sanitizeFileName(report.weekTitle || 'التقرير الأسبوعي');
+        const fileName = `تقرير ${student} - ${week}.pdf`;
+        const blob = pdf.output('blob');
+        await saveGeneratedBlob(blob, fileName, 'application/pdf', 'تقرير الطالب بصيغة PDF');
+
+        button.textContent = 'تم تحميل PDF ✓';
+        window.setTimeout(() => { button.textContent = originalText; }, 1800);
+      } catch (error) {
+        console.error('PDF download failed:', error);
+        alert('تعذر تحميل ملف PDF. تأكد من اتصال الإنترنت ثم جرّب مرة أخرى.');
+        button.textContent = originalText;
+      } finally {
+        button.disabled = false;
+        imageButton.disabled = false;
+      }
+    }
+
+    async function downloadReportImage() {
+      const button = $('downloadImageBtn');
+      const pdfButton = $('downloadPdfBtn');
+      const originalText = button.textContent;
+      button.disabled = true;
+      pdfButton.disabled = true;
+      button.textContent = 'جاري تجهيز الصورة...';
+
+      try {
+        const canvas = await createHighQualityReportCanvas();
+        const blob = await canvasToBlob(canvas, 'image/png');
+
+        const student = sanitizeFileName(report.studentName || 'الطالب');
+        const week = sanitizeFileName(report.weekTitle || 'التقرير الأسبوعي');
+        const fileName = `تقرير ${student} - ${week}.png`;
+        await saveGeneratedBlob(blob, fileName, 'image/png', 'صورة تقرير الطالب بجودة عالية');
+
+        button.textContent = 'تم تحميل الصورة ✓';
+        window.setTimeout(() => { button.textContent = originalText; }, 1800);
+      } catch (error) {
+        console.error('Image download failed:', error);
+        alert('تعذر تحميل الصورة. تأكد من اتصال الإنترنت ثم جرّب مرة أخرى.');
+        button.textContent = originalText;
+      } finally {
+        button.disabled = false;
+        pdfButton.disabled = false;
+      }
+    }
+
+    window.addEventListener('load', () => {
+      requestAnimationFrame(() => requestAnimationFrame(fitReportToSinglePage));
+    });
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 900) fitReportToSinglePage();
+    });
+  </script>
+</body>
+</html>
