@@ -85,7 +85,8 @@ interface RegItemValue {
   value: boolean | null; // type=yesno: نعم/لا
   range: SurahRange;     // type=range: من/إلى
   absent: boolean;       // type=range: لم يسمع
-  score: number | null;  // type=range: النقاط المختارة لهذا الطالب
+  none?: boolean;        // الحفظ فقط: «لا يوجد» — يأخذ نفس نقاط المراجعة
+  score: number | null;  // type=range: النقاط المختارة لهذا الطالب (تكفي بدون اختيار السورة)
   selectedPoints: number | null; // type=points: اختيار واحد من الخيارات الرسمية
   manualPoints: number | null;   // type=rating: المعلم يكتب النقاط وقت التسجيل
 }
@@ -659,6 +660,7 @@ const emptyRegItemValue = (): RegItemValue => ({
   value: null,
   range: emptySurahRange(),
   absent: false,
+  none: false,
   score: null,
   selectedPoints: null,
   manualPoints: null,
@@ -669,6 +671,22 @@ function regItemRangeScore(item: RegItem, value?: RegItemValue): number {
   const chosen = value?.score;
   if (typeof chosen === "number" && Number.isFinite(chosen) && chosen >= 0) return chosen;
   return Math.max(0, safeNumber(item.points));
+}
+
+// هل يستحق بند «سورة من وإلى» نقاطاً؟ يكفي اكتمال السورة، أو اختيار النقاط مباشرة
+// بدون سورة، أو «لا يوجد» في الحفظ.
+function regItemRangeHasPoints(value: RegItemValue): boolean {
+  if (value.absent) return false;
+  return !!value.none || isSurahRangeComplete(value.range) || value.score !== null;
+}
+
+// «لا يوجد» في الحفظ: يأخذ الحفظ نفس نقاط المراجعة (لم يسمع في المراجعة = صفر).
+function withHifzMirror(items: RegItem[], values: Record<string, RegItemValue>): Record<string, RegItemValue> {
+  const hifz = values.hifz;
+  if (!hifz?.none) return values;
+  const murajaaItem = items.find((item) => item.id === "murajaa");
+  const murajaaPoints = murajaaItem ? regItemPoints(murajaaItem, values.murajaa) : 0;
+  return { ...values, hifz: { ...hifz, score: murajaaPoints } };
 }
 
 // نقاط البند حسب قيمته الحالية.
@@ -686,8 +704,7 @@ function regItemPoints(item: RegItem, value?: RegItemValue): number {
       : 0;
   }
   if (item.type === "yesno") return value.value === true ? item.points : 0;
-  if (item.type === "range")
-    return value.absent ? 0 : isSurahRangeComplete(value.range) ? regItemRangeScore(item, value) : 0;
+  if (item.type === "range") return regItemRangeHasPoints(value) ? regItemRangeScore(item, value) : 0;
   return 0;
 }
 
@@ -698,7 +715,13 @@ function regItemHasData(item: RegItem, value?: RegItemValue): boolean {
   if (item.type === "rating") return value.manualPoints !== null;
   if (item.type === "yesno") return value.value !== null;
   if (item.type === "range")
-    return value.absent || value.range.from.surahIndex !== null || value.range.to.surahIndex !== null;
+    return (
+      value.absent ||
+      !!value.none ||
+      value.score !== null ||
+      value.range.from.surahIndex !== null ||
+      value.range.to.surahIndex !== null
+    );
   return false;
 }
 
@@ -729,10 +752,11 @@ function regItemSummaryText(
       ? { label: item.label, value: `+${item.points}` }
       : { label: item.label, value: "0" };
   if (value!.absent) return { label: item.label, value: "لم يسمع" };
+  if (value!.none) return { label: item.label, value: `لا يوجد +${regItemRangeScore(item, value)}` };
   const label = surahRangeLabel(value!.range);
   return {
     label: item.label,
-    value: isSurahRangeComplete(value!.range) ? `+${regItemRangeScore(item, value)}` : label || "0",
+    value: regItemRangeHasPoints(value!) ? `+${regItemRangeScore(item, value)}` : label || "0",
   };
 }
 
@@ -1275,6 +1299,8 @@ export default function AdminPage() {
   const [quickMode, setQuickMode] = useState(false);
   const [rosterModalOpen, setRosterModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  // يزيد عند إغلاق نافذة التسجيلات حتى تُعاد قراءة «نجوم الأسبوع» بعد أي تعديل.
+  const [historyClosedCount, setHistoryClosedCount] = useState(0);
   const [quickPts, setQuickPts] = useState("");
   const [syncSheet, setSyncSheet] = useState(true);
   const [showReset, setShowReset] = useState(false);
@@ -1315,10 +1341,8 @@ export default function AdminPage() {
     classById.get(teamId)?.className || LEGACY_TEAM_NAMES[teamId] || fallback || teamId;
   const visibleClassTeams = classTeams;
   const accentColor = classTeams.find((t) => t.id === selectedTeam)?.color || "#6366f1";
-  // نسخة واحدة: نعرض أفضل ثلاثة فصول من الفصول الخمسة.
-  const ranked = [...classTeams]
-    .sort((a, b) => getTeamLocationPoints(b) - getTeamLocationPoints(a))
-    .slice(0, 3);
+  // نعرض كل الحلقات مرتبة حسب النقاط.
+  const ranked = [...classTeams].sort((a, b) => getTeamLocationPoints(b) - getTeamLocationPoints(a));
 
   // بنود «سورة من وإلى»: يمنع التسجيل إذا اختار طرفاً واحداً فقط.
   const incompleteRangeItems = regItems.filter(
@@ -1340,8 +1364,11 @@ export default function AdminPage() {
       tilawaFromAyah.trim() !== "" &&
       tilawaToAyah.trim() !== "");
 
+  // «لا يوجد» في الحفظ يأخذ نقاط المراجعة، فنحسب كل النقاط من هذه القيم.
+  const effectiveItemValues = withHifzMirror(regItems, itemValues);
+
   const dynamicPreview = regItems.reduce(
-    (sum, item) => sum + regItemPoints(item, itemValues[item.id]),
+    (sum, item) => sum + regItemPoints(item, effectiveItemValues[item.id]),
     0,
   );
   // الحضور تلقائي (+10) لأي تسجيل؛ وبعدها تُضاف نقاط البنود الثابتة.
@@ -1350,7 +1377,7 @@ export default function AdminPage() {
     ? specialTrackPoints +
       regItems
         .filter((item) => item.type !== "range")
-        .reduce((sum, item) => sum + regItemPoints(item, itemValues[item.id]), 0)
+        .reduce((sum, item) => sum + regItemPoints(item, effectiveItemValues[item.id]), 0)
     : dynamicPreview);
 
   const hasRegistrationData = usesFirstCircleSpecialTrack
@@ -1706,7 +1733,7 @@ export default function AdminPage() {
 
     // المسار القياسي: البنود الثابتة تُترجم إلى أعمدة البيانات الرسمية
     // (الحفظ / المراجعة / الاستماع / إحضار الحقيبة) حتى تظهر مباشرة في تقرير الحلقة.
-    const valueOf = (id: string) => itemValues[id] ?? emptyRegItemValue();
+    const valueOf = (id: string) => effectiveItemValues[id] ?? emptyRegItemValue();
     const hifzItem = regItems.find((item) => item.id === "hifz");
     const murajaaItem = regItems.find((item) => item.id === "murajaa");
     const hifzValue = valueOf("hifz");
@@ -1723,8 +1750,9 @@ export default function AdminPage() {
       date: getRiyadhDateISO(),
       // الحضور تلقائي: أي تسجيل من المعلم يعني الطالب حاضراً (+10).
       hudur: true,
-      hifzFrom: hifzFilled && !hifzValue.absent ? formatSurahPoint(hifzValue.range.from) : null,
-      hifzTo: hifzFilled && !hifzValue.absent ? formatSurahPoint(hifzValue.range.to) : null,
+      // «لا يوجد» تُكتب كما هي في التقرير، وتقارير أولياء الأمور تعرضها مرة واحدة.
+      hifzFrom: hifzValue.none ? "لا يوجد" : hifzFilled && !hifzValue.absent ? formatSurahPoint(hifzValue.range.from) : null,
+      hifzTo: hifzValue.none ? "لا يوجد" : hifzFilled && !hifzValue.absent ? formatSurahPoint(hifzValue.range.to) : null,
       hifzScore: hifzFilled
         ? (hifzValue.absent ? "لم يسمع" : regItemRangeScore(hifzItem as RegItem, hifzValue))
         : null,
@@ -1883,13 +1911,14 @@ export default function AdminPage() {
         parts.push(firstCircleTrack === "nurania" ? "نورانية" : "تلاوة");
       } else {
         regItems.forEach((item) => {
-          const v = itemValues[item.id];
+          const v = effectiveItemValues[item.id];
           if (!v) return;
           if (item.type === "points" && regItemHasData(item, v)) parts.push(`${item.label} +${regItemPoints(item, v)}`);
           else if (item.type === "rating" && v.manualPoints !== null) parts.push(`${item.label} +${regItemPoints(item, v)}`);
           else if (item.type === "yesno" && v.value === true) parts.push(`${item.label} ✔`);
           else if (item.type === "range" && v.absent) parts.push(`${item.label}: لم يسمع`);
-          else if (item.type === "range" && isSurahRangeComplete(v.range)) parts.push(`${item.label} +${regItemRangeScore(item, v)}`);
+          else if (item.type === "range" && v.none) parts.push(`${item.label}: لا يوجد +${regItemRangeScore(item, v)}`);
+          else if (item.type === "range" && regItemRangeHasPoints(v)) parts.push(`${item.label} +${regItemRangeScore(item, v)}`);
         });
       }
 
@@ -2961,6 +2990,12 @@ export default function AdminPage() {
         </div>
       </div>
 
+      <WeeklyStars
+        schoolClasses={schoolClasses}
+        refreshKey={sheetStats.saved + studentsReloadKey}
+        fullRefreshKey={historyClosedCount}
+      />
+
       {/* ── Undo Button ── */}
       {lastAction && (
         <button
@@ -3004,7 +3039,10 @@ export default function AdminPage() {
         />
         <RegistrationsManager
           open={historyModalOpen}
-          onClose={() => setHistoryModalOpen(false)}
+          onClose={() => {
+            setHistoryModalOpen(false);
+            setHistoryClosedCount((v) => v + 1);
+          }}
           schoolClasses={schoolClasses}
           showToast={showToast}
         />
@@ -3503,13 +3541,22 @@ export default function AdminPage() {
               const hasFrom = v.range.from.surahIndex !== null;
               const hasTo = v.range.to.surahIndex !== null;
               const rangeLabel = surahRangeLabel(v.range);
+              // «لم يسمع» و«لا يوجد» يعطّلان اختيار السورة والنقاط.
+              const locked = v.absent || !!v.none;
+              const effective = effectiveItemValues[item.id] ?? v;
+              // النقاط المظللة: المختارة، أو الافتراضية عند اكتمال السورة بدون اختيار.
+              const shownScore = v.score ?? (hasFrom && hasTo ? regItemRangeScore(item, v) : null);
+              const canBeNone = item.id === "hifz";
               return (
                 <div key={item.id} style={{ marginBottom: 16 }}>
                   <label style={S.label}>
                     📖 {item.label}
-                    <span style={S.hint}>(اختر النقاط عند إكمال من وإلى)</span>
+                    <span style={S.hint}>(السورة اختيارية)</span>
                     {v.absent && <span style={S.badge}>لم يسمع</span>}
-                    {!v.absent && hasFrom && hasTo && (
+                    {v.none && (
+                      <span style={S.badge}>لا يوجد = المراجعة +{regItemRangeScore(item, effective)}</span>
+                    )}
+                    {!locked && regItemRangeHasPoints(v) && (
                       <span style={S.badge}>+{regItemRangeScore(item, v)} ✔</span>
                     )}
                   </label>
@@ -3520,10 +3567,10 @@ export default function AdminPage() {
                       border: "1px solid rgba(255,255,255,0.08)",
                       borderRadius: 14,
                       padding: "10px 12px",
-                      opacity: v.absent ? 0.45 : 1,
+                      opacity: locked ? 0.45 : 1,
                     }}
                   >
-                    {rangeLabel && !v.absent && (
+                    {rangeLabel && !locked && (
                       <div
                         style={{
                           color: accentColor,
@@ -3539,13 +3586,13 @@ export default function AdminPage() {
                     <div style={{ display: "flex", gap: 8 }}>
                       <button
                         onClick={() => setPickerTarget({ itemId: item.id, side: "from" })}
-                        disabled={v.absent}
+                        disabled={locked}
                         className="smooth-btn"
                         style={{
                           flex: 1,
                           padding: "9px 8px",
                           borderRadius: 10,
-                          cursor: v.absent ? "not-allowed" : "pointer",
+                          cursor: locked ? "not-allowed" : "pointer",
                           fontFamily: "'Tajawal',sans-serif",
                           fontSize: 12,
                           fontWeight: 700,
@@ -3560,13 +3607,13 @@ export default function AdminPage() {
                       </button>
                       <button
                         onClick={() => setPickerTarget({ itemId: item.id, side: "to" })}
-                        disabled={v.absent}
+                        disabled={locked}
                         className="smooth-btn"
                         style={{
                           flex: 1,
                           padding: "9px 8px",
                           borderRadius: 10,
-                          cursor: v.absent ? "not-allowed" : "pointer",
+                          cursor: locked ? "not-allowed" : "pointer",
                           fontFamily: "'Tajawal',sans-serif",
                           fontSize: 12,
                           fontWeight: 700,
@@ -3579,7 +3626,7 @@ export default function AdminPage() {
                           ? `إلى: ${formatSurahPoint(v.range.to)}`
                           : "🏁 إلى (سورة + آية)"}
                       </button>
-                      {(hasFrom || hasTo || v.absent) && (
+                      {(hasFrom || hasTo || locked || v.score !== null) && (
                         <button
                           onClick={() => {
                             setItemValues((prev) => {
@@ -3595,7 +3642,7 @@ export default function AdminPage() {
                         </button>
                       )}
                     </div>
-                    {hasFrom && hasTo && !v.absent && (
+                    {!locked && (
                       <div style={{ display: "flex", gap: 6, marginTop: 8, alignItems: "center" }}>
                         <span
                           style={{
@@ -3608,7 +3655,7 @@ export default function AdminPage() {
                           النقاط:
                         </span>
                         {regItemRangePointsOptions(item.points).map((opt) => {
-                          const selected = regItemRangeScore(item, v) === opt;
+                          const selected = shownScore === opt;
                           return (
                             <button
                               key={opt}
@@ -3656,6 +3703,8 @@ export default function AdminPage() {
                           [item.id]: {
                             ...(prev[item.id] ?? emptyRegItemValue()),
                             absent: !v.absent,
+                            none: false,
+                            score: null,
                             range: emptySurahRange(),
                           },
                         }))
@@ -3663,6 +3712,26 @@ export default function AdminPage() {
                     >
                       ❌ لم يسمع
                     </OptionBtn>
+                    {canBeNone && (
+                      <OptionBtn
+                        active={!!v.none}
+                        accentColor={accentColor}
+                        onClick={() =>
+                          setItemValues((prev) => ({
+                            ...prev,
+                            [item.id]: {
+                              ...(prev[item.id] ?? emptyRegItemValue()),
+                              none: !v.none,
+                              absent: false,
+                              score: null,
+                              range: emptySurahRange(),
+                            },
+                          }))
+                        }
+                      >
+                        ➖ لا يوجد
+                      </OptionBtn>
+                    )}
                   </div>
                 </div>
               );
@@ -4099,7 +4168,7 @@ export default function AdminPage() {
                     ...regItems
                       .filter((item) => !usesFirstCircleSpecialTrack || item.type !== "range")
                       .map((item) => {
-                        const summary = regItemSummaryText(item, itemValues[item.id]);
+                        const summary = regItemSummaryText(item, effectiveItemValues[item.id]);
                         return summary ? [summary.label, summary.value] : null;
                       }),
                   ] as (false | [string, string] | null)[]
@@ -4838,6 +4907,221 @@ type HistoryPickerTarget = {
   field: "hifz" | "mura";
   side: "from" | "to";
 } | null;
+
+// ── نجوم الأسبوع ──────────────────────────────────────────────────────
+// أفضل طالبين في كل حلقة بمجموع نقاط الأسبوع الحالي (من الأحد)، ويُعرض كل من
+// تعادل مع صاحب المركز الثاني. القائمة تبدأ من الصفر تلقائياً مع كل أسبوع جديد.
+const WEEKLY_STARS_CACHE_KEY = "sailor-race:weekly-stars-v1";
+const WEEKLY_STARS_TOP = 2;
+
+interface WeeklyStar {
+  name: string;
+  total: number;
+  rank: number;
+}
+
+// تواريخ الأسبوع الدراسي الحالي من الأحد حتى اليوم (بنفس منطق «اليوم يبدأ 6 صباحاً»).
+function currentWeekDates(): string[] {
+  const today = getRiyadhDateISO();
+  const [y, m, d] = today.split("-").map(Number);
+  const base = new Date(Date.UTC(y, m - 1, d));
+  const dayOfWeek = base.getUTCDay(); // الأحد = 0
+  return Array.from({ length: dayOfWeek + 1 }, (_, i) => {
+    const day = new Date(base.getTime() - (dayOfWeek - i) * 86400000);
+    return day.toISOString().slice(0, 10);
+  });
+}
+
+function rankWeeklyStars(totals: Map<string, number>): WeeklyStar[] {
+  const sorted = [...totals.entries()]
+    .filter(([, total]) => total > 0)
+    .sort((a, b) => b[1] - a[1]);
+  if (sorted.length === 0) return [];
+  const cutoff = sorted[Math.min(WEEKLY_STARS_TOP, sorted.length) - 1][1];
+  let rank = 0;
+  let prev = Number.NaN;
+  return sorted
+    .filter(([, total]) => total >= cutoff)
+    .map(([name, total]) => {
+      if (total !== prev) rank += 1;
+      prev = total;
+      return { name, total, rank };
+    });
+}
+
+type WeeklyDayCache = Record<string, Record<string, Record<string, number>>>; // يوم ← حلقة ← طالب ← نقاط
+
+function readWeeklyCache(weekStart: string): WeeklyDayCache {
+  try {
+    const raw = JSON.parse(localStorage.getItem(WEEKLY_STARS_CACHE_KEY) || "null");
+    return raw && raw.weekStart === weekStart && raw.days ? raw.days : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeWeeklyCache(weekStart: string, days: WeeklyDayCache) {
+  try {
+    localStorage.setItem(WEEKLY_STARS_CACHE_KEY, JSON.stringify({ weekStart, days }));
+  } catch {
+    // التخزين المحلي اختياري
+  }
+}
+
+function WeeklyStars({
+  schoolClasses,
+  refreshKey,
+  fullRefreshKey,
+}: {
+  schoolClasses: SchoolClass[];
+  refreshKey: number; // تسجيل جديد: نحدّث اليوم الحالي فقط
+  fullRefreshKey: number; // تعديل تسجيلات أيام سابقة: نعيد قراءة الأسبوع كله
+}) {
+  const weekDates = currentWeekDates();
+  const weekStart = weekDates[0];
+  const [days, setDays] = useState<WeeklyDayCache>(() => readWeeklyCache(weekStart));
+  const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [forceAll, setForceAll] = useState(0);
+  const lastFullRef = useRef(`${forceAll}|${fullRefreshKey}`);
+
+  const classIds = schoolClasses.map((c) => c.classId).join(",");
+
+  useEffect(() => {
+    if (!classIds) return;
+    let active = true;
+    const today = weekDates[weekDates.length - 1];
+    const cached = readWeeklyCache(weekStart);
+    const fullKey = `${forceAll}|${fullRefreshKey}`;
+    const full = fullKey !== lastFullRef.current;
+    lastFullRef.current = fullKey;
+    // الأيام السابقة تُقرأ مرة واحدة ثم تُحفظ، واليوم الحالي يُحدَّث مع كل تسجيل جديد.
+    const jobs: Array<{ date: string; teamId: string }> = [];
+    weekDates.forEach((date) => {
+      schoolClasses.forEach(({ classId }) => {
+        if (full || date === today || !cached[date]?.[classId]) jobs.push({ date, teamId: classId });
+      });
+    });
+    setLoading(true);
+    setFailed(false);
+    const next: WeeklyDayCache = JSON.parse(JSON.stringify(cached));
+    let anyFailed = false;
+    const run = async () => {
+      // أربعة طلبات في نفس الوقت كحد أقصى حتى لا نُثقل Apps Script.
+      for (let i = 0; i < jobs.length; i += 4) {
+        await Promise.all(
+          jobs.slice(i, i + 4).map(async ({ date, teamId }) => {
+            try {
+              const result = await callAppsScriptJsonp(
+                APPS_SCRIPT_URL,
+                "getEntries",
+                { teamId, date },
+                SHEET_READ_TIMEOUT_MS,
+              );
+              if (result?.status === "error") throw new Error(result.message);
+              const perStudent: Record<string, number> = {};
+              (Array.isArray(result?.entries) ? result.entries : []).forEach((entry: HistoryEntry) => {
+                const name = String(entry.studentName || "").trim().replace(/\s+/g, " ");
+                if (name) perStudent[name] = (perStudent[name] || 0) + safeNumber(entry.total);
+              });
+              next[date] = { ...(next[date] || {}), [teamId]: perStudent };
+            } catch {
+              anyFailed = true;
+            }
+          }),
+        );
+      }
+      if (!active) return;
+      writeWeeklyCache(weekStart, next);
+      setDays(next);
+      setFailed(anyFailed);
+      setLoading(false);
+    };
+    run();
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classIds, weekStart, refreshKey, forceAll, fullRefreshKey]);
+
+  const starsByClass = schoolClasses.map((schoolClass) => {
+    const totals = new Map<string, number>();
+    weekDates.forEach((date) => {
+      const perStudent = days[date]?.[schoolClass.classId] || {};
+      Object.entries(perStudent).forEach(([name, pts]) => totals.set(name, (totals.get(name) || 0) + pts));
+    });
+    return { schoolClass, stars: rankWeeklyStars(totals) };
+  });
+
+  return (
+    <div style={{ ...S.card, padding: "14px 16px", marginBottom: 14 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+        <div style={{ ...S.sectionTitle, marginBottom: 0 }}>⭐ نجوم الأسبوع</div>
+        <button
+          onClick={() => setForceAll((v) => v + 1)}
+          disabled={loading}
+          className="smooth-btn"
+          style={{
+            background: "rgba(255,255,255,0.06)",
+            border: "1px solid rgba(255,255,255,0.12)",
+            borderRadius: 10,
+            color: "rgba(255,255,255,0.7)",
+            fontSize: 11,
+            fontWeight: 700,
+            padding: "4px 10px",
+            cursor: loading ? "default" : "pointer",
+          }}
+        >
+          {loading ? "⏳ تحديث..." : "🔄 تحديث"}
+        </button>
+      </div>
+      <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, marginBottom: 10 }}>
+        مجموع نقاط الأسبوع من الأحد · تبدأ من جديد كل أسبوع
+        {failed && <span style={{ color: "#fbbf24" }}> · تعذر تحميل بعض الأيام</span>}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {starsByClass.map(({ schoolClass, stars }) => {
+          const color = classColorBySlot(schoolClass.slot, schoolClass.version);
+          return (
+            <div
+              key={schoolClass.classId}
+              style={{
+                borderRadius: 12,
+                border: `1px solid ${color}40`,
+                background: `${color}12`,
+                padding: "8px 12px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: stars.length ? 6 : 0 }}>
+                <div style={{ width: 9, height: 9, borderRadius: "50%", background: color, boxShadow: `0 0 6px ${color}` }} />
+                <span style={{ color: "#fff", fontWeight: 800, fontSize: 13 }}>{schoolClass.className}</span>
+                {!stars.length && (
+                  <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 11, marginInlineStart: "auto" }}>
+                    {loading ? "..." : "لا توجد تسجيلات بعد"}
+                  </span>
+                )}
+              </div>
+              {stars.map((star) => (
+                <div
+                  key={star.name}
+                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "3px 0" }}
+                >
+                  <span style={{ color: "#fff", fontSize: 13, fontWeight: 700 }}>
+                    <span style={{ marginInlineEnd: 6 }}>{MEDALS[star.rank - 1] || "🏅"}</span>
+                    {star.name}
+                  </span>
+                  <span style={{ color: "#fde047", fontWeight: 800, fontSize: 12, fontFamily: "monospace" }}>
+                    {formatPoints(star.total)} نقطة
+                  </span>
+                </div>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 function RegistrationsManager({
   open,
