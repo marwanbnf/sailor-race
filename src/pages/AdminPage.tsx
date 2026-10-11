@@ -727,7 +727,7 @@ function regItemHasData(item: RegItem, value?: RegItemValue): boolean {
 
 // هل اختار المعلم طرفاً واحداً فقط (من بلا إلى أو العكس)؟ يمنع التسجيل حتى يكتمل.
 function regItemHasPartialRange(value?: RegItemValue): boolean {
-  if (!value || value.absent) return false;
+  if (!value || value.none) return false;
   const from = value.range.from.surahIndex !== null;
   const to = value.range.to.surahIndex !== null;
   return from !== to;
@@ -1751,13 +1751,14 @@ export default function AdminPage() {
       // الحضور تلقائي: أي تسجيل من المعلم يعني الطالب حاضراً (+10).
       hudur: true,
       // «لا يوجد» تُكتب كما هي في التقرير، وتقارير أولياء الأمور تعرضها مرة واحدة.
-      hifzFrom: hifzValue.none ? "لا يوجد" : hifzFilled && !hifzValue.absent ? formatSurahPoint(hifzValue.range.from) : null,
-      hifzTo: hifzValue.none ? "لا يوجد" : hifzFilled && !hifzValue.absent ? formatSurahPoint(hifzValue.range.to) : null,
+      hifzFrom: hifzValue.none ? "لا يوجد" : hifzFilled ? formatSurahPoint(hifzValue.range.from) : null,
+      hifzTo: hifzValue.none ? "لا يوجد" : hifzFilled ? formatSurahPoint(hifzValue.range.to) : null,
       hifzScore: hifzFilled
         ? (hifzValue.absent ? "لم يسمع" : regItemRangeScore(hifzItem as RegItem, hifzValue))
         : null,
-      muraFrom: murajaaFilled && !murajaaValue.absent ? formatSurahPoint(murajaaValue.range.from) : null,
-      muraTo: murajaaFilled && !murajaaValue.absent ? formatSurahPoint(murajaaValue.range.to) : null,
+      // «لم يسمع» تحفظ السورة المقررة إن اختارها المعلم، مع صفر نقاط.
+      muraFrom: murajaaFilled ? formatSurahPoint(murajaaValue.range.from) : null,
+      muraTo: murajaaFilled ? formatSurahPoint(murajaaValue.range.to) : null,
       muraScore: murajaaFilled
         ? (murajaaValue.absent ? "لم يسمع" : regItemRangeScore(murajaaItem as RegItem, murajaaValue))
         : null,
@@ -3541,8 +3542,10 @@ export default function AdminPage() {
               const hasFrom = v.range.from.surahIndex !== null;
               const hasTo = v.range.to.surahIndex !== null;
               const rangeLabel = surahRangeLabel(v.range);
-              // «لم يسمع» و«لا يوجد» يعطّلان اختيار السورة والنقاط.
+              // «لم يسمع» و«لا يوجد» يعطّلان النقاط، و«لا يوجد» فقط يعطّل السورة:
+              // مع «لم يسمع» تبقى السورة المقررة على الطالب محفوظة في التقرير.
               const locked = v.absent || !!v.none;
+              const rangeLocked = !!v.none;
               const effective = effectiveItemValues[item.id] ?? v;
               // النقاط المظللة: المختارة، أو الافتراضية عند اكتمال السورة بدون اختيار.
               const shownScore = v.score ?? (hasFrom && hasTo ? regItemRangeScore(item, v) : null);
@@ -3567,10 +3570,10 @@ export default function AdminPage() {
                       border: "1px solid rgba(255,255,255,0.08)",
                       borderRadius: 14,
                       padding: "10px 12px",
-                      opacity: locked ? 0.45 : 1,
+                      opacity: rangeLocked ? 0.45 : 1,
                     }}
                   >
-                    {rangeLabel && !locked && (
+                    {rangeLabel && !rangeLocked && (
                       <div
                         style={{
                           color: accentColor,
@@ -3586,13 +3589,13 @@ export default function AdminPage() {
                     <div style={{ display: "flex", gap: 8 }}>
                       <button
                         onClick={() => setPickerTarget({ itemId: item.id, side: "from" })}
-                        disabled={locked}
+                        disabled={rangeLocked}
                         className="smooth-btn"
                         style={{
                           flex: 1,
                           padding: "9px 8px",
                           borderRadius: 10,
-                          cursor: locked ? "not-allowed" : "pointer",
+                          cursor: rangeLocked ? "not-allowed" : "pointer",
                           fontFamily: "'Tajawal',sans-serif",
                           fontSize: 12,
                           fontWeight: 700,
@@ -3607,13 +3610,13 @@ export default function AdminPage() {
                       </button>
                       <button
                         onClick={() => setPickerTarget({ itemId: item.id, side: "to" })}
-                        disabled={locked}
+                        disabled={rangeLocked}
                         className="smooth-btn"
                         style={{
                           flex: 1,
                           padding: "9px 8px",
                           borderRadius: 10,
-                          cursor: locked ? "not-allowed" : "pointer",
+                          cursor: rangeLocked ? "not-allowed" : "pointer",
                           fontFamily: "'Tajawal',sans-serif",
                           fontSize: 12,
                           fontWeight: 700,
@@ -3705,7 +3708,6 @@ export default function AdminPage() {
                             absent: !v.absent,
                             none: false,
                             score: null,
-                            range: emptySurahRange(),
                           },
                         }))
                       }
@@ -4983,6 +4985,8 @@ function WeeklyStars({
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
   const [forceAll, setForceAll] = useState(0);
+  // مقفلة افتراضياً حتى لا تأخذ مساحة كبيرة من صفحة التسجيل.
+  const [expanded, setExpanded] = useState(false);
   const lastFullRef = useRef(`${forceAll}|${fullRefreshKey}`);
 
   const classIds = schoolClasses.map((c) => c.classId).join(",");
@@ -5052,11 +5056,45 @@ function WeeklyStars({
     });
     return { schoolClass, stars: rankWeeklyStars(totals) };
   });
+  const starCount = starsByClass.reduce((sum, { stars }) => sum + stars.length, 0);
 
   return (
     <div style={{ ...S.card, padding: "14px 16px", marginBottom: 14 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-        <div style={{ ...S.sectionTitle, marginBottom: 0 }}>⭐ نجوم الأسبوع</div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          style={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            background: "none",
+            border: "none",
+            padding: 0,
+            cursor: "pointer",
+            fontFamily: "'Tajawal',sans-serif",
+          }}
+        >
+          <span style={{ ...S.sectionTitle, marginBottom: 0 }}>
+            ⭐ نجوم الأسبوع
+            {starCount > 0 && <span style={{ color: "#fde047", marginInlineStart: 6 }}>({starCount})</span>}
+          </span>
+          <span
+            style={{
+              color: "#fff",
+              fontSize: 12,
+              fontWeight: 800,
+              background: "rgba(253,224,71,0.14)",
+              border: "1px solid rgba(253,224,71,0.35)",
+              borderRadius: 999,
+              padding: "3px 12px",
+            }}
+          >
+            {expanded ? "إخفاء ▴" : "عرض ▾"}
+          </span>
+        </button>
+        {expanded && (
         <button
           onClick={() => setForceAll((v) => v + 1)}
           disabled={loading}
@@ -5074,8 +5112,11 @@ function WeeklyStars({
         >
           {loading ? "⏳ تحديث..." : "🔄 تحديث"}
         </button>
+        )}
       </div>
-      <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, marginBottom: 10 }}>
+      {expanded && (
+      <>
+      <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, margin: "8px 0 10px" }}>
         مجموع نقاط الأسبوع من الأحد · تبدأ من جديد كل أسبوع
         {failed && <span style={{ color: "#fbbf24" }}> · تعذر تحميل بعض الأيام</span>}
       </div>
@@ -5119,6 +5160,8 @@ function WeeklyStars({
           );
         })}
       </div>
+      </>
+      )}
     </div>
   );
 }
