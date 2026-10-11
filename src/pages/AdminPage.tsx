@@ -85,7 +85,8 @@ interface RegItemValue {
   value: boolean | null; // type=yesno: نعم/لا
   range: SurahRange;     // type=range: من/إلى
   absent: boolean;       // type=range: لم يسمع
-  score: number | null;  // type=range: النقاط المختارة لهذا الطالب
+  none?: boolean;        // الحفظ فقط: «لا يوجد» — يأخذ نفس نقاط المراجعة
+  score: number | null;  // type=range: النقاط المختارة لهذا الطالب (تكفي بدون اختيار السورة)
   selectedPoints: number | null; // type=points: اختيار واحد من الخيارات الرسمية
   manualPoints: number | null;   // type=rating: المعلم يكتب النقاط وقت التسجيل
 }
@@ -659,6 +660,7 @@ const emptyRegItemValue = (): RegItemValue => ({
   value: null,
   range: emptySurahRange(),
   absent: false,
+  none: false,
   score: null,
   selectedPoints: null,
   manualPoints: null,
@@ -669,6 +671,22 @@ function regItemRangeScore(item: RegItem, value?: RegItemValue): number {
   const chosen = value?.score;
   if (typeof chosen === "number" && Number.isFinite(chosen) && chosen >= 0) return chosen;
   return Math.max(0, safeNumber(item.points));
+}
+
+// هل يستحق بند «سورة من وإلى» نقاطاً؟ يكفي اكتمال السورة، أو اختيار النقاط مباشرة
+// بدون سورة، أو «لا يوجد» في الحفظ.
+function regItemRangeHasPoints(value: RegItemValue): boolean {
+  if (value.absent) return false;
+  return !!value.none || isSurahRangeComplete(value.range) || value.score !== null;
+}
+
+// «لا يوجد» في الحفظ: يأخذ الحفظ نفس نقاط المراجعة (لم يسمع في المراجعة = صفر).
+function withHifzMirror(items: RegItem[], values: Record<string, RegItemValue>): Record<string, RegItemValue> {
+  const hifz = values.hifz;
+  if (!hifz?.none) return values;
+  const murajaaItem = items.find((item) => item.id === "murajaa");
+  const murajaaPoints = murajaaItem ? regItemPoints(murajaaItem, values.murajaa) : 0;
+  return { ...values, hifz: { ...hifz, score: murajaaPoints } };
 }
 
 // نقاط البند حسب قيمته الحالية.
@@ -686,8 +704,7 @@ function regItemPoints(item: RegItem, value?: RegItemValue): number {
       : 0;
   }
   if (item.type === "yesno") return value.value === true ? item.points : 0;
-  if (item.type === "range")
-    return value.absent ? 0 : isSurahRangeComplete(value.range) ? regItemRangeScore(item, value) : 0;
+  if (item.type === "range") return regItemRangeHasPoints(value) ? regItemRangeScore(item, value) : 0;
   return 0;
 }
 
@@ -698,7 +715,13 @@ function regItemHasData(item: RegItem, value?: RegItemValue): boolean {
   if (item.type === "rating") return value.manualPoints !== null;
   if (item.type === "yesno") return value.value !== null;
   if (item.type === "range")
-    return value.absent || value.range.from.surahIndex !== null || value.range.to.surahIndex !== null;
+    return (
+      value.absent ||
+      !!value.none ||
+      value.score !== null ||
+      value.range.from.surahIndex !== null ||
+      value.range.to.surahIndex !== null
+    );
   return false;
 }
 
@@ -729,10 +752,11 @@ function regItemSummaryText(
       ? { label: item.label, value: `+${item.points}` }
       : { label: item.label, value: "0" };
   if (value!.absent) return { label: item.label, value: "لم يسمع" };
+  if (value!.none) return { label: item.label, value: `لا يوجد +${regItemRangeScore(item, value)}` };
   const label = surahRangeLabel(value!.range);
   return {
     label: item.label,
-    value: isSurahRangeComplete(value!.range) ? `+${regItemRangeScore(item, value)}` : label || "0",
+    value: regItemRangeHasPoints(value!) ? `+${regItemRangeScore(item, value)}` : label || "0",
   };
 }
 
@@ -1340,8 +1364,11 @@ export default function AdminPage() {
       tilawaFromAyah.trim() !== "" &&
       tilawaToAyah.trim() !== "");
 
+  // «لا يوجد» في الحفظ يأخذ نقاط المراجعة، فنحسب كل النقاط من هذه القيم.
+  const effectiveItemValues = withHifzMirror(regItems, itemValues);
+
   const dynamicPreview = regItems.reduce(
-    (sum, item) => sum + regItemPoints(item, itemValues[item.id]),
+    (sum, item) => sum + regItemPoints(item, effectiveItemValues[item.id]),
     0,
   );
   // الحضور تلقائي (+10) لأي تسجيل؛ وبعدها تُضاف نقاط البنود الثابتة.
@@ -1350,7 +1377,7 @@ export default function AdminPage() {
     ? specialTrackPoints +
       regItems
         .filter((item) => item.type !== "range")
-        .reduce((sum, item) => sum + regItemPoints(item, itemValues[item.id]), 0)
+        .reduce((sum, item) => sum + regItemPoints(item, effectiveItemValues[item.id]), 0)
     : dynamicPreview);
 
   const hasRegistrationData = usesFirstCircleSpecialTrack
@@ -1706,7 +1733,7 @@ export default function AdminPage() {
 
     // المسار القياسي: البنود الثابتة تُترجم إلى أعمدة البيانات الرسمية
     // (الحفظ / المراجعة / الاستماع / إحضار الحقيبة) حتى تظهر مباشرة في تقرير الحلقة.
-    const valueOf = (id: string) => itemValues[id] ?? emptyRegItemValue();
+    const valueOf = (id: string) => effectiveItemValues[id] ?? emptyRegItemValue();
     const hifzItem = regItems.find((item) => item.id === "hifz");
     const murajaaItem = regItems.find((item) => item.id === "murajaa");
     const hifzValue = valueOf("hifz");
@@ -1723,8 +1750,9 @@ export default function AdminPage() {
       date: getRiyadhDateISO(),
       // الحضور تلقائي: أي تسجيل من المعلم يعني الطالب حاضراً (+10).
       hudur: true,
-      hifzFrom: hifzFilled && !hifzValue.absent ? formatSurahPoint(hifzValue.range.from) : null,
-      hifzTo: hifzFilled && !hifzValue.absent ? formatSurahPoint(hifzValue.range.to) : null,
+      // «لا يوجد» تُكتب كما هي في التقرير، وتقارير أولياء الأمور تعرضها مرة واحدة.
+      hifzFrom: hifzValue.none ? "لا يوجد" : hifzFilled && !hifzValue.absent ? formatSurahPoint(hifzValue.range.from) : null,
+      hifzTo: hifzValue.none ? "لا يوجد" : hifzFilled && !hifzValue.absent ? formatSurahPoint(hifzValue.range.to) : null,
       hifzScore: hifzFilled
         ? (hifzValue.absent ? "لم يسمع" : regItemRangeScore(hifzItem as RegItem, hifzValue))
         : null,
@@ -1883,13 +1911,14 @@ export default function AdminPage() {
         parts.push(firstCircleTrack === "nurania" ? "نورانية" : "تلاوة");
       } else {
         regItems.forEach((item) => {
-          const v = itemValues[item.id];
+          const v = effectiveItemValues[item.id];
           if (!v) return;
           if (item.type === "points" && regItemHasData(item, v)) parts.push(`${item.label} +${regItemPoints(item, v)}`);
           else if (item.type === "rating" && v.manualPoints !== null) parts.push(`${item.label} +${regItemPoints(item, v)}`);
           else if (item.type === "yesno" && v.value === true) parts.push(`${item.label} ✔`);
           else if (item.type === "range" && v.absent) parts.push(`${item.label}: لم يسمع`);
-          else if (item.type === "range" && isSurahRangeComplete(v.range)) parts.push(`${item.label} +${regItemRangeScore(item, v)}`);
+          else if (item.type === "range" && v.none) parts.push(`${item.label}: لا يوجد +${regItemRangeScore(item, v)}`);
+          else if (item.type === "range" && regItemRangeHasPoints(v)) parts.push(`${item.label} +${regItemRangeScore(item, v)}`);
         });
       }
 
@@ -3512,13 +3541,22 @@ export default function AdminPage() {
               const hasFrom = v.range.from.surahIndex !== null;
               const hasTo = v.range.to.surahIndex !== null;
               const rangeLabel = surahRangeLabel(v.range);
+              // «لم يسمع» و«لا يوجد» يعطّلان اختيار السورة والنقاط.
+              const locked = v.absent || !!v.none;
+              const effective = effectiveItemValues[item.id] ?? v;
+              // النقاط المظللة: المختارة، أو الافتراضية عند اكتمال السورة بدون اختيار.
+              const shownScore = v.score ?? (hasFrom && hasTo ? regItemRangeScore(item, v) : null);
+              const canBeNone = item.id === "hifz";
               return (
                 <div key={item.id} style={{ marginBottom: 16 }}>
                   <label style={S.label}>
                     📖 {item.label}
-                    <span style={S.hint}>(اختر النقاط عند إكمال من وإلى)</span>
+                    <span style={S.hint}>(السورة اختيارية)</span>
                     {v.absent && <span style={S.badge}>لم يسمع</span>}
-                    {!v.absent && hasFrom && hasTo && (
+                    {v.none && (
+                      <span style={S.badge}>لا يوجد = المراجعة +{regItemRangeScore(item, effective)}</span>
+                    )}
+                    {!locked && regItemRangeHasPoints(v) && (
                       <span style={S.badge}>+{regItemRangeScore(item, v)} ✔</span>
                     )}
                   </label>
@@ -3529,10 +3567,10 @@ export default function AdminPage() {
                       border: "1px solid rgba(255,255,255,0.08)",
                       borderRadius: 14,
                       padding: "10px 12px",
-                      opacity: v.absent ? 0.45 : 1,
+                      opacity: locked ? 0.45 : 1,
                     }}
                   >
-                    {rangeLabel && !v.absent && (
+                    {rangeLabel && !locked && (
                       <div
                         style={{
                           color: accentColor,
@@ -3548,13 +3586,13 @@ export default function AdminPage() {
                     <div style={{ display: "flex", gap: 8 }}>
                       <button
                         onClick={() => setPickerTarget({ itemId: item.id, side: "from" })}
-                        disabled={v.absent}
+                        disabled={locked}
                         className="smooth-btn"
                         style={{
                           flex: 1,
                           padding: "9px 8px",
                           borderRadius: 10,
-                          cursor: v.absent ? "not-allowed" : "pointer",
+                          cursor: locked ? "not-allowed" : "pointer",
                           fontFamily: "'Tajawal',sans-serif",
                           fontSize: 12,
                           fontWeight: 700,
@@ -3569,13 +3607,13 @@ export default function AdminPage() {
                       </button>
                       <button
                         onClick={() => setPickerTarget({ itemId: item.id, side: "to" })}
-                        disabled={v.absent}
+                        disabled={locked}
                         className="smooth-btn"
                         style={{
                           flex: 1,
                           padding: "9px 8px",
                           borderRadius: 10,
-                          cursor: v.absent ? "not-allowed" : "pointer",
+                          cursor: locked ? "not-allowed" : "pointer",
                           fontFamily: "'Tajawal',sans-serif",
                           fontSize: 12,
                           fontWeight: 700,
@@ -3588,7 +3626,7 @@ export default function AdminPage() {
                           ? `إلى: ${formatSurahPoint(v.range.to)}`
                           : "🏁 إلى (سورة + آية)"}
                       </button>
-                      {(hasFrom || hasTo || v.absent) && (
+                      {(hasFrom || hasTo || locked || v.score !== null) && (
                         <button
                           onClick={() => {
                             setItemValues((prev) => {
@@ -3604,7 +3642,7 @@ export default function AdminPage() {
                         </button>
                       )}
                     </div>
-                    {hasFrom && hasTo && !v.absent && (
+                    {!locked && (
                       <div style={{ display: "flex", gap: 6, marginTop: 8, alignItems: "center" }}>
                         <span
                           style={{
@@ -3617,7 +3655,7 @@ export default function AdminPage() {
                           النقاط:
                         </span>
                         {regItemRangePointsOptions(item.points).map((opt) => {
-                          const selected = regItemRangeScore(item, v) === opt;
+                          const selected = shownScore === opt;
                           return (
                             <button
                               key={opt}
@@ -3665,6 +3703,8 @@ export default function AdminPage() {
                           [item.id]: {
                             ...(prev[item.id] ?? emptyRegItemValue()),
                             absent: !v.absent,
+                            none: false,
+                            score: null,
                             range: emptySurahRange(),
                           },
                         }))
@@ -3672,6 +3712,26 @@ export default function AdminPage() {
                     >
                       ❌ لم يسمع
                     </OptionBtn>
+                    {canBeNone && (
+                      <OptionBtn
+                        active={!!v.none}
+                        accentColor={accentColor}
+                        onClick={() =>
+                          setItemValues((prev) => ({
+                            ...prev,
+                            [item.id]: {
+                              ...(prev[item.id] ?? emptyRegItemValue()),
+                              none: !v.none,
+                              absent: false,
+                              score: null,
+                              range: emptySurahRange(),
+                            },
+                          }))
+                        }
+                      >
+                        ➖ لا يوجد
+                      </OptionBtn>
+                    )}
                   </div>
                 </div>
               );
@@ -4108,7 +4168,7 @@ export default function AdminPage() {
                     ...regItems
                       .filter((item) => !usesFirstCircleSpecialTrack || item.type !== "range")
                       .map((item) => {
-                        const summary = regItemSummaryText(item, itemValues[item.id]);
+                        const summary = regItemSummaryText(item, effectiveItemValues[item.id]);
                         return summary ? [summary.label, summary.value] : null;
                       }),
                   ] as (false | [string, string] | null)[]
