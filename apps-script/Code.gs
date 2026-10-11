@@ -431,6 +431,14 @@ function getSchoolDayDateStr_() {
   return formatDate(getSchoolDayNow_());
 }
 
+function getEndedSchoolDay_() {
+  // آخر يوم دراسي «انتهى» فعلاً = اليوم الدراسي الحالي ناقص يوم.
+  // تريجر الغياب يعمل الساعة 6:00–6:15 صباحاً، ووقتها يكون اليوم الدراسي الحالي قد بدأ للتو،
+  // فالغياب يُكتب لليوم السابق. ولو شُغّل قبل 6 صباحاً أو في المساء، يُكتب ليوم أقدم انتهى
+  // تماماً، فلا يُسجَّل غياب أبداً ليوم ما زالت حلقته جارية.
+  return addDays(getSchoolDayNow_(), -1);
+}
+
 // يوحّد التاريخ المطلوب مع اليوم الدراسي (بدايته 6:00 صباحاً):
 // أي طلب بتاريخ "اليوم التقويمي" ونحن قبل 6 صباحاً → يُحوّل لليوم الدراسي السابق (أمس).
 // هذا يجعل التسجيل والعرض والحذف كلهم يتعاملون مع نفس اليوم حول منتصف الليل.
@@ -2773,8 +2781,7 @@ function markAbsences() {
   // اليوم الدراسي المنتهي هو «أمس» التقويمي (اليوم الدراسي = الساعة الحالية − 6 ساعات).
   // مثال: تريجر الساعة 6 صباحاً يوم الاثنين → يكتب غياب يوم الأحد لكل من لم يُسجل له،
   // وأي تسجيل بعد 6 صباحاً يبدأ يُحسب ليوم الاثنين.
-  const schoolDay = getSchoolDayNow_();
-  const today = schoolDay;
+  const today = getEndedSchoolDay_();
 
   // الأيام المعتمدة: الأحد إلى الأربعاء فقط.
   if (!isSessionDayInAppTimezone(today)) {
@@ -6900,7 +6907,7 @@ function debugLastAdminRecordToWeekly() {
 }
 
 function runAbsenceNowAndRefreshReports() {
-  // للتجربة الفورية: يسجل غياب اليوم الآن، ثم يحدث تقرير حلقة واحدة فقط لتجنب timeout.
+  // تشغيل يدوي: يسجل غياب آخر يوم دراسي انتهى (وليس اليوم الجاري)، ثم يحدث تقرير حلقة واحدة فقط لتجنب timeout.
   // ملاحظة: لن يكرر الغياب إذا الطالب لديه سجل اليوم.
   markAbsences();
   SpreadsheetApp.flush();
@@ -6908,6 +6915,46 @@ function runAbsenceNowAndRefreshReports() {
   createFastReportsTrigger();
   const result = refreshReportsIfDirty();
   return 'تم تسجيل الغياب، وبدأ تحديث التقارير بالخلفية. آخر نتيجة: ' + result;
+}
+
+function REMOVE_EARLY_AUTO_ABSENCES_NOW() {
+  // تنظيف لمرة واحدة: يحذف «الغياب التلقائي» المكتوب ليوم ما زال جارياً (اليوم الدراسي الحالي)
+  // بسبب الخطأ القديم في وقت التريجر. لا يحذف إلا صفوف الغياب التلقائي الخالية من أي نشاط،
+  // وأي طالب سجّله المعلم يبقى كما هو.
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const logSheet = getOrCreateLogSheet(ss);
+  const dateStr = normalizeDate(getSchoolDayDateStr_());
+  const lastRow = logSheet.getLastRow();
+  if (lastRow < 2) return 'لا توجد بيانات';
+
+  const values = logSheet.getRange(2, 1, lastRow - 1, HEADERS.length).getDisplayValues();
+  const rowsToDelete = [];
+  const teams = {};
+  values.forEach(function(row, index) {
+    if (dateValueToString(row[COL.DATE - 1]) !== dateStr) return;
+    if (String(row[COL.NOTE - 1] || '').trim() !== '🔴 غياب تلقائي') return;
+    if (String(row[COL.HUDUR - 1] || '').trim() !== 'غائب') return;
+    const hasActivity =
+      String(row[COL.HIFZ_SCORE - 1] || '').trim() ||
+      String(row[COL.MURA_SCORE - 1] || '').trim() ||
+      String(row[COL.HAQIBA - 1] || '').trim() === 'نعم' ||
+      String(row[COL.ISTIMA - 1] || '').trim() === 'نعم';
+    if (hasActivity) return;
+    rowsToDelete.push(index + 2);
+    const teamId = normalizeTeamId(row[COL.CLASS_ID - 1] || row[COL.TEAM - 1] || '');
+    if (teamId) teams[teamId] = true;
+  });
+
+  rowsToDelete.sort(function(a, b) { return b - a; }).forEach(function(rowNumber) {
+    logSheet.deleteRow(rowNumber);
+  });
+  SpreadsheetApp.flush();
+
+  Object.keys(teams).forEach(function(teamId) { markReportsDirty(dateStr, teamId); });
+  const msg = 'تم حذف ' + rowsToDelete.length + ' غياب تلقائي مبكر ليوم ' + dateStr +
+    '. شغّل rebuild...ReportNow للحلقات حتى تتحدث التقارير.';
+  Logger.log(msg);
+  return msg;
 }
 
 function createAllTriggers() {
@@ -7891,8 +7938,8 @@ function seedTodayEntryIndexV6_() {
 }
 
 function markAbsencesAndQueueStudentsV6_() {
-  // نفس اليوم الدراسي الذي يكتبه markAbsences (نهايته 6 صباحاً) حتى يُزامن الطابور يوم الغياب الصحيح.
-  const today = getSchoolDayNow_();
+  // نفس اليوم الدراسي الذي يكتبه markAbsences (اليوم المنتهي) حتى يُزامن الطابور يوم الغياب الصحيح.
+  const today = getEndedSchoolDay_();
   const dateStr = formatDate(today);
   const result = markAbsences();
   if (!isSessionDayInAppTimezone(today)) return result;
