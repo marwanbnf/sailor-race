@@ -5166,6 +5166,8 @@ function WeeklyStars({
   );
 }
 
+const normalizeStudentName = (name: unknown) => String(name || "").trim().replace(/\s+/g, " ");
+
 function RegistrationsManager({
   open,
   onClose,
@@ -5188,6 +5190,8 @@ function RegistrationsManager({
 
   // إضافة تسجيل ليوم محدد (حتى لو كان اليوم بعيداً بأسبوع أو أكثر).
   const [adding, setAdding] = useState(false);
+  // عرض «لم يتم التسجيل»: طلاب الحلقة الذين ليس لهم تسجيل من المعلم في اليوم المختار.
+  const [showMissing, setShowMissing] = useState(false);
   const [pickStudent, setPickStudent] = useState("");
   const [manualName, setManualName] = useState("");
   const [addValues, setAddValues] = useState<HistoryFormValues>(emptyHistoryForm());
@@ -5237,6 +5241,18 @@ function RegistrationsManager({
   const currentClass = schoolClasses.find((c) => c.classId === teamId) || null;
 
   const accentColor = currentClass ? classColorBySlot(currentClass.slot) : "#6366f1";
+
+  // صف «غائب» في الشيت يكتبه الغياب التلقائي فقط (الموقع يسجل الطالب حاضراً دائماً)،
+  // فنعدّ صاحبه «لم يتم تسجيله» حتى يسجّله المعلم إن حضر.
+  const autoAbsentNames = new Set(
+    entries.filter((e) => String(e.hudur || "").trim() === "غائب").map((e) => normalizeStudentName(e.studentName)),
+  );
+  const registeredNames = new Set(
+    entries.filter((e) => String(e.hudur || "").trim() !== "غائب").map((e) => normalizeStudentName(e.studentName)),
+  );
+  const missingStudents = (currentClass?.students || []).filter(
+    (name) => !registeredNames.has(normalizeStudentName(name)),
+  );
 
   // نقرأ التسجيلات الحقيقية من الشيت — نستعملها أيضاً للتحقق بعد أي مهلة/خطأ
   // في عملية كتابة قد تكون نجحت فعلاً، حتى لا نُظهر فشلاً كاذباً للمعلم.
@@ -5574,13 +5590,96 @@ function RegistrationsManager({
         <label style={S.label}>
           التسجيلات {currentClass ? `— ${currentClass.name}` : ""} {dateStr ? `(${dateStr})` : ""}
         </label>
+        {currentClass && !loading && !adding && (
+          <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+            {[
+              { missing: false, label: `📋 التسجيلات (${entries.length})` },
+              { missing: true, label: `⏳ لم يتم التسجيل (${missingStudents.length})` },
+            ].map((opt) => (
+              <button
+                key={opt.label}
+                onClick={() => setShowMissing(opt.missing)}
+                className="smooth-btn"
+                style={{
+                  flex: 1,
+                  padding: "9px 8px",
+                  borderRadius: 12,
+                  border: `1.5px solid ${showMissing === opt.missing ? accentColor : "rgba(255,255,255,0.12)"}`,
+                  background: showMissing === opt.missing ? `${accentColor}30` : "rgba(255,255,255,0.05)",
+                  color: showMissing === opt.missing ? "#fff" : "rgba(255,255,255,0.55)",
+                  fontSize: 12,
+                  fontWeight: 800,
+                  cursor: "pointer",
+                }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        )}
         <div>
           {loading && (
             <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, textAlign: "center", padding: 18 }}>
               ⏳ جارٍ التحميل...
             </div>
           )}
-          {!loading && entries.length === 0 && !adding && (
+          {!loading && showMissing && !adding && currentClass && (
+            <div>
+              {missingStudents.length === 0 && (
+                <div style={{ color: "#86efac", fontSize: 13, fontWeight: 800, textAlign: "center", padding: 16 }}>
+                  ✅ كل طلاب الحلقة مسجّلون في هذا اليوم
+                </div>
+              )}
+              {missingStudents.map((name) => (
+                <div
+                  key={name}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 8,
+                    padding: "9px 12px",
+                    borderRadius: 12,
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    background: "rgba(255,255,255,0.04)",
+                    marginBottom: 6,
+                  }}
+                >
+                  <span style={{ color: "#fff", fontWeight: 800, fontSize: 13 }}>
+                    {name}
+                    {autoAbsentNames.has(normalizeStudentName(name)) && (
+                      <span style={{ ...S.badge, marginInlineStart: 6 }}>غياب تلقائي</span>
+                    )}
+                  </span>
+                  <button
+                    onClick={() => {
+                      setShowMissing(false);
+                      setAdding(true);
+                      setPickStudent(name);
+                      setManualName("");
+                      setAddValues(emptyHistoryForm());
+                    }}
+                    className="smooth-btn"
+                    style={{
+                      padding: "6px 12px",
+                      borderRadius: 10,
+                      border: "none",
+                      background: "linear-gradient(180deg,#22c55e,#15803d)",
+                      color: "#fff",
+                      fontSize: 12,
+                      fontWeight: 900,
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    ➕ سجّل
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!loading && !showMissing && entries.length === 0 && !adding && (
             <div style={{ textAlign: "center", padding: "16px 12px" }}>
               <div style={{ color: "rgba(255,255,255,0.35)", fontSize: 12, marginBottom: 12 }}>
                 لا توجد تسجيلات بهذا اليوم لهذه الحلقة
@@ -5611,7 +5710,7 @@ function RegistrationsManager({
             </div>
           )}
 
-          {!loading && entries.length > 0 && !adding && currentClass && (
+          {!loading && !showMissing && entries.length > 0 && !adding && currentClass && (
             <button
               onClick={() => {
                 setAdding(true);
@@ -5771,6 +5870,7 @@ function RegistrationsManager({
           )}
 
           {!loading &&
+            !showMissing &&
             entries.map((entry) => (
               <div
                 key={entry.studentName}
