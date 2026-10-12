@@ -115,8 +115,31 @@ type FirstCircleTrack = "nurania" | "tilawa" | "hifz-review" | null;
 type FirstCircleScore = number | "absent" | null;
 
 // ── Constants ──────────────────────────────────────────────────────────
-// مسارات حلقة أولى مؤجلة حاليًا. غيّر القيمة إلى true مستقبلًا لإعادتها.
-const ENABLE_FIRST_CIRCLE_TRACKS = false;
+// مسارات حلقة أولى: المعلم يختار المسار وقت التسجيل (بدون عمود في الشيت).
+const ENABLE_FIRST_CIRCLE_TRACKS = true;
+
+// آخر مسار اختاره المعلم لكل طالب في حلقة أولى، محفوظ في هذا الجهاز فقط.
+const FIRST_CIRCLE_TRACKS_KEY = "sailor-race:first-circle-tracks-v1";
+
+function readRememberedTrack(studentName: string): Exclude<FirstCircleTrack, null> | null {
+  try {
+    const map = JSON.parse(localStorage.getItem(FIRST_CIRCLE_TRACKS_KEY) || "{}");
+    const value = map?.[studentName];
+    return value ? normalizeFirstCircleTrack(value) : null;
+  } catch {
+    return null;
+  }
+}
+
+function rememberTrack(studentName: string, track: Exclude<FirstCircleTrack, null>) {
+  try {
+    const map = JSON.parse(localStorage.getItem(FIRST_CIRCLE_TRACKS_KEY) || "{}") || {};
+    map[studentName] = track;
+    localStorage.setItem(FIRST_CIRCLE_TRACKS_KEY, JSON.stringify(map));
+  } catch {
+    // التخزين المحلي اختياري
+  }
+}
 
 const FIRST_CIRCLE_TRACKS: { id: Exclude<FirstCircleTrack, null>; label: string; icon: string }[] = [
   { id: "nurania", label: "القاعدة النورانية", icon: "🔤" },
@@ -1318,7 +1341,10 @@ export default function AdminPage() {
   const [itemsPassword, setItemsPassword] = useState("");
 
   // ── Derived values ───────────────────────────────────────────────────
-  const isFirstCircle = selectedTeam === "blue";
+  // حلقة أولى: المعرّف القديم blue أو الحلقة في الخانة الأولى من الشيت.
+  const isFirstCircleTeam = (teamId: string) =>
+    teamId === "blue" || schoolClasses.some((c) => c.classId === teamId && Number(c.slot) === 1);
+  const isFirstCircle = isFirstCircleTeam(selectedTeam);
   const usesFirstCircleSpecialTrack = ENABLE_FIRST_CIRCLE_TRACKS && isFirstCircle && (firstCircleTrack === "nurania" || firstCircleTrack === "tilawa");
   const specialTrackPoints = firstCircleTrackScore(firstCircleScoreValue);
 
@@ -1699,8 +1725,8 @@ export default function AdminPage() {
         muraFrom: null,
         muraTo: null,
         muraScore: null,
-        haqiba: null,
-        istima: null,
+        haqiba: effectiveItemValues.haqiba?.value === true ? "نعم" : "لا",
+        istima: effectiveItemValues.istima?.value === true ? "نعم" : "لا",
         totalPoints,
         notes: "مسار: القاعدة النورانية",
       };
@@ -1724,8 +1750,8 @@ export default function AdminPage() {
         muraFrom: null,
         muraTo: null,
         muraScore: null,
-        haqiba: null,
-        istima: null,
+        haqiba: effectiveItemValues.haqiba?.value === true ? "نعم" : "لا",
+        istima: effectiveItemValues.istima?.value === true ? "نعم" : "لا",
         totalPoints,
         notes: "مسار: التلاوة",
       };
@@ -3244,7 +3270,11 @@ export default function AdminPage() {
 
                       return studentsForTeam.map((student) => {
                         const isSelectedStudent = studentName === student.name;
-                        const trackMeta = team.id === "blue" ? getFirstCircleTrackMeta(student.track) : null;
+                        const firstCircleTeam = isFirstCircleTeam(team.id);
+                        const rememberedTrack = firstCircleTeam ? readRememberedTrack(student.name) : null;
+                        const trackMeta = rememberedTrack && rememberedTrack !== "hifz-review"
+                          ? getFirstCircleTrackMeta(rememberedTrack)
+                          : null;
 
                         return (
                           <button
@@ -3254,8 +3284,12 @@ export default function AdminPage() {
                               const nextSelected = isSelectedStudent ? "" : student.name;
                               setStudent(nextSelected);
 
-                              if (team.id === "blue") {
-                                setFirstCircleTrack(nextSelected ? (ENABLE_FIRST_CIRCLE_TRACKS ? normalizeFirstCircleTrack(student.track) : "hifz-review") : null);
+                              if (firstCircleTeam) {
+                                setFirstCircleTrack(
+                                  nextSelected
+                                    ? rememberedTrack || normalizeFirstCircleTrack(student.track)
+                                    : null,
+                                );
                                 setFirstCircleScoreValue(null);
                                 setNuraniaLesson(null);
                                 setLessonPickerOpen(false);
@@ -3376,9 +3410,43 @@ export default function AdminPage() {
         {/* ── Full Registration Mode ── */}
         {!quickMode && studentName && (
           <div>
+            {ENABLE_FIRST_CIRCLE_TRACKS && isFirstCircle && (
+              <div style={{ marginBottom: 16 }}>
+                <label style={S.label}>
+                  🧭 مسار الطالب
+                  <span style={S.hint}>(يتذكّره الجهاز للمرة القادمة)</span>
+                </label>
+                <div style={{ display: "flex", gap: 6 }}>
+                  {[FIRST_CIRCLE_TRACKS[2], FIRST_CIRCLE_TRACKS[0], FIRST_CIRCLE_TRACKS[1]].map((track) => (
+                    <OptionBtn
+                      key={track.id}
+                      active={firstCircleTrack === track.id}
+                      accentColor={accentColor}
+                      onClick={() => {
+                        if (firstCircleTrack === track.id) return;
+                        setFirstCircleTrack(track.id);
+                        rememberTrack(studentName, track.id);
+                        setFirstCircleScoreValue(null);
+                        setNuraniaLesson(null);
+                        setNuraniaFromText("");
+                        setNuraniaToText("");
+                        setTilawaSurah(null);
+                        setTilawaFromAyah("");
+                        setTilawaToAyah("");
+                      }}
+                    >
+                      {track.icon} {track.label}
+                    </OptionBtn>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* بنود التسجيل الديناميكية — تُعرض حسب النوع الذي حددته الإدارة */}
             {regItems.map((item) => {
               const v = itemValues[item.id] ?? emptyRegItemValue();
+              // في مسار النورانية أو التلاوة يُستبدل الحفظ والمراجعة بتقييم المسار.
+              if (usesFirstCircleSpecialTrack && item.type === "range") return null;
 
               // ── بند «إضافة نقاط»: المعلم يختار من الخيارات التي اعتمدتها الإدارة ──
               if (item.type === "points") {
@@ -3952,32 +4020,6 @@ export default function AdminPage() {
                 />
               );
             })()}
-
-            {ENABLE_FIRST_CIRCLE_TRACKS && isFirstCircle && studentName && firstCircleTrack && (
-              <div
-                style={{
-                  marginBottom: 16,
-                  padding: "13px 14px",
-                  borderRadius: 14,
-                  border: `1.5px solid ${accentColor}66`,
-                  background: `${accentColor}18`,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 12,
-                }}
-              >
-                <div>
-                  <div style={{ color: "rgba(255,255,255,0.48)", fontSize: 10, fontWeight: 700, marginBottom: 4 }}>
-                    مسار الطالب من شيت حلقة أولى
-                  </div>
-                  <div style={{ color: "#fff", fontSize: 14, fontWeight: 800 }}>
-                    {getFirstCircleTrackMeta(firstCircleTrack).icon} {getFirstCircleTrackMeta(firstCircleTrack).label}
-                  </div>
-                </div>
-                <span style={{ color: "#86efac", fontSize: 11, fontWeight: 800 }}>ثابت ✓</span>
-              </div>
-            )}
 
             {isFirstCircle && firstCircleTrack === "nurania" && (
               <div style={{ marginBottom: 16 }}>
