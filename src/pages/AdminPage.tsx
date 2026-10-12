@@ -826,12 +826,12 @@ const OptionBtn: React.FC<{
         fontFamily: "'Tajawal',sans-serif",
         background: active
           ? `linear-gradient(180deg, ${activeColor}, ${activeColor}cc)`
-          : "rgba(255,255,255,0.06)",
-        color: active ? "#fff" : "rgba(255,255,255,0.5)",
+          : "rgb(var(--fg) / 0.06)",
+        color: active ? "#fff" : "rgb(var(--fg) / 0.5)",
         boxShadow: active
           ? `0 4px 16px ${activeBorder}55, inset 0 1px 0 rgba(255,255,255,0.25)`
           : "inset 0 1px 0 rgba(255,255,255,0.04)",
-        border: `1.5px solid ${active ? activeBorder : "rgba(255,255,255,0.1)"}`,
+        border: `1.5px solid ${active ? activeBorder : "rgb(var(--fg) / 0.1)"}`,
       }}
     >
       {children}
@@ -949,22 +949,22 @@ function SurahPickerModal({
       display: "flex", alignItems: "flex-end", justifyContent: "center",
     }}>
       <div style={{
-        background: "#1e293b",
-        border: "1.5px solid rgba(255,255,255,0.12)",
+        background: "var(--sheet-2)",
+        border: "1.5px solid rgb(var(--fg) / 0.12)",
         borderRadius: "24px 24px 0 0",
         width: "100%", maxWidth: 430,
         maxHeight: "85vh", display: "flex", flexDirection: "column",
         padding: "20px 16px calc(30px + env(safe-area-inset-bottom, 0px))",
         fontFamily: "'Tajawal',sans-serif",
       }}>
-        <div style={{ color: "#fff", fontWeight: 800, fontSize: 15, marginBottom: 12, textAlign: "center" }}>
+        <div style={{ color: "var(--text)", fontWeight: 800, fontSize: 15, marginBottom: 12, textAlign: "center" }}>
           {title}
         </div>
 
         {/* رقم الآية (يظهر بعد اختيار السورة) */}
         {surah && (
           <div style={{ marginBottom: 16 }}>
-            <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 13, fontWeight: 700, marginBottom: 10, textAlign: "center" }}>
+            <div style={{ color: "rgb(var(--fg) / 0.55)", fontSize: 13, fontWeight: 700, marginBottom: 10, textAlign: "center" }}>
               سورة {surah.name} — أدخل رقم الآية (1 – {surah.ayahs})
             </div>
             <input
@@ -988,7 +988,7 @@ function SurahPickerModal({
                 setSearch("");
                 onClearPoint();
               }}
-              style={{ width: "100%", padding: "11px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)", fontFamily: "'Tajawal',sans-serif", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+              style={{ width: "100%", padding: "11px", borderRadius: 12, border: "1px solid rgb(var(--fg) / 0.15)", background: "rgb(var(--fg) / 0.06)", color: "rgb(var(--fg) / 0.5)", fontFamily: "'Tajawal',sans-serif", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
             >
               ↩️ تغيير السورة
             </button>
@@ -1010,15 +1010,15 @@ function SurahPickerModal({
               {PICKER_SURAHS.map((s) =>
                 s.name.includes(search) ? (
                   <button key={s.index} onClick={() => { setSearch(""); onSelectSurah(s.index); }} style={{
-                    background: "rgba(255,255,255,0.06)",
-                    border: "1.5px solid rgba(255,255,255,0.1)",
+                    background: "rgb(var(--fg) / 0.06)",
+                    border: "1.5px solid rgb(var(--fg) / 0.1)",
                     borderRadius: 10, padding: "10px 14px",
-                    color: "#fff", fontFamily: "'Tajawal',sans-serif",
+                    color: "var(--text)", fontFamily: "'Tajawal',sans-serif",
                     fontSize: 14, fontWeight: 700, cursor: "pointer",
                     display: "flex", justifyContent: "space-between",
                   }}>
                     <span>{s.index + 1}. {s.name}</span>
-                    <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 12 }}>{s.ayahs} آية</span>
+                    <span style={{ color: "rgb(var(--fg) / 0.35)", fontSize: 12 }}>{s.ayahs} آية</span>
                   </button>
                 ) : null
               )}
@@ -1030,7 +1030,7 @@ function SurahPickerModal({
         <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
           <button onClick={onClose}
             style={{ flex: 1, padding: "15px", borderRadius: 14, border: "none",
-              background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)",
+              background: "rgb(var(--fg) / 0.08)", color: "rgb(var(--fg) / 0.6)",
               fontFamily: "'Tajawal',sans-serif", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
             إلغاء
           </button>
@@ -1156,8 +1156,8 @@ function SurahRangeField({
       <div
         style={{
           marginBottom: 8,
-          background: "rgba(255,255,255,0.03)",
-          border: "1px solid rgba(255,255,255,0.08)",
+          background: "rgb(var(--fg) / 0.03)",
+          border: "1px solid rgb(var(--fg) / 0.08)",
           borderRadius: 14,
           padding: "10px 12px",
           opacity: value.absent ? 0.45 : 1,
@@ -1181,9 +1181,9 @@ function SurahRangeField({
               fontFamily: "'Tajawal',sans-serif",
               fontSize: 12,
               fontWeight: 700,
-              background: hasFrom ? `${accentColor}25` : "rgba(255,255,255,0.06)",
-              border: `1.5px solid ${hasFrom ? accentColor : "rgba(255,255,255,0.12)"}`,
-              color: hasFrom ? "#fff" : "rgba(255,255,255,0.4)",
+              background: hasFrom ? `${accentColor}25` : "rgb(var(--fg) / 0.06)",
+              border: `1.5px solid ${hasFrom ? accentColor : "rgb(var(--fg) / 0.12)"}`,
+              color: hasFrom ? "var(--text)" : "rgb(var(--fg) / 0.4)",
             }}
           >
             {hasFrom ? `من: ${formatSurahPoint(value.range.from)}` : "📍 من (سورة + آية)"}
@@ -1200,9 +1200,9 @@ function SurahRangeField({
               fontFamily: "'Tajawal',sans-serif",
               fontSize: 12,
               fontWeight: 700,
-              background: hasTo ? `${accentColor}25` : "rgba(255,255,255,0.06)",
-              border: `1.5px solid ${hasTo ? accentColor : "rgba(255,255,255,0.12)"}`,
-              color: hasTo ? "#fff" : "rgba(255,255,255,0.4)",
+              background: hasTo ? `${accentColor}25` : "rgb(var(--fg) / 0.06)",
+              border: `1.5px solid ${hasTo ? accentColor : "rgb(var(--fg) / 0.12)"}`,
+              color: hasTo ? "var(--text)" : "rgb(var(--fg) / 0.4)",
             }}
           >
             {hasTo ? `إلى: ${formatSurahPoint(value.range.to)}` : "🏁 إلى (سورة + آية)"}
@@ -1218,13 +1218,13 @@ function SurahRangeField({
           )}
         </div>
         {legacyMismatch && (
-          <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10.5, marginTop: 8, textAlign: "center" }}>
+          <div style={{ color: "rgb(var(--fg) / 0.4)", fontSize: 10.5, marginTop: 8, textAlign: "center" }}>
             المحفوظ حالياً في الشيت: {value.legacyFrom || "—"} → {value.legacyTo || "—"}
           </div>
         )}
         {hasFrom && hasTo && !value.absent && (
           <div style={{ display: "flex", gap: 6, marginTop: 8, alignItems: "center" }}>
-            <span style={{ color: "rgba(255,255,255,0.45)", fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" }}>
+            <span style={{ color: "rgb(var(--fg) / 0.45)", fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" }}>
               النقاط:
             </span>
             {regItemRangePointsOptions(points).map((opt) => {
@@ -1245,9 +1245,9 @@ function SurahRangeField({
                     fontWeight: 900,
                     background: selected
                       ? "linear-gradient(180deg,#fbbf24,#d97706)"
-                      : "rgba(255,255,255,0.07)",
-                    color: selected ? "#fff" : "rgba(255,255,255,0.55)",
-                    border: `1.5px solid ${selected ? "#fbbf24" : "rgba(255,255,255,0.14)"}`,
+                      : "rgb(var(--fg) / 0.07)",
+                    color: selected ? "#fff" : "rgb(var(--fg) / 0.55)",
+                    border: `1.5px solid ${selected ? "#fbbf24" : "rgb(var(--fg) / 0.14)"}`,
                     boxShadow: selected ? "0 4px 14px rgba(245,158,11,0.4)" : "none",
                   }}
                 >
@@ -1320,6 +1320,12 @@ export default function AdminPage() {
   // عدّاد جلسة التسجيل: عدد المحفوظ في الشيت وعدد ما زال قيد الحفظ بالخلفية.
   const [sheetStats, setSheetStats] = useState<{ saved: number; pending: number }>({ saved: 0, pending: 0 });
   const [quickMode, setQuickMode] = useState(false);
+  // التصميم الجديد: تبويب التسجيل/اللوحة، قائمة الإعدادات، الثيم، البحث، ومن سُجّل اليوم.
+  const [tab, setTab] = useState<"register" | "board">("register");
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [theme, setTheme] = useState<"dark" | "light">(() => readStoredTheme());
+  const [studentSearch, setStudentSearch] = useState("");
+  const [doneTodayNames, setDoneTodayNames] = useState<Set<string>>(() => new Set());
   const [rosterModalOpen, setRosterModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   // يزيد عند إغلاق نافذة التسجيلات حتى تُعاد قراءة «نجوم الأسبوع» بعد أي تعديل.
@@ -1548,6 +1554,32 @@ export default function AdminPage() {
     const t = setTimeout(() => setToast(null), 2800);
     return () => clearTimeout(t);
   }, [toast]);
+
+  useEffect(() => {
+    applyTheme(theme);
+  }, [theme]);
+
+  // من سُجّل اليوم في الحلقة المختارة (الغياب التلقائي لا يُعد تسجيلاً).
+  useEffect(() => {
+    if (!selectedTeam || !APPS_SCRIPT_URL.includes("script.google.com")) return;
+    let active = true;
+    callAppsScriptJsonp(APPS_SCRIPT_URL, "getEntries", { teamId: selectedTeam, date: getRiyadhDateISO() }, SHEET_READ_TIMEOUT_MS)
+      .then((result: { status?: string; entries?: HistoryEntry[] }) => {
+        if (!active || result?.status === "error") return;
+        const entries: HistoryEntry[] = Array.isArray(result?.entries) ? result.entries : [];
+        setDoneTodayNames(
+          new Set(
+            entries
+              .filter((e) => String(e.hudur || "").trim() !== "غائب")
+              .map((e) => normalizeStudentName(e.studentName)),
+          ),
+        );
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [selectedTeam, sheetStats.saved]);
 
   // Reset student name and the special First Circle path when team changes.
   useEffect(() => {
@@ -2179,28 +2211,56 @@ export default function AdminPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800;900&display=swap');
         html, body, #root { overflow-y: auto; }
-        input::placeholder { color: rgba(255,255,255,0.25); }
+        :root, :root[data-theme="dark"] {
+          color-scheme: dark;
+          --fg: 255 255 255;
+          --text: #eef3fb;
+          --page-bg: #0b1220;
+          --surface: #121b2d;
+          --surface-2: #18233a;
+          --sheet: #111a2c;
+          --sheet-2: #162033;
+          --nav-bg: #0e1626;
+          --input-bg: #0f1829;
+          --primary: #14b8a6;
+          --gold: #fcd34d;
+          --ok: #4ade80;
+          --danger-text: #fca5a5;
+          --accent-text: #a5b4fc;
+          --info-text: #7dd3fc;
+        }
+        :root[data-theme="light"] {
+          color-scheme: light;
+          --fg: 15 23 42;
+          --text: #0f172a;
+          --page-bg: #f1f4f9;
+          --surface: #ffffff;
+          --surface-2: #f6f8fc;
+          --sheet: #ffffff;
+          --sheet-2: #ffffff;
+          --nav-bg: #ffffff;
+          --input-bg: #ffffff;
+          --primary: #0d9488;
+          --gold: #b45309;
+          --ok: #15803d;
+          --danger-text: #b91c1c;
+          --accent-text: #4338ca;
+          --info-text: #0369a1;
+        }
+        body { background: var(--page-bg); }
+        input::placeholder { color: rgb(var(--fg) / 0.35); }
         @keyframes slideDown {
           from { opacity:0; transform:translateX(-50%) translateY(-14px); }
           to   { opacity:1; transform:translateX(-50%) translateY(0); }
         }
-        /* زر كرتوني: حدود سميكة + ظل صلب سفلي (تأثير 3D) + ضغطة نازلة واضحة */
+        /* أزرار مسطحة هادئة: الزر الأهم فقط يأخذ لوناً قوياً */
         .smooth-btn {
-          transition: transform 0.14s ease, box-shadow 0.14s ease, filter 0.16s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease !important;
-          will-change: transform;
-          border: 3px solid rgba(0,0,0,0.30) !important;
-          box-shadow: 0 5px 0 rgba(0,0,0,0.38), inset 0 2px 0 rgba(255,255,255,0.35), inset 0 -3px 0 rgba(0,0,0,0.15) !important;
+          transition: transform 0.12s ease, filter 0.16s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease !important;
+          box-shadow: none !important;
         }
-        .smooth-btn:hover:not(:disabled) {
-          transform: translateY(-2px) !important;
-          filter: brightness(1.08);
-          box-shadow: 0 7px 0 rgba(0,0,0,0.38), inset 0 2px 0 rgba(255,255,255,0.40), inset 0 -3px 0 rgba(0,0,0,0.15) !important;
-        }
-        .smooth-btn:active:not(:disabled) {
-          transform: translateY(4px) !important;
-          filter: brightness(0.96);
-          box-shadow: 0 1px 0 rgba(0,0,0,0.38), inset 0 2px 0 rgba(255,255,255,0.28), inset 0 -2px 0 rgba(0,0,0,0.15) !important;
-        }
+        .smooth-btn:hover:not(:disabled) { filter: brightness(1.06); }
+        .smooth-btn:active:not(:disabled) { transform: scale(0.97); }
+        button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
         /* لمعان يمر على الزر الرئيسي */
         .btn-shine {
           position: relative;
@@ -2213,7 +2273,7 @@ export default function AdminPage() {
           left: -60%;
           width: 40%;
           height: 100%;
-          background: linear-gradient(105deg, transparent, rgba(255,255,255,0.35), transparent);
+          background: linear-gradient(105deg, transparent, rgb(var(--fg) / 0.35), transparent);
           transform: skewX(-20deg);
           animation: btn-shine 3.4s ease-in-out infinite;
           pointer-events: none;
@@ -2252,179 +2312,172 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* ── Header ── */}
-      <div
-        style={{
-          ...S.header,
-          justifyContent: "space-between",
-          gap: 6,
-        }}
-      >
+      {/* ── الرأس ── */}
+      <div style={S.topBar}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+          <img
+            src={`${import.meta.env.BASE_URL}mawadda-mark.png`}
+            alt="مجمع المودة القرآني"
+            style={{ width: 44, height: 44, objectFit: "contain", flex: "none" }}
+          />
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 19, fontWeight: 900, lineHeight: 1.2 }}>ربيع القلوب</div>
+            <div style={{ fontSize: 12, color: "rgb(var(--fg) / 0.55)", fontWeight: 600 }}>
+              {tab === "board" ? "اللوحة" : "تسجيل اليوم"} · {todayLabel()}
+            </div>
+          </div>
+        </div>
+        <button
+          onClick={() => setSettingsOpen(true)}
+          aria-label="الإعدادات"
+          style={S.iconBtn}
+        >
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
+          </svg>
+        </button>
+      </div>
+
+      {/* ── حالة المزامنة ── */}
+      <div style={{ width: "100%", maxWidth: 430, marginBottom: 14 }}>
         <span
           style={{
-            display: "flex",
+            display: "inline-flex",
             alignItems: "center",
-            gap: 6,
-            fontWeight: 800,
-            whiteSpace: "nowrap",
-            flexShrink: 0,
+            gap: 7,
+            fontSize: 12,
+            fontWeight: 700,
+            padding: "5px 12px",
+            borderRadius: 999,
+            color: syncSheet ? "var(--ok)" : "rgb(var(--fg) / 0.55)",
+            background: syncSheet ? "rgba(34,197,94,0.1)" : "rgb(var(--fg) / 0.06)",
+            border: `1px solid ${syncSheet ? "rgba(34,197,94,0.3)" : "rgb(var(--fg) / 0.12)"}`,
           }}
         >
-          <span style={{ fontSize: 22 }}>⚓</span>
-          <span>ربيع القلوب</span>
+          <span style={{ width: 7, height: 7, borderRadius: "50%", background: syncSheet ? "#22c55e" : "#94a3b8" }} />
+          {syncSheet ? `متصل بالشيت · ${sheetStats.saved} محفوظ` : "المزامنة مع الشيت متوقفة"}
+          {sheetStats.pending > 0 && (
+            <span style={{ color: "var(--gold)" }}>· {sheetStats.pending} قيد الحفظ</span>
+          )}
         </span>
+      </div>
 
+      {/* ── قائمة الإعدادات ── */}
+      {settingsOpen && createPortal(
         <div
-          style={{
-            flex: 1,
-            minWidth: 0,
-            display: "grid",
-            gridTemplateColumns: "repeat(4,minmax(0,1fr))",
-            gap: 5,
-            alignItems: "center",
-          }}
+          onClick={() => setSettingsOpen(false)}
+          style={{ position: "fixed", inset: 0, zIndex: 3000, background: "rgba(3,7,15,0.6)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}
         >
-          <button
-            onClick={() => setSyncSheet((p) => !p)}
-            className="smooth-btn"
+          <div
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-label="الإعدادات"
             style={{
-              minWidth: 0,
-              minHeight: 48,
-              background: syncSheet
-                ? "linear-gradient(180deg,#22c55e,#15803d)"
-                : "rgba(255,255,255,0.09)",
-              border: `1px solid ${syncSheet ? "rgba(74,222,128,0.55)" : "rgba(255,255,255,0.12)"}`,
-              borderRadius: 999,
-              padding: "5px 3px",
-              cursor: "pointer",
-              color: syncSheet ? "#fff" : "rgba(255,255,255,0.45)",
-              fontSize: "clamp(8px,2.6vw,10.5px)",
-              lineHeight: 1.15,
-              fontWeight: 800,
+              width: "100%",
+              maxWidth: 480,
+              maxHeight: "88vh",
+              overflowY: "auto",
+              background: "var(--sheet)",
+              color: "var(--text)",
+              borderRadius: "24px 24px 0 0",
+              padding: "12px 18px calc(24px + env(safe-area-inset-bottom, 0px))",
               fontFamily: "'Tajawal',sans-serif",
-              whiteSpace: "normal",
-              boxShadow: syncSheet
-                ? "0 3px 12px rgba(34,197,94,0.35), inset 0 1px 0 rgba(255,255,255,0.25)"
-                : "none",
+              direction: "rtl",
+              boxShadow: "0 -10px 40px rgba(0,0,0,0.35)",
             }}
           >
-            {syncSheet ? "🟢 Sheets تلقائي" : "⚪ Sheets"}
-          </button>
+            <div style={{ width: 44, height: 5, borderRadius: 99, background: "rgb(var(--fg) / 0.2)", margin: "0 auto 14px" }} />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+              <img src={`${import.meta.env.BASE_URL}mawadda-logo.png`} alt="مجمع المودة القرآني" style={{ height: 54, objectFit: "contain" }} />
+              <button onClick={() => setSettingsOpen(false)} aria-label="إغلاق" style={S.iconBtn}>✕</button>
+            </div>
 
-          <button
-            onClick={() => setRosterModalOpen(true)}
-            className="smooth-btn"
-            style={{
-              minWidth: 0,
-              minHeight: 48,
-              background: "linear-gradient(180deg,#6366f1,#4338ca)",
-              border: "1px solid rgba(129,140,248,0.55)",
-              borderRadius: 999,
-              padding: "5px 3px",
-              cursor: "pointer",
-              color: "#fff",
-              fontSize: "clamp(8px,2.6vw,10.5px)",
-              lineHeight: 1.15,
-              fontWeight: 800,
-              fontFamily: "'Tajawal',sans-serif",
-              whiteSpace: "normal",
-              boxShadow: "0 3px 12px rgba(99,102,241,0.35), inset 0 1px 0 rgba(255,255,255,0.25)",
-            }}
-          >
-            👥 إدارة الحلقة
-          </button>
+            <div style={S.sheetLabel}>المظهر</div>
+            <div style={{ display: "flex", gap: 6, marginBottom: 16, padding: 4, borderRadius: 14, background: "rgb(var(--fg) / 0.06)" }}>
+              {([
+                { id: "dark", label: "🌙 داكن" },
+                { id: "light", label: "☀️ فاتح" },
+              ] as const).map((opt) => (
+                <button
+                  key={opt.id}
+                  onClick={() => setTheme(opt.id)}
+                  aria-pressed={theme === opt.id}
+                  style={{
+                    flex: 1,
+                    minHeight: 44,
+                    borderRadius: 11,
+                    border: "none",
+                    cursor: "pointer",
+                    fontFamily: "'Tajawal',sans-serif",
+                    fontSize: 14,
+                    fontWeight: 800,
+                    background: theme === opt.id ? "var(--primary)" : "transparent",
+                    color: theme === opt.id ? "#fff" : "rgb(var(--fg) / 0.6)",
+                  }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
 
-          <button
-            onClick={() => setStudentsReloadKey((v) => v + 1)}
-            disabled={studentsLoading}
-            className="smooth-btn"
-            style={{
-              minWidth: 0,
-              minHeight: 48,
-              background: studentsLoading
-                ? "rgba(255,255,255,0.08)"
-                : "linear-gradient(180deg,#10b981,#059669)",
-              border: `1px solid ${studentsLoading ? "rgba(255,255,255,0.1)" : "rgba(52,211,153,0.55)"}`,
-              borderRadius: 999,
-              padding: "5px 3px",
-              cursor: studentsLoading ? "not-allowed" : "pointer",
-              color: studentsLoading ? "rgba(255,255,255,0.35)" : "#fff",
-              fontSize: "clamp(8px,2.6vw,10.5px)",
-              lineHeight: 1.15,
-              fontWeight: 800,
-              fontFamily: "'Tajawal',sans-serif",
-              whiteSpace: "normal",
-              boxShadow: studentsLoading
-                ? "none"
-                : "0 3px 12px rgba(16,185,129,0.35), inset 0 1px 0 rgba(255,255,255,0.25)",
-            }}
-          >
-            {studentsLoading ? "⏳ الفصول" : "🔄 الفصول"}
-          </button>
+            <div style={S.sheetLabel}>الإدارة</div>
+            <SettingsRow
+              icon="👥"
+              title="إدارة الحلقات"
+              sub="إضافة وحذف الطلاب"
+              onClick={() => { setSettingsOpen(false); setRosterModalOpen(true); }}
+            />
+            <SettingsRow
+              icon="🔄"
+              title="تحديث الأسماء من الشيت"
+              sub={studentsLoading ? "جارٍ التحديث…" : "إعادة قراءة الحلقات والطلاب"}
+              onClick={() => { if (!studentsLoading) setStudentsReloadKey((v) => v + 1); }}
+            />
+            <SettingsRow
+              icon="📊"
+              title="المزامنة مع Google Sheets"
+              sub={syncSheet ? "تلقائي · مفعّل" : "متوقفة"}
+              onClick={() => setSyncSheet((p) => !p)}
+              trailing={
+                <span
+                  aria-hidden="true"
+                  style={{
+                    width: 46,
+                    height: 28,
+                    borderRadius: 999,
+                    background: syncSheet ? "var(--primary)" : "rgb(var(--fg) / 0.15)",
+                    position: "relative",
+                    flex: "none",
+                  }}
+                >
+                  <span style={{ position: "absolute", top: 3, [syncSheet ? "left" : "right"]: 3, width: 22, height: 22, borderRadius: "50%", background: "#fff" } as React.CSSProperties} />
+                </span>
+              }
+            />
 
-          <button
-            onClick={() => { setResetPassword(""); setResetScope("today"); setShowReset(true); }}
-            className="smooth-btn"
-            style={{
-              minWidth: 0,
-              minHeight: 48,
-              background: "linear-gradient(180deg,rgba(239,68,68,0.32),rgba(185,28,28,0.28))",
-              border: "1px solid rgba(239,68,68,0.5)",
-              borderRadius: 999,
-              padding: "5px 3px",
-              cursor: "pointer",
-              color: "#fecaca",
-              fontSize: "clamp(8px,2.6vw,10.5px)",
-              lineHeight: 1.15,
-              fontWeight: 800,
-              fontFamily: "'Tajawal',sans-serif",
-              whiteSpace: "normal",
-              boxShadow: "0 3px 12px rgba(239,68,68,0.22), inset 0 1px 0 rgba(255,255,255,0.12)",
-            }}
-          >
-            🔄 تصفير
-          </button>
-        </div>
-      </div>
-
-      {/* ── Session save counter ── */}
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 430,
-          marginBottom: 14,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 10,
-          background: "rgba(255,255,255,0.04)",
-          border: "1px solid rgba(255,255,255,0.08)",
-          borderRadius: 12,
-          padding: "8px 14px",
-          fontFamily: "'Tajawal',sans-serif",
-          fontSize: 11.5,
-          fontWeight: 700,
-          color: "rgba(255,255,255,0.5)",
-          boxSizing: "border-box" as const,
-        }}
-      >
-        <span>📊 جلسة التسجيل</span>
-        <span style={{ display: "flex", gap: 14, alignItems: "center" }}>
-          <span style={{ color: "#4ade80", fontWeight: 800 }}>
-            ✅ {sheetStats.saved} محفوظ في الشيت
-          </span>
-          <span
-            style={{
-              color: sheetStats.pending > 0 ? "#fbbf24" : "rgba(255,255,255,0.35)",
-              fontWeight: 800,
-            }}
-          >
-            {sheetStats.pending > 0
-              ? `⏳ ${sheetStats.pending} قيد الحفظ`
-              : "◌ 0 في الانتظار"}
-          </span>
-        </span>
-      </div>
+            <div
+              style={{
+                marginTop: 18,
+                padding: 12,
+                borderRadius: 16,
+                border: "1px solid rgba(239,68,68,0.35)",
+                background: "rgba(239,68,68,0.07)",
+              }}
+            >
+              <div style={{ ...S.sheetLabel, color: "var(--danger-text)", marginTop: 0 }}>منطقة الخطر</div>
+              <SettingsRow
+                icon="🗑️"
+                title="تصفير النقاط"
+                sub="يطلب كلمة المرور والتأكيد"
+                danger
+                onClick={() => { setSettingsOpen(false); setResetPassword(""); setResetScope("today"); setShowReset(true); }}
+              />
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
 
       {/* ── Items Settings Modal — بنود التسجيل ── */}
       {showItemsSettings && (
@@ -2441,7 +2494,7 @@ export default function AdminPage() {
         >
           <div
             style={{
-              background: "#0f172a",
+              background: "var(--sheet)",
               border: "1.5px solid rgba(56,189,248,0.35)",
               borderRadius: "22px 22px 0 0",
               width: "100%",
@@ -2462,7 +2515,7 @@ export default function AdminPage() {
                 marginBottom: 4,
               }}
             >
-              <div style={{ color: "#fff", fontWeight: 900, fontSize: 16 }}>⚙️ بنود التسجيل</div>
+              <div style={{ color: "var(--text)", fontWeight: 900, fontSize: 16 }}>⚙️ بنود التسجيل</div>
               <button
                 onClick={() => setShowItemsSettings(false)}
                 className="smooth-btn"
@@ -2473,7 +2526,7 @@ export default function AdminPage() {
             </div>
             <div
               style={{
-                color: "rgba(255,255,255,0.45)",
+                color: "rgb(var(--fg) / 0.45)",
                 fontSize: 11,
                 marginBottom: 12,
                 lineHeight: 1.7,
@@ -2497,8 +2550,8 @@ export default function AdminPage() {
                 <div
                   key={item.id}
                   style={{
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.09)",
+                    background: "rgb(var(--fg) / 0.04)",
+                    border: "1px solid rgb(var(--fg) / 0.09)",
                     borderRadius: 14,
                     padding: "12px",
                   }}
@@ -2542,7 +2595,7 @@ export default function AdminPage() {
                           borderRadius: 12,
                           background: "rgba(168,85,247,0.12)",
                           border: "1px solid rgba(192,132,252,0.35)",
-                          color: "#d8b4fe",
+                          color: "var(--accent-text)",
                           textAlign: "center",
                           fontSize: 11,
                           fontWeight: 800,
@@ -2579,9 +2632,9 @@ export default function AdminPage() {
                           background:
                             item.type === type
                               ? "linear-gradient(180deg,#38bdf8,#0284c7)"
-                              : "rgba(255,255,255,0.06)",
-                          color: item.type === type ? "#fff" : "rgba(255,255,255,0.5)",
-                          border: `1.5px solid ${item.type === type ? "#38bdf8" : "rgba(255,255,255,0.12)"}`,
+                              : "rgb(var(--fg) / 0.06)",
+                          color: item.type === type ? "#fff" : "rgb(var(--fg) / 0.5)",
+                          border: `1.5px solid ${item.type === type ? "#38bdf8" : "rgb(var(--fg) / 0.12)"}`,
                         }}
                       >
                         {REG_ITEMS_TYPE_LABELS[type]}
@@ -2609,7 +2662,7 @@ export default function AdminPage() {
                       type="button"
                       className="smooth-btn"
                       onClick={() => removeItemDraft(index)}
-                      style={{ ...S.clearBtn, padding: "8px 10px", color: "#f87171" }}
+                      style={{ ...S.clearBtn, padding: "8px 10px", color: "var(--danger-text)" }}
                     >
                       🗑
                     </button>
@@ -2634,14 +2687,14 @@ export default function AdminPage() {
                           marginBottom: 8,
                         }}
                       >
-                        <span style={{ color: "#bae6fd", fontSize: 12, fontWeight: 800 }}>
+                        <span style={{ color: "var(--info-text)", fontSize: 12, fontWeight: 800 }}>
                           اختيارات النقاط: {regItemPointOptions(item).length}
                         </span>
                         <button
                           type="button"
                           className="smooth-btn"
                           onClick={() => addPointOptionDraft(index)}
-                          style={{ ...S.clearBtn, padding: "7px 10px", color: "#7dd3fc", fontSize: 11 }}
+                          style={{ ...S.clearBtn, padding: "7px 10px", color: "var(--info-text)", fontSize: 11 }}
                         >
                           ＋ إضافة خيار
                         </button>
@@ -2658,7 +2711,7 @@ export default function AdminPage() {
                               minWidth: 0,
                             }}
                           >
-                            <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, whiteSpace: "nowrap" }}>
+                            <span style={{ color: "rgb(var(--fg) / 0.4)", fontSize: 10, whiteSpace: "nowrap" }}>
                               خيار {optionIndex + 1}
                             </span>
                             <input
@@ -2689,7 +2742,7 @@ export default function AdminPage() {
                               style={{
                                 ...S.clearBtn,
                                 padding: "7px 8px",
-                                color: regItemPointOptions(item).length <= 1 ? "rgba(255,255,255,0.2)" : "#f87171",
+                                color: regItemPointOptions(item).length <= 1 ? "rgb(var(--fg) / 0.2)" : "#f87171",
                               }}
                             >
                               ✕
@@ -2704,7 +2757,7 @@ export default function AdminPage() {
               {itemsDraft.length === 0 && (
                 <div
                   style={{
-                    color: "rgba(255,255,255,0.4)",
+                    color: "rgb(var(--fg) / 0.4)",
                     fontSize: 12,
                     textAlign: "center",
                     padding: 20,
@@ -2726,7 +2779,7 @@ export default function AdminPage() {
                 borderRadius: 14,
                 border: "1.5px dashed rgba(56,189,248,0.5)",
                 background: "rgba(56,189,248,0.08)",
-                color: "#7dd3fc",
+                color: "var(--info-text)",
                 fontFamily: "'Tajawal',sans-serif",
                 fontSize: 14,
                 fontWeight: 800,
@@ -2754,8 +2807,8 @@ export default function AdminPage() {
                 padding: "13px 14px",
                 borderRadius: 14,
                 border: "1.5px solid rgba(56,189,248,0.35)",
-                background: "rgba(15,23,42,0.85)",
-                color: "#fff",
+                background: "var(--input-bg)",
+                color: "var(--text)",
                 outline: "none",
                 fontSize: 14,
                 fontWeight: 700,
@@ -2783,9 +2836,9 @@ export default function AdminPage() {
                   borderRadius: 14,
                   border: "none",
                   background: itemsSaving
-                    ? "rgba(255,255,255,0.1)"
+                    ? "rgb(var(--fg) / 0.1)"
                     : "linear-gradient(180deg,#22c55e,#15803d)",
-                  color: itemsSaving ? "rgba(255,255,255,0.4)" : "#fff",
+                  color: itemsSaving ? "rgb(var(--fg) / 0.4)" : "#fff",
                   fontFamily: "'Tajawal',sans-serif",
                   fontSize: 14,
                   fontWeight: 900,
@@ -2815,7 +2868,7 @@ export default function AdminPage() {
         >
           <div
             style={{
-              background: "#1e293b",
+              background: "var(--sheet-2)",
               border: "1.5px solid rgba(239,68,68,0.5)",
               borderRadius: 20,
               padding: "28px 24px",
@@ -2826,7 +2879,7 @@ export default function AdminPage() {
             }}
           >
             <div style={{ fontSize: 40, marginBottom: 12 }}>⚠️</div>
-            <div style={{ color: "#fff", fontSize: 17, fontWeight: 800, marginBottom: 8 }}>
+            <div style={{ color: "var(--text)", fontSize: 17, fontWeight: 800, marginBottom: 8 }}>
               اختر نوع التصفير
             </div>
             <div
@@ -2851,11 +2904,11 @@ export default function AdminPage() {
                     style={{
                       padding: "12px 8px",
                       borderRadius: 14,
-                      border: `1.5px solid ${active ? "#f87171" : "rgba(255,255,255,0.13)"}`,
+                      border: `1.5px solid ${active ? "#f87171" : "rgb(var(--fg) / 0.13)"}`,
                       background: active
                         ? "linear-gradient(180deg,rgba(239,68,68,0.4),rgba(153,27,27,0.35))"
-                        : "rgba(255,255,255,0.06)",
-                      color: active ? "#fff" : "rgba(255,255,255,0.55)",
+                        : "rgb(var(--fg) / 0.06)",
+                      color: active ? "var(--text)" : "rgb(var(--fg) / 0.55)",
                       fontFamily: "'Tajawal',sans-serif",
                       fontSize: 13,
                       fontWeight: 800,
@@ -2872,30 +2925,30 @@ export default function AdminPage() {
             </div>
             <div
               style={{
-                color: "rgba(255,255,255,0.55)",
+                color: "rgb(var(--fg) / 0.55)",
                 fontSize: 13,
                 marginBottom: 20,
                 lineHeight: 1.7,
-                background: "rgba(15,23,42,0.45)",
-                border: "1px solid rgba(255,255,255,0.08)",
+                background: "rgb(var(--fg) / 0.06)",
+                border: "1px solid rgb(var(--fg) / 0.08)",
                 borderRadius: 14,
                 padding: "12px",
               }}
             >
               {resetScope === "today" ? (
                 <>
-                  سيتم مسح <span style={{ color: "#fbbf24", fontWeight: 700 }}>تسجيلات اليوم فقط</span> من قوقل شيت والتقارير.
+                  سيتم مسح <span style={{ color: "var(--gold)", fontWeight: 700 }}>تسجيلات اليوم فقط</span> من قوقل شيت والتقارير.
                   <br />وسيتم طرح مجموع نقاط اليوم من شاشة المسابقة حتى لا تبقى نقاط التجربة.
                   <br />
-                  <span style={{ color: "#f87171", fontWeight: 700 }}>أسماء الطلاب وباقي الأيام لن تُحذف.</span>
+                  <span style={{ color: "var(--danger-text)", fontWeight: 700 }}>أسماء الطلاب وباقي الأيام لن تُحذف.</span>
                 </>
               ) : (
                 <>
-                  سيتم مسح <span style={{ color: "#fbbf24", fontWeight: 700 }}>كل الأيام</span> بضغطة واحدة:
+                  سيتم مسح <span style={{ color: "var(--gold)", fontWeight: 700 }}>كل الأيام</span> بضغطة واحدة:
                   <br />🔢 نقاط الفصول الخمسة ← صفر
                   <br />📊 قاعدة البيانات والتقارير ← ممسوحة
                   <br />
-                  <span style={{ color: "#f87171", fontWeight: 700 }}>أسماء الطلاب في أوراق الفصول لن تُحذف.</span>
+                  <span style={{ color: "var(--danger-text)", fontWeight: 700 }}>أسماء الطلاب في أوراق الفصول لن تُحذف.</span>
                 </>
               )}
             </div>
@@ -2916,8 +2969,8 @@ export default function AdminPage() {
                 padding: "12px 14px",
                 borderRadius: 12,
                 border: "1px solid rgba(239,68,68,0.45)",
-                background: "rgba(15,23,42,0.85)",
-                color: "#fff",
+                background: "var(--input-bg)",
+                color: "var(--text)",
                 outline: "none",
                 fontSize: 14,
                 fontWeight: 700,
@@ -2933,9 +2986,9 @@ export default function AdminPage() {
                   flex: 1,
                   padding: "12px",
                   borderRadius: 14,
-                  border: "1px solid rgba(255,255,255,0.15)",
-                  background: "rgba(255,255,255,0.07)",
-                  color: "rgba(255,255,255,0.7)",
+                  border: "1px solid rgb(var(--fg) / 0.15)",
+                  background: "rgb(var(--fg) / 0.07)",
+                  color: "rgb(var(--fg) / 0.7)",
                   fontFamily: "'Tajawal',sans-serif",
                   fontSize: 14,
                   fontWeight: 700,
@@ -2956,9 +3009,9 @@ export default function AdminPage() {
                   position: "relative",
                   overflow: "hidden",
                   background: resetting || !resetPassword.trim()
-                    ? "rgba(255,255,255,0.1)"
+                    ? "rgb(var(--fg) / 0.1)"
                     : "linear-gradient(180deg,#ef4444,#b91c1c)",
-                  color: resetting || !resetPassword.trim() ? "rgba(255,255,255,0.3)" : "#fff",
+                  color: resetting || !resetPassword.trim() ? "rgb(var(--fg) / 0.3)" : "#fff",
                   fontFamily: "'Tajawal',sans-serif",
                   fontSize: 14,
                   fontWeight: 800,
@@ -2975,6 +3028,26 @@ export default function AdminPage() {
         </div>
       )}
 
+      {/* ── مدراء النوافذ (تبقى متاحة من أي تبويب) ── */}
+      <RosterManager
+        open={rosterModalOpen}
+        onClose={() => setRosterModalOpen(false)}
+        schoolClasses={schoolClasses}
+        onClassesRefresh={() => setStudentsReloadKey((v) => v + 1)}
+        showToast={showToast}
+      />
+      <RegistrationsManager
+        open={historyModalOpen}
+        onClose={() => {
+          setHistoryModalOpen(false);
+          setHistoryClosedCount((v) => v + 1);
+        }}
+        schoolClasses={schoolClasses}
+        showToast={showToast}
+      />
+
+      {tab === "board" && (
+      <>
       {/* ── Current Standings ── */}
       <div style={{ ...S.card, padding: "14px 16px", marginBottom: 14 }}>
         <div style={S.sectionTitle}>🏆 الترتيب الحالي</div>
@@ -2986,8 +3059,8 @@ export default function AdminPage() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                background: i === 0 ? `${team.color}1a` : "rgba(255,255,255,0.03)",
-                border: `1px solid ${i === 0 ? `${team.color}55` : "rgba(255,255,255,0.06)"}`,
+                background: i === 0 ? `${team.color}1a` : "rgb(var(--fg) / 0.03)",
+                border: `1px solid ${i === 0 ? `${team.color}55` : "rgb(var(--fg) / 0.06)"}`,
                 borderRadius: 10,
                 padding: "8px 12px",
               }}
@@ -3005,11 +3078,11 @@ export default function AdminPage() {
                     boxShadow: `0 0 6px ${team.color}`,
                   }}
                 />
-                <span style={{ color: "#fff", fontWeight: 700, fontSize: 13 }}>
+                <span style={{ color: "var(--text)", fontWeight: 700, fontSize: 13 }}>
                   {getTeamName(team.id, team.name || team.id)}
                 </span>
               </div>
-              <span style={{ color: "#fde047", fontWeight: 800, fontSize: 13, fontFamily: "monospace" }}>
+              <span style={{ color: "var(--gold)", fontWeight: 800, fontSize: 13, fontFamily: "monospace" }}>
                 {formatPoints(getTeamLocationPoints(team))} نقطة
               </span>
             </div>
@@ -3021,7 +3094,13 @@ export default function AdminPage() {
         schoolClasses={schoolClasses}
         refreshKey={sheetStats.saved + studentsReloadKey}
         fullRefreshKey={historyClosedCount}
+        defaultExpanded
       />
+      </>
+      )}
+
+      {tab === "register" && (
+      <>
 
       {/* ── Undo Button ── */}
       {lastAction && (
@@ -3037,7 +3116,7 @@ export default function AdminPage() {
             borderRadius: 16,
             border: "1.5px solid rgba(248,113,113,0.45)",
             background: "linear-gradient(180deg,rgba(239,68,68,0.32),rgba(153,27,27,0.3))",
-            color: "#fecaca",
+            color: "var(--danger-text)",
             fontFamily: "'Tajawal',sans-serif",
             fontSize: 13,
             fontWeight: 800,
@@ -3057,22 +3136,6 @@ export default function AdminPage() {
 
       {/* ── Main Card ── */}
       <div style={S.card}>
-        <RosterManager
-          open={rosterModalOpen}
-          onClose={() => setRosterModalOpen(false)}
-          schoolClasses={schoolClasses}
-          onClassesRefresh={() => setStudentsReloadKey((v) => v + 1)}
-          showToast={showToast}
-        />
-        <RegistrationsManager
-          open={historyModalOpen}
-          onClose={() => {
-            setHistoryModalOpen(false);
-            setHistoryClosedCount((v) => v + 1);
-          }}
-          schoolClasses={schoolClasses}
-          showToast={showToast}
-        />
         {/* Mode toggle — مفتاح مقسّم بنمط حبوب */}
         <div
           style={{
@@ -3081,8 +3144,8 @@ export default function AdminPage() {
             marginBottom: 20,
             padding: 5,
             borderRadius: 18,
-            background: "rgba(7,15,30,0.5)",
-            border: "1px solid rgba(255,255,255,0.08)",
+            background: "rgb(var(--fg) / 0.06)",
+            border: "1px solid rgb(var(--fg) / 0.08)",
             boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 8px 24px rgba(0,0,0,0.12)",
           }}
         >
@@ -3101,7 +3164,7 @@ export default function AdminPage() {
               background: !quickMode
                 ? `linear-gradient(180deg,${accentColor},${accentColor}cc)`
                 : "transparent",
-              color: !quickMode ? "#fff" : "rgba(255,255,255,0.45)",
+              color: !quickMode ? "#fff" : "rgb(var(--fg) / 0.45)",
               boxShadow: !quickMode
                 ? `0 4px 16px ${accentColor}55, inset 0 1px 0 rgba(255,255,255,0.3)`
                 : "none",
@@ -3124,7 +3187,7 @@ export default function AdminPage() {
               background: quickMode
                 ? "linear-gradient(180deg,#fbbf24,#d97706)"
                 : "transparent",
-              color: quickMode ? "#fff" : "rgba(255,255,255,0.45)",
+              color: quickMode ? "#fff" : "rgb(var(--fg) / 0.45)",
               boxShadow: quickMode
                 ? "0 4px 16px rgba(245,158,11,0.5), inset 0 1px 0 rgba(255,255,255,0.3)"
                 : "none",
@@ -3134,97 +3197,71 @@ export default function AdminPage() {
           </button>
         </div>
 
-        {/* ── Team Selection ── */}
-        <label style={S.label}>اختر الفصل</label>
+        {/* ── الخطوة ١: الحلقة ── */}
+        <StepLabel n={1}>الحلقة</StepLabel>
         {studentsLoading && schoolClasses.length === 0 && (
-          <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, textAlign: "center", padding: "14px 8px" }}>
+          <div style={{ color: "rgb(var(--fg) / 0.5)", fontSize: 12, textAlign: "center", padding: "14px 8px" }}>
             ⏳ جارٍ تحميل الفصول من Google Sheets...
           </div>
         )}
         {studentsError && schoolClasses.length === 0 && (
-          <div style={{ color: "#fca5a5", fontSize: 12, textAlign: "center", padding: "14px 8px", lineHeight: 1.7 }}>
+          <div style={{ color: "var(--danger-text)", fontSize: 12, textAlign: "center", padding: "14px 8px", lineHeight: 1.7 }}>
             ⚠️ {studentsError}
           </div>
         )}
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
-          {visibleClassTeams
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${Math.min(Math.max(visibleClassTeams.length, 1), 4)}, minmax(0, 1fr))`,
+            gap: 8,
+            marginBottom: 18,
+          }}
+        >
+          {[...visibleClassTeams]
             .sort((a, b) => safeNumber(a.slot) - safeNumber(b.slot))
-            .map((team) => (
-              <div key={team.id}>
+            .map((team) => {
+              const on = selectedTeam === team.id;
+              return (
                 <button
-                  onClick={() => setSelected(selectedTeam === team.id ? "" : team.id)}
+                  key={team.id}
+                  onClick={() => {
+                    setSelected(on ? "" : team.id);
+                    setStudentSearch("");
+                  }}
                   className="smooth-btn"
+                  aria-pressed={on}
                   style={{
-                    width: "100%",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "12px 16px",
-                    borderRadius: selectedTeam === team.id ? "14px 14px 0 0" : 14,
+                    minHeight: 46,
+                    borderRadius: 12,
                     cursor: "pointer",
-                    border: `2px solid ${selectedTeam === team.id ? team.color : "rgba(255,255,255,0.08)"}`,
-                    borderBottom: selectedTeam === team.id ? `2px solid ${team.color}` : undefined,
-                    background:
-                      selectedTeam === team.id
-                        ? `linear-gradient(180deg, ${team.color}38, ${team.color}14)`
-                        : "rgba(255,255,255,0.04)",
+                    border: `1.5px solid ${on ? team.color : "rgb(var(--fg) / 0.1)"}`,
+                    background: on ? `${team.color}26` : "var(--surface-2)",
+                    color: on ? "var(--text)" : "rgb(var(--fg) / 0.65)",
                     fontFamily: "'Tajawal',sans-serif",
-                    boxShadow: selectedTeam === team.id
-                      ? `0 4px 18px ${team.color}33, inset 0 1px 0 rgba(255,255,255,0.06)`
-                      : "none",
+                    fontWeight: 800,
+                    fontSize: 13,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                    padding: "6px 4px",
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div
-                      style={{
-                        width: 11,
-                        height: 11,
-                        borderRadius: "50%",
-                        background: team.color,
-                        boxShadow: `0 0 8px ${team.color}`,
-                      }}
-                    />
-                    <span style={{ color: "#fff", fontWeight: 700, fontSize: 15 }}>
-                      {getTeamName(team.id, team.name || team.id)}
-                    </span>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span
-                      style={{
-                        color: selectedTeam === team.id ? team.color : "rgba(255,255,255,0.3)",
-                        fontSize: 12,
-                      }}
-                    >
-                      {selectedTeam === team.id ? "▲" : "▼"}
-                    </span>
-                  </div>
+                  <span style={{ width: 9, height: 9, borderRadius: "50%", background: team.color, flex: "none" }} />
+                  {getTeamName(team.id, team.name || team.id).replace(/^حلقة\s*/, "")}
                 </button>
+              );
+            })}
+        </div>
 
-                {/* Student list (shown when team is selected) */}
-                {selectedTeam === team.id && (
-                  <div
-                    style={{
-                      background: `${team.color}0d`,
-                      border: `2px solid ${team.color}`,
-                      borderTop: "none",
-                      borderRadius: "0 0 14px 14px",
-                      padding: "10px",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 6,
-                    }}
-                  >
-                    <div
-                      style={{
-                        color: "rgba(255,255,255,0.4)",
-                        fontSize: 10,
-                        fontWeight: 700,
-                        marginBottom: 4,
-                        paddingRight: 4,
-                      }}
-                    >
-                      اختر الطالب
-                    </div>
+        {/* ── الخطوة ٢: الطالب ── */}
+        {visibleClassTeams
+          .filter((team) => team.id === selectedTeam)
+          .map((team) => (
+            <div key={team.id} style={{ marginBottom: 18 }}>
+              <StepLabel n={2} meta={(teamStudents[team.id] || []).length ? `سُجّل ${(teamStudents[team.id] || []).filter((st) => doneTodayNames.has(normalizeStudentName(st.name))).length} من ${(teamStudents[team.id] || []).length}` : undefined}>
+                الطالب
+              </StepLabel>
                     {studentsError && (teamStudents[team.id] || []).length > 0 && (
                       <div
                         style={{
@@ -3239,12 +3276,25 @@ export default function AdminPage() {
                         ⚠️ تعذر تحديث الأسماء — تعرض آخر نسخة محفوظة
                       </div>
                     )}
+              {(teamStudents[team.id] || []).length > 8 && (
+                <input
+                  value={studentSearch}
+                  onChange={(e) => setStudentSearch(e.target.value)}
+                  placeholder="🔍 ابحث عن اسم…"
+                  style={{ ...S.input, padding: "11px 14px", fontSize: 15, marginBottom: 8 }}
+                />
+              )}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 7 }}>
                     {(() => {
-                      const studentsForTeam = teamStudents[team.id] || [];
+                      const allStudentsForTeam = teamStudents[team.id] || [];
+                      const query = studentSearch.trim();
+                      const studentsForTeam = query
+                        ? allStudentsForTeam.filter((st) => st.name.includes(query))
+                        : allStudentsForTeam;
 
                       if (studentsLoading && !studentsForTeam.length) {
                         return (
-                          <div style={{ color: "rgba(255,255,255,0.45)", fontSize: 12, padding: "12px", textAlign: "center" }}>
+                          <div style={{ color: "rgb(var(--fg) / 0.45)", fontSize: 12, padding: "12px", textAlign: "center" }}>
                             ⏳ جارٍ تحميل الفصول وأسماء الطلاب من Google Sheets...
                           </div>
                         );
@@ -3252,16 +3302,24 @@ export default function AdminPage() {
 
                       if (studentsError && !studentsForTeam.length) {
                         return (
-                          <div style={{ color: "#fca5a5", fontSize: 12, padding: "12px", textAlign: "center", lineHeight: 1.7 }}>
+                          <div style={{ color: "var(--danger-text)", fontSize: 12, padding: "12px", textAlign: "center", lineHeight: 1.7 }}>
                             ⚠️ {studentsError}
                             <br />تأكد من نشر Apps Script ثم اضغط زر 🔄 الطلاب.
                           </div>
                         );
                       }
 
+                      if (!studentsForTeam.length && query) {
+                        return (
+                          <div style={{ color: "rgb(var(--fg) / 0.45)", fontSize: 13, padding: "12px", textAlign: "center", gridColumn: "1 / -1" }}>
+                            لا يوجد طالب بهذا الاسم
+                          </div>
+                        );
+                      }
+
                       if (!studentsForTeam.length) {
                         return (
-                          <div style={{ color: "rgba(255,255,255,0.45)", fontSize: 12, padding: "12px", textAlign: "center", lineHeight: 1.7 }}>
+                          <div style={{ color: "rgb(var(--fg) / 0.45)", fontSize: 12, padding: "12px", textAlign: "center", lineHeight: 1.7 }}>
                             لا توجد أسماء في ورقة الفصل {getTeamName(team.id, team.name || team.id)}.
                             <br />اكتب الأسماء في العمود A، ثم اضغط 🔄 الطلاب.
                           </div>
@@ -3270,6 +3328,7 @@ export default function AdminPage() {
 
                       return studentsForTeam.map((student) => {
                         const isSelectedStudent = studentName === student.name;
+                        const doneToday = !isSelectedStudent && doneTodayNames.has(normalizeStudentName(student.name));
                         const firstCircleTeam = isFirstCircleTeam(team.id);
                         const rememberedTrack = firstCircleTeam ? readRememberedTrack(student.name) : null;
                         const trackMeta = rememberedTrack && rememberedTrack !== "hifz-review"
@@ -3303,18 +3362,21 @@ export default function AdminPage() {
                               }
                             }}
                             style={{
-                              padding: "13px 14px",
-                              borderRadius: 14,
+                              minHeight: 46,
+                              padding: "10px 12px",
+                              borderRadius: 12,
                               cursor: "pointer",
                               fontFamily: "'Tajawal',sans-serif",
                               fontSize: 14,
                               fontWeight: 700,
                               textAlign: "right",
                               background: isSelectedStudent
-                                ? `linear-gradient(180deg, ${team.color}, ${team.color}cc)`
-                                : "rgba(255,255,255,0.05)",
-                              color: isSelectedStudent ? "#fff" : "rgba(255,255,255,0.7)",
-                              border: `1.5px solid ${isSelectedStudent ? team.color : "rgba(255,255,255,0.1)"}`,
+                                ? team.color
+                                : doneToday
+                                ? "transparent"
+                                : "var(--surface-2)",
+                              color: isSelectedStudent ? "#fff" : doneToday ? "rgb(var(--fg) / 0.5)" : "var(--text)",
+                              border: `1.5px ${doneToday ? "dashed" : "solid"} ${isSelectedStudent ? team.color : "rgb(var(--fg) / 0.12)"}`,
                               boxShadow: isSelectedStudent
                                 ? `0 4px 16px ${team.color}55, inset 0 1px 0 rgba(255,255,255,0.25)`
                                 : "none",
@@ -3332,16 +3394,19 @@ export default function AdminPage() {
                                 </span>
                               )}
                               {isSelectedStudent && <span style={{ fontSize: 16 }}>✔</span>}
+                              {doneToday && (
+                                <span title="مسجّل اليوم" style={{ color: "var(--ok)", fontSize: 14, fontWeight: 900 }}>✓</span>
+                              )}
                             </span>
                           </button>
                         );
                       });
                     })()}
-                  </div>
-                )}
               </div>
-            ))}
-        </div>
+            </div>
+          ))}
+
+        {studentName && !quickMode && <StepLabel n={3}>التقييم</StepLabel>}
 
         {/* ── Quick Mode ── */}
         {quickMode && (
@@ -3356,7 +3421,7 @@ export default function AdminPage() {
           >
             <div
               style={{
-                color: "#fbbf24",
+                color: "var(--gold)",
                 fontSize: 12,
                 fontWeight: 700,
                 marginBottom: 12,
@@ -3395,8 +3460,8 @@ export default function AdminPage() {
                 cursor: canQuick ? "pointer" : "not-allowed",
                 background: canQuick
                   ? "linear-gradient(180deg,#fbbf24,#d97706)"
-                  : "rgba(255,255,255,0.07)",
-                color: canQuick ? "#fff" : "rgba(255,255,255,0.3)",
+                  : "rgb(var(--fg) / 0.07)",
+                color: canQuick ? "#fff" : "rgb(var(--fg) / 0.3)",
                 boxShadow: canQuick
                   ? "0 6px 22px rgba(245,158,11,0.5), inset 0 1px 0 rgba(255,255,255,0.3)"
                   : "none",
@@ -3486,9 +3551,9 @@ export default function AdminPage() {
                               fontWeight: 900,
                               background: active
                                 ? "linear-gradient(180deg,#22c55e,#15803d)"
-                                : "rgba(255,255,255,0.07)",
-                              color: active ? "#fff" : "rgba(255,255,255,0.6)",
-                              border: `1.5px solid ${active ? "#4ade80" : "rgba(255,255,255,0.12)"}`,
+                                : "rgb(var(--fg) / 0.07)",
+                              color: active ? "#fff" : "rgb(var(--fg) / 0.6)",
+                              border: `1.5px solid ${active ? "#4ade80" : "rgb(var(--fg) / 0.12)"}`,
                               boxShadow: active ? "0 4px 16px rgba(34,197,94,0.35)" : "none",
                             }}
                           >
@@ -3507,8 +3572,8 @@ export default function AdminPage() {
                   <div
                     key={item.id}
                     style={{
-                      background: v.manualPoints !== null ? "rgba(168,85,247,0.10)" : "rgba(255,255,255,0.04)",
-                      border: `1.5px solid ${v.manualPoints !== null ? "#a855f7" : "rgba(255,255,255,0.1)"}`,
+                      background: v.manualPoints !== null ? "rgba(168,85,247,0.10)" : "rgb(var(--fg) / 0.04)",
+                      border: `1.5px solid ${v.manualPoints !== null ? "#a855f7" : "rgb(var(--fg) / 0.1)"}`,
                       borderRadius: 14,
                       padding: "14px 16px",
                       marginBottom: 16,
@@ -3634,8 +3699,8 @@ export default function AdminPage() {
                   <div
                     style={{
                       marginBottom: 8,
-                      background: "rgba(255,255,255,0.03)",
-                      border: "1px solid rgba(255,255,255,0.08)",
+                      background: "rgb(var(--fg) / 0.03)",
+                      border: "1px solid rgb(var(--fg) / 0.08)",
                       borderRadius: 14,
                       padding: "10px 12px",
                       opacity: rangeLocked ? 0.45 : 1,
@@ -3667,9 +3732,9 @@ export default function AdminPage() {
                           fontFamily: "'Tajawal',sans-serif",
                           fontSize: 12,
                           fontWeight: 700,
-                          background: hasFrom ? `${accentColor}25` : "rgba(255,255,255,0.06)",
-                          border: `1.5px solid ${hasFrom ? accentColor : "rgba(255,255,255,0.12)"}`,
-                          color: hasFrom ? "#fff" : "rgba(255,255,255,0.4)",
+                          background: hasFrom ? `${accentColor}25` : "rgb(var(--fg) / 0.06)",
+                          border: `1.5px solid ${hasFrom ? accentColor : "rgb(var(--fg) / 0.12)"}`,
+                          color: hasFrom ? "var(--text)" : "rgb(var(--fg) / 0.4)",
                         }}
                       >
                         {hasFrom
@@ -3688,9 +3753,9 @@ export default function AdminPage() {
                           fontFamily: "'Tajawal',sans-serif",
                           fontSize: 12,
                           fontWeight: 700,
-                          background: hasTo ? `${accentColor}25` : "rgba(255,255,255,0.06)",
-                          border: `1.5px solid ${hasTo ? accentColor : "rgba(255,255,255,0.12)"}`,
-                          color: hasTo ? "#fff" : "rgba(255,255,255,0.4)",
+                          background: hasTo ? `${accentColor}25` : "rgb(var(--fg) / 0.06)",
+                          border: `1.5px solid ${hasTo ? accentColor : "rgb(var(--fg) / 0.12)"}`,
+                          color: hasTo ? "var(--text)" : "rgb(var(--fg) / 0.4)",
                         }}
                       >
                         {hasTo
@@ -3717,7 +3782,7 @@ export default function AdminPage() {
                       <div style={{ display: "flex", gap: 6, marginTop: 8, alignItems: "center" }}>
                         <span
                           style={{
-                            color: "rgba(255,255,255,0.45)",
+                            color: "rgb(var(--fg) / 0.45)",
                             fontSize: 11,
                             fontWeight: 700,
                             whiteSpace: "nowrap",
@@ -3748,9 +3813,9 @@ export default function AdminPage() {
                                 fontWeight: 900,
                                 background: selected
                                   ? "linear-gradient(180deg,#fbbf24,#d97706)"
-                                  : "rgba(255,255,255,0.07)",
-                                color: selected ? "#fff" : "rgba(255,255,255,0.55)",
-                                border: `1.5px solid ${selected ? "#fbbf24" : "rgba(255,255,255,0.14)"}`,
+                                  : "rgb(var(--fg) / 0.07)",
+                                color: selected ? "#fff" : "rgb(var(--fg) / 0.55)",
+                                border: `1.5px solid ${selected ? "#fbbf24" : "rgb(var(--fg) / 0.14)"}`,
                                 boxShadow: selected
                                   ? "0 4px 14px rgba(245,158,11,0.4)"
                                   : "none",
@@ -3815,15 +3880,15 @@ export default function AdminPage() {
                 display: "flex", alignItems: "flex-end", justifyContent: "center",
               }}>
                 <div style={{
-                  background: "#1e293b",
-                  border: "1.5px solid rgba(255,255,255,0.12)",
+                  background: "var(--sheet-2)",
+                  border: "1.5px solid rgb(var(--fg) / 0.12)",
                   borderRadius: "24px 24px 0 0",
                   width: "100%", maxWidth: 430,
                   maxHeight: "85vh", display: "flex", flexDirection: "column",
                   padding: "20px 16px calc(30px + env(safe-area-inset-bottom, 0px))",
                   fontFamily: "'Tajawal',sans-serif",
                 }}>
-                  <div style={{ color: "#fff", fontWeight: 800, fontSize: 15, marginBottom: 12, textAlign: "center" }}>
+                  <div style={{ color: "var(--text)", fontWeight: 800, fontSize: 15, marginBottom: 12, textAlign: "center" }}>
                     🔤 اختر درس القاعدة النورانية
                   </div>
 
@@ -3848,12 +3913,12 @@ export default function AdminPage() {
                             setLessonSearch("");
                           }}
                           style={{
-                            background: nuraniaLesson === index ? `${accentColor}33` : "rgba(255,255,255,0.06)",
+                            background: nuraniaLesson === index ? `${accentColor}33` : "rgb(var(--fg) / 0.06)",
                             border: nuraniaLesson === index
                               ? `1.5px solid ${accentColor}`
-                              : "1.5px solid rgba(255,255,255,0.1)",
+                              : "1.5px solid rgb(var(--fg) / 0.1)",
                             borderRadius: 10, padding: "10px 14px",
-                            color: "#fff", fontFamily: "'Tajawal',sans-serif",
+                            color: "var(--text)", fontFamily: "'Tajawal',sans-serif",
                             fontSize: 14, fontWeight: 700, cursor: "pointer",
                             display: "flex", justifyContent: "space-between", alignItems: "center",
                           }}
@@ -3873,7 +3938,7 @@ export default function AdminPage() {
                     }}
                     style={{
                       width: "100%", marginTop: 16, padding: "15px", borderRadius: 14, border: "none",
-                      background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)",
+                      background: "rgb(var(--fg) / 0.08)", color: "rgb(var(--fg) / 0.6)",
                       fontFamily: "'Tajawal',sans-serif", fontSize: 15, fontWeight: 700, cursor: "pointer",
                     }}
                   >
@@ -3891,15 +3956,15 @@ export default function AdminPage() {
                 display: "flex", alignItems: "flex-end", justifyContent: "center",
               }}>
                 <div style={{
-                  background: "#1e293b",
-                  border: "1.5px solid rgba(255,255,255,0.12)",
+                  background: "var(--sheet-2)",
+                  border: "1.5px solid rgb(var(--fg) / 0.12)",
                   borderRadius: "24px 24px 0 0",
                   width: "100%", maxWidth: 430,
                   maxHeight: "85vh", display: "flex", flexDirection: "column",
                   padding: "20px 16px calc(30px + env(safe-area-inset-bottom, 0px))",
                   fontFamily: "'Tajawal',sans-serif",
                 }}>
-                  <div style={{ color: "#fff", fontWeight: 800, fontSize: 15, marginBottom: 12, textAlign: "center" }}>
+                  <div style={{ color: "var(--text)", fontWeight: 800, fontSize: 15, marginBottom: 12, textAlign: "center" }}>
                     📖 اختر سورة التلاوة
                   </div>
 
@@ -3926,18 +3991,18 @@ export default function AdminPage() {
                             setSurahSearch("");
                           }}
                           style={{
-                            background: tilawaSurah === s.index ? `${accentColor}33` : "rgba(255,255,255,0.06)",
+                            background: tilawaSurah === s.index ? `${accentColor}33` : "rgb(var(--fg) / 0.06)",
                             border: tilawaSurah === s.index
                               ? `1.5px solid ${accentColor}`
-                              : "1.5px solid rgba(255,255,255,0.1)",
+                              : "1.5px solid rgb(var(--fg) / 0.1)",
                             borderRadius: 10, padding: "10px 14px",
-                            color: "#fff", fontFamily: "'Tajawal',sans-serif",
+                            color: "var(--text)", fontFamily: "'Tajawal',sans-serif",
                             fontSize: 14, fontWeight: 700, cursor: "pointer",
                             display: "flex", justifyContent: "space-between", alignItems: "center",
                           }}
                         >
                           <span>{s.index + 1}. {s.name}</span>
-                          <span style={{ color: "rgba(255,255,255,0.45)", fontSize: 12 }}>
+                          <span style={{ color: "rgb(var(--fg) / 0.45)", fontSize: 12 }}>
                             {tilawaSurah === s.index ? "✓" : `${s.ayahs} آية`}
                           </span>
                         </button>
@@ -3953,7 +4018,7 @@ export default function AdminPage() {
                     }}
                     style={{
                       width: "100%", marginTop: 16, padding: "15px", borderRadius: 14, border: "none",
-                      background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)",
+                      background: "rgb(var(--fg) / 0.08)", color: "rgb(var(--fg) / 0.6)",
                       fontFamily: "'Tajawal',sans-serif", fontSize: 15, fontWeight: 700, cursor: "pointer",
                     }}
                   >
@@ -4041,7 +4106,7 @@ export default function AdminPage() {
                     alignItems: "center",
                     justifyContent: "space-between",
                     textAlign: "right",
-                    color: nuraniaLesson === null ? "rgba(255,255,255,0.45)" : "#fff",
+                    color: nuraniaLesson === null ? "rgb(var(--fg) / 0.45)" : "#fff",
                   }}
                 >
                   <span>{nuraniaLesson === null ? "اختر الدرس" : NURANIA_LESSONS[nuraniaLesson]}</span>
@@ -4118,7 +4183,7 @@ export default function AdminPage() {
                     alignItems: "center",
                     justifyContent: "space-between",
                     textAlign: "right",
-                    color: tilawaSurah === null ? "rgba(255,255,255,0.45)" : "#fff",
+                    color: tilawaSurah === null ? "rgb(var(--fg) / 0.45)" : "#fff",
                   }}
                 >
                   <span>{tilawaSurah === null ? "اختر السورة" : SURAHS[tilawaSurah]?.name}</span>
@@ -4191,8 +4256,8 @@ export default function AdminPage() {
             {hasRegistrationData && (
               <div
                 style={{
-                  background: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.1)",
+                  background: "rgb(var(--fg) / 0.05)",
+                  border: "1px solid rgb(var(--fg) / 0.1)",
                   borderRadius: 14,
                   padding: "14px 16px",
                   marginBottom: 16,
@@ -4225,7 +4290,7 @@ export default function AdminPage() {
                         key={l}
                         style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}
                       >
-                        <span style={{ color: "rgba(255,255,255,0.45)", fontSize: 12 }}>{l}</span>
+                        <span style={{ color: "rgb(var(--fg) / 0.45)", fontSize: 12 }}>{l}</span>
                         <span
                           style={{
                             color:
@@ -4246,7 +4311,7 @@ export default function AdminPage() {
                 <div
                   style={{
                     height: 1,
-                    background: "rgba(255,255,255,0.1)",
+                    background: "rgb(var(--fg) / 0.1)",
                     margin: "10px 0",
                   }}
                 />
@@ -4257,12 +4322,12 @@ export default function AdminPage() {
                     alignItems: "center",
                   }}
                 >
-                  <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 14, fontWeight: 700 }}>
+                  <span style={{ color: "rgb(var(--fg) / 0.7)", fontSize: 14, fontWeight: 700 }}>
                     يُضاف الآن
                   </span>
                   <span
                     style={{
-                      color: "#fde047",
+                      color: "var(--gold)",
                       fontSize: 26,
                       fontWeight: 900,
                       textShadow: "0 0 20px rgba(253,224,71,0.6)",
@@ -4274,7 +4339,16 @@ export default function AdminPage() {
               </div>
             )}
 
-            {/* Submit button */}
+            {/* Submit button — ثابت أسفل الشاشة فوق شريط التنقل */}
+            <div
+              style={{
+                position: "sticky",
+                bottom: "calc(76px + env(safe-area-inset-bottom, 0px))",
+                zIndex: 30,
+                paddingTop: 10,
+                background: "linear-gradient(180deg, transparent, var(--surface) 40%)",
+              }}
+            >
             <button
               onClick={handleSubmit}
               disabled={!canSubmit}
@@ -4292,8 +4366,8 @@ export default function AdminPage() {
                 cursor: canSubmit ? "pointer" : "not-allowed",
                 background: canSubmit
                   ? `linear-gradient(180deg, ${accentColor}, ${accentColor}bb)`
-                  : "rgba(255,255,255,0.08)",
-                color: canSubmit ? "#fff" : "rgba(255,255,255,0.3)",
+                  : "var(--surface-2)",
+                color: canSubmit ? "#fff" : "rgb(var(--fg) / 0.45)",
                 boxShadow: canSubmit
                   ? `0 6px 24px ${accentColor}66, inset 0 1px 0 rgba(255,255,255,0.3)`
                   : "none",
@@ -4305,6 +4379,7 @@ export default function AdminPage() {
                 ? `➕ تسجيل (${preview} نقطة)`
                 : "اختر طالباً وبنداً على الأقل"}
             </button>
+            </div>
           </div>
         )}
 
@@ -4313,7 +4388,7 @@ export default function AdminPage() {
           <div
             style={{
               textAlign: "center",
-              color: "rgba(255,255,255,0.3)",
+              color: "rgb(var(--fg) / 0.3)",
               fontSize: 13,
               fontWeight: 600,
               padding: "10px 0",
@@ -4323,33 +4398,156 @@ export default function AdminPage() {
           </div>
         )}
       </div>
-      <div style={{ height: 16 }} />
+      </>
+      )}
 
-      <button
-        onClick={() => setHistoryModalOpen(true)}
-        className="smooth-btn"
+      {/* ── شريط التنقل السفلي ── */}
+      <nav style={S.bottomNav} aria-label="التنقل">
+        {([
+          { key: "register", label: "التسجيل", icon: "✏️", onClick: () => setTab("register"), on: tab === "register" },
+          { key: "history", label: "التسجيلات", icon: "🗂️", onClick: () => setHistoryModalOpen(true), on: historyModalOpen },
+          { key: "board", label: "اللوحة", icon: "🏆", onClick: () => setTab("board"), on: tab === "board" },
+        ]).map((item) => (
+          <button
+            key={item.key}
+            onClick={item.onClick}
+            aria-current={item.on ? "page" : undefined}
+            style={{
+              flex: 1,
+              minHeight: 52,
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+              fontFamily: "'Tajawal',sans-serif",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 2,
+              color: item.on ? "var(--primary)" : "rgb(var(--fg) / 0.55)",
+              fontSize: 12,
+              fontWeight: 800,
+            }}
+          >
+            <span style={{ fontSize: 19, filter: item.on ? "none" : "grayscale(0.6)" }}>{item.icon}</span>
+            {item.label}
+          </button>
+        ))}
+      </nav>
+    </div>
+  );
+}
+
+// ── الثيم والمكوّنات الصغيرة للتصميم الجديد ─────────────────────────────
+const THEME_KEY = "sailor-race:theme";
+
+function readStoredTheme(): "dark" | "light" {
+  try {
+    return localStorage.getItem(THEME_KEY) === "light" ? "light" : "dark";
+  } catch {
+    return "dark";
+  }
+}
+
+function applyTheme(theme: "dark" | "light") {
+  document.documentElement.dataset.theme = theme;
+  try {
+    localStorage.setItem(THEME_KEY, theme);
+  } catch {
+    // التخزين المحلي اختياري
+  }
+}
+
+// «الإثنين 12/10» بتوقيت السعودية وبنفس منطق اليوم الدراسي (يبدأ 6 صباحاً).
+function todayLabel(): string {
+  const [y, m, d] = getRiyadhDateISO().split("-").map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d));
+  const weekday = new Intl.DateTimeFormat("ar-SA", { weekday: "long", timeZone: "UTC" }).format(date);
+  return `${weekday} ${d}/${m}`;
+}
+
+function StepLabel({ n, meta, children }: { n: number; meta?: string; children: React.ReactNode }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, fontSize: 15, fontWeight: 800, color: "var(--text)" }}>
+      <span
         style={{
-          width: "100%",
-          maxWidth: 430,
-          padding: "15px 16px",
-          borderRadius: 18,
-          border: "1.5px solid rgba(56,189,248,0.4)",
-          background: "linear-gradient(180deg,rgba(14,165,233,0.22),rgba(2,132,199,0.18))",
-          color: "#bae6fd",
-          fontFamily: "'Tajawal',sans-serif",
-          fontSize: 14,
-          fontWeight: 800,
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 8,
-          boxShadow: "0 4px 18px rgba(14,165,233,0.18), inset 0 1px 0 rgba(255,255,255,0.1)",
+          width: 24,
+          height: 24,
+          borderRadius: "50%",
+          background: "var(--primary)",
+          color: "#fff",
+          fontSize: 13,
+          fontWeight: 900,
+          display: "grid",
+          placeItems: "center",
+          flex: "none",
         }}
       >
-        🗂️ التسجيلات
-      </button>
+        {n}
+      </span>
+      {children}
+      {meta && (
+        <span style={{ marginInlineStart: "auto", color: "rgb(var(--fg) / 0.55)", fontSize: 12, fontWeight: 700 }}>{meta}</span>
+      )}
     </div>
+  );
+}
+
+function SettingsRow({
+  icon,
+  title,
+  sub,
+  onClick,
+  danger = false,
+  trailing,
+}: {
+  icon: string;
+  title: string;
+  sub?: string;
+  onClick: () => void;
+  danger?: boolean;
+  trailing?: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        width: "100%",
+        minHeight: 58,
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        padding: "8px 12px",
+        marginBottom: 8,
+        borderRadius: 14,
+        border: "none",
+        cursor: "pointer",
+        textAlign: "right",
+        fontFamily: "'Tajawal',sans-serif",
+        background: danger ? "transparent" : "rgb(var(--fg) / 0.06)",
+        color: "var(--text)",
+      }}
+    >
+      <span
+        style={{
+          width: 38,
+          height: 38,
+          flex: "none",
+          borderRadius: 11,
+          display: "grid",
+          placeItems: "center",
+          fontSize: 18,
+          background: danger ? "rgba(239,68,68,0.14)" : "rgba(34,195,181,0.14)",
+        }}
+      >
+        {icon}
+      </span>
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={{ display: "block", fontSize: 15, fontWeight: 800, color: danger ? "var(--danger-text)" : "var(--text)" }}>{title}</span>
+        {sub && <span style={{ display: "block", fontSize: 12, color: "rgb(var(--fg) / 0.55)" }}>{sub}</span>}
+      </span>
+      {trailing ?? <span aria-hidden="true" style={{ color: "rgb(var(--fg) / 0.4)", fontSize: 18 }}>‹</span>}
+    </button>
   );
 }
 
@@ -4357,11 +4555,12 @@ export default function AdminPage() {
 const S: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "100vh",
-    background: "linear-gradient(160deg,#0f172a 0%,#1e293b 60%,#0f2027 100%)",
+    background: "var(--page-bg)",
+    color: "var(--text)",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    padding: "16px 12px calc(100px + env(safe-area-inset-bottom, 0px))",
+    padding: "calc(14px + env(safe-area-inset-top, 0px)) 14px calc(110px + env(safe-area-inset-bottom, 0px))",
     fontFamily: "'Tajawal',sans-serif",
     direction: "rtl",
     overflowY: "auto",
@@ -4371,7 +4570,7 @@ const S: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     gap: 6,
-    color: "#fff",
+    color: "var(--text)",
     fontSize: 20,
     fontWeight: 900,
     marginBottom: 20,
@@ -4379,9 +4578,51 @@ const S: Record<string, React.CSSProperties> = {
     width: "100%",
     maxWidth: 430,
   },
+  topBar: {
+    width: "100%",
+    maxWidth: 430,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    marginBottom: 10,
+  },
+  iconBtn: {
+    width: 44,
+    height: 44,
+    flex: "none",
+    borderRadius: 14,
+    border: "1px solid rgb(var(--fg) / 0.12)",
+    background: "var(--surface)",
+    color: "var(--text)",
+    display: "grid",
+    placeItems: "center",
+    cursor: "pointer",
+    fontSize: 16,
+    fontFamily: "'Tajawal',sans-serif",
+  },
+  sheetLabel: {
+    color: "rgb(var(--fg) / 0.55)",
+    fontSize: 12,
+    fontWeight: 800,
+    margin: "4px 0 8px",
+  },
+  bottomNav: {
+    position: "fixed",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 900,
+    display: "flex",
+    justifyContent: "center",
+    background: "var(--nav-bg)",
+    borderTop: "1px solid rgb(var(--fg) / 0.1)",
+    padding: "6px 10px calc(8px + env(safe-area-inset-bottom, 0px))",
+    direction: "rtl",
+  },
   card: {
-    background: "rgba(255,255,255,0.05)",
-    border: "1px solid rgba(255,255,255,0.09)",
+    background: "var(--surface)",
+    border: "1px solid rgb(var(--fg) / 0.09)",
     borderRadius: 20,
     padding: "18px 14px",
     width: "100%",
@@ -4392,18 +4633,18 @@ const S: Record<string, React.CSSProperties> = {
   },
   label: {
     display: "block",
-    color: "rgba(255,255,255,0.5)",
-    fontSize: 11,
+    color: "rgb(var(--fg) / 0.6)",
+    fontSize: 12,
     fontWeight: 700,
     letterSpacing: 1.2,
     marginBottom: 8,
   },
   input: {
     width: "100%",
-    background: "rgba(255,255,255,0.07)",
-    border: "1.5px solid rgba(255,255,255,0.1)",
+    background: "var(--input-bg)",
+    border: "1.5px solid rgb(var(--fg) / 0.1)",
     borderRadius: 14,
-    color: "#fff",
+    color: "var(--text)",
     fontSize: 16,
     padding: "15px 16px",
     marginBottom: 16,
@@ -4414,21 +4655,21 @@ const S: Record<string, React.CSSProperties> = {
     WebkitAppearance: "none",
   },
   sectionTitle: {
-    color: "rgba(255,255,255,0.5)",
+    color: "rgb(var(--fg) / 0.5)",
     fontSize: 11,
     fontWeight: 700,
     letterSpacing: 1.2,
     marginBottom: 10,
   },
   hint: {
-    color: "rgba(255,255,255,0.3)",
-    fontSize: 10,
+    color: "rgb(var(--fg) / 0.45)",
+    fontSize: 11,
     fontWeight: 400,
     marginRight: 6,
   },
   badge: {
     background: "rgba(99,102,241,0.25)",
-    color: "#a5b4fc",
+    color: "var(--accent-text)",
     fontSize: 10,
     fontWeight: 700,
     borderRadius: 8,
@@ -4438,9 +4679,9 @@ const S: Record<string, React.CSSProperties> = {
   clearBtn: {
     padding: "10px 12px",
     borderRadius: 999,
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: "rgba(255,255,255,0.06)",
-    color: "rgba(255,255,255,0.45)",
+    border: "1px solid rgb(var(--fg) / 0.12)",
+    background: "rgb(var(--fg) / 0.06)",
+    color: "rgb(var(--fg) / 0.45)",
     fontSize: 11,
     cursor: "pointer",
     fontFamily: "'Tajawal',sans-serif",
@@ -4487,9 +4728,9 @@ function RosterManager({
     flex: 1,
     padding: "9px 10px",
     borderRadius: 12,
-    border: `1.5px solid ${selected ? "#818cf8" : "rgba(255,255,255,0.12)"}`,
-    background: selected ? "rgba(129,140,248,0.22)" : "rgba(255,255,255,0.05)",
-    color: selected ? "#fff" : "rgba(255,255,255,0.5)",
+    border: `1.5px solid ${selected ? "#818cf8" : "rgb(var(--fg) / 0.12)"}`,
+    background: selected ? "rgba(129,140,248,0.22)" : "rgb(var(--fg) / 0.05)",
+    color: selected ? "var(--text)" : "rgb(var(--fg) / 0.5)",
     fontSize: 12,
     fontWeight: 800,
     cursor: "pointer",
@@ -4612,9 +4853,9 @@ function RosterManager({
   const chipStyle = (selected: boolean, c: SchoolClass): React.CSSProperties => ({
     padding: "9px 13px",
     borderRadius: 12,
-    border: `1.5px solid ${selected ? classColorBySlot(c.slot) : "rgba(255,255,255,0.12)"}`,
-    background: selected ? `${classColorBySlot(c.slot)}33` : "rgba(255,255,255,0.05)",
-    color: selected ? "#fff" : "rgba(255,255,255,0.55)",
+    border: `1.5px solid ${selected ? classColorBySlot(c.slot) : "rgb(var(--fg) / 0.12)"}`,
+    background: selected ? `${classColorBySlot(c.slot)}33` : "rgb(var(--fg) / 0.05)",
+    color: selected ? "var(--text)" : "rgb(var(--fg) / 0.55)",
     fontSize: 12,
     fontWeight: 800,
     cursor: "pointer",
@@ -4634,7 +4875,7 @@ function RosterManager({
     >
       <div
         style={{
-          background: "#0f172a",
+          background: "var(--sheet)",
           border: "1.5px solid rgba(129,140,248,0.4)",
           borderRadius: "22px 22px 0 0",
           width: "100%",
@@ -4661,12 +4902,12 @@ function RosterManager({
             position: "sticky",
             top: 0,
             zIndex: 2,
-            background: "#0f172a",
+            background: "var(--sheet)",
             margin: "0 -16px 12px",
             padding: "18px 16px 12px",
           }}
         >
-          <div style={{ color: "#fff", fontWeight: 900, fontSize: 16 }}>👥 إدارة الحلقة</div>
+          <div style={{ color: "var(--text)", fontWeight: 900, fontSize: 16 }}>👥 إدارة الحلقة</div>
           <button onClick={onClose} className="smooth-btn" style={{ ...S.clearBtn, fontSize: 12 }}>
             ✕ إغلاق
           </button>
@@ -4688,7 +4929,7 @@ function RosterManager({
             </button>
           ))}
           {schoolClasses.length === 0 && (
-            <div style={{ color: "#fca5a5", fontSize: 12 }}>
+            <div style={{ color: "var(--danger-text)", fontSize: 12 }}>
               ⚠️ لا توجد حلقات محمّلة — تأكد من الاتصال ثم أعد فتح النافذة
             </div>
           )}
@@ -4731,8 +4972,8 @@ function RosterManager({
                     padding: "0 18px",
                     borderRadius: 14,
                     border: "none",
-                    background: busy || !newName.trim() ? "rgba(255,255,255,0.08)" : "linear-gradient(180deg,#22c55e,#15803d)",
-                    color: busy || !newName.trim() ? "rgba(255,255,255,0.35)" : "#fff",
+                    background: busy || !newName.trim() ? "rgb(var(--fg) / 0.08)" : "linear-gradient(180deg,#22c55e,#15803d)",
+                    color: busy || !newName.trim() ? "rgb(var(--fg) / 0.35)" : "#fff",
                     fontSize: 13,
                     fontWeight: 900,
                     cursor: busy || !newName.trim() ? "not-allowed" : "pointer",
@@ -4744,12 +4985,12 @@ function RosterManager({
               </div>
             ) : (
               <div style={{ marginBottom: 16 }}>
-                <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, fontWeight: 700, marginBottom: 6 }}>
+                <div style={{ color: "rgb(var(--fg) / 0.4)", fontSize: 11, fontWeight: 700, marginBottom: 6 }}>
                   اكتب اسم الطالب في كل سطر — تُضاف كلها مرة واحدة
                 </div>
                 {bulkNames.map((name, idx) => (
                   <div key={idx} style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 6 }}>
-                    <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 11, fontWeight: 800, width: 16, textAlign: "center" }}>
+                    <span style={{ color: "rgb(var(--fg) / 0.35)", fontSize: 11, fontWeight: 800, width: 16, textAlign: "center" }}>
                       {idx + 1}
                     </span>
                     <input
@@ -4784,7 +5025,7 @@ function RosterManager({
                     borderRadius: 12,
                     border: "1px dashed rgba(129,140,248,0.45)",
                     background: "rgba(129,140,248,0.08)",
-                    color: "#c7d2fe",
+                    color: "var(--accent-text)",
                     fontSize: 12,
                     fontWeight: 800,
                     cursor: "pointer",
@@ -4804,9 +5045,9 @@ function RosterManager({
                     border: "none",
                     background:
                       busy || !bulkNames.some((n) => n.trim())
-                        ? "rgba(255,255,255,0.08)"
+                        ? "rgb(var(--fg) / 0.08)"
                         : "linear-gradient(180deg,#22c55e,#15803d)",
-                    color: busy || !bulkNames.some((n) => n.trim()) ? "rgba(255,255,255,0.35)" : "#fff",
+                    color: busy || !bulkNames.some((n) => n.trim()) ? "rgb(var(--fg) / 0.35)" : "#fff",
                     fontSize: 13,
                     fontWeight: 900,
                     cursor: busy || !bulkNames.some((n) => n.trim()) ? "not-allowed" : "pointer",
@@ -4820,7 +5061,7 @@ function RosterManager({
             <label style={S.label}>الطلاب ({currentClass.students.length})</label>
             <div>
               {currentClass.students.length === 0 && (
-                <div style={{ color: "rgba(255,255,255,0.35)", fontSize: 12, textAlign: "center", padding: 18 }}>
+                <div style={{ color: "rgb(var(--fg) / 0.35)", fontSize: 12, textAlign: "center", padding: 18 }}>
                   لا يوجد طلاب بعد — أضف أول طالب من الأعلى
                 </div>
               )}
@@ -4834,12 +5075,12 @@ function RosterManager({
                     gap: 8,
                     padding: "10px 12px",
                     borderRadius: 12,
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgb(var(--fg) / 0.08)",
+                    background: "rgb(var(--fg) / 0.04)",
                     marginBottom: 6,
                   }}
                 >
-                  <span style={{ color: "rgba(255,255,255,0.85)", fontSize: 13, fontWeight: 700, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</span>
+                  <span style={{ color: "rgb(var(--fg) / 0.85)", fontSize: 13, fontWeight: 700, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</span>
                   {confirmRemove === name ? (
                     <div style={{ display: "flex", gap: 6, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
                       <button
@@ -4851,7 +5092,7 @@ function RosterManager({
                           borderRadius: 10,
                           border: "1px solid rgba(239,68,68,0.5)",
                           background: "rgba(239,68,68,0.25)",
-                          color: "#fecaca",
+                          color: "var(--danger-text)",
                           fontSize: 11,
                           fontWeight: 800,
                           cursor: busy ? "not-allowed" : "pointer",
@@ -4874,9 +5115,9 @@ function RosterManager({
                       style={{
                         padding: "6px 10px",
                         borderRadius: 10,
-                        border: "1px solid rgba(255,255,255,0.12)",
-                        background: "rgba(255,255,255,0.06)",
-                        color: "rgba(255,255,255,0.5)",
+                        border: "1px solid rgb(var(--fg) / 0.12)",
+                        background: "rgb(var(--fg) / 0.06)",
+                        color: "rgb(var(--fg) / 0.5)",
                         fontSize: 11,
                         fontWeight: 700,
                         cursor: "pointer",
@@ -5016,8 +5257,10 @@ function WeeklyStars({
   schoolClasses,
   refreshKey,
   fullRefreshKey,
+  defaultExpanded = false,
 }: {
   schoolClasses: SchoolClass[];
+  defaultExpanded?: boolean;
   refreshKey: number; // تسجيل جديد: نحدّث اليوم الحالي فقط
   fullRefreshKey: number; // تعديل تسجيلات أيام سابقة: نعيد قراءة الأسبوع كله
 }) {
@@ -5028,7 +5271,7 @@ function WeeklyStars({
   const [failed, setFailed] = useState(false);
   const [forceAll, setForceAll] = useState(0);
   // مقفلة افتراضياً حتى لا تأخذ مساحة كبيرة من صفحة التسجيل.
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(defaultExpanded);
   const lastFullRef = useRef(`${forceAll}|${fullRefreshKey}`);
 
   const classIds = schoolClasses.map((c) => c.classId).join(",");
@@ -5120,11 +5363,11 @@ function WeeklyStars({
         >
           <span style={{ ...S.sectionTitle, marginBottom: 0 }}>
             ⭐ نجوم الأسبوع
-            {starCount > 0 && <span style={{ color: "#fde047", marginInlineStart: 6 }}>({starCount})</span>}
+            {starCount > 0 && <span style={{ color: "var(--gold)", marginInlineStart: 6 }}>({starCount})</span>}
           </span>
           <span
             style={{
-              color: "#fff",
+              color: "var(--text)",
               fontSize: 12,
               fontWeight: 800,
               background: "rgba(253,224,71,0.14)",
@@ -5142,10 +5385,10 @@ function WeeklyStars({
           disabled={loading}
           className="smooth-btn"
           style={{
-            background: "rgba(255,255,255,0.06)",
-            border: "1px solid rgba(255,255,255,0.12)",
+            background: "rgb(var(--fg) / 0.06)",
+            border: "1px solid rgb(var(--fg) / 0.12)",
             borderRadius: 10,
-            color: "rgba(255,255,255,0.7)",
+            color: "rgb(var(--fg) / 0.7)",
             fontSize: 11,
             fontWeight: 700,
             padding: "4px 10px",
@@ -5158,9 +5401,9 @@ function WeeklyStars({
       </div>
       {expanded && (
       <>
-      <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, margin: "8px 0 10px" }}>
+      <div style={{ color: "rgb(var(--fg) / 0.4)", fontSize: 11, margin: "8px 0 10px" }}>
         مجموع نقاط الأسبوع من الأحد · تبدأ من جديد كل أسبوع
-        {failed && <span style={{ color: "#fbbf24" }}> · تعذر تحميل بعض الأيام</span>}
+        {failed && <span style={{ color: "var(--gold)" }}> · تعذر تحميل بعض الأيام</span>}
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {starsByClass.map(({ schoolClass, stars }) => {
@@ -5177,9 +5420,9 @@ function WeeklyStars({
             >
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: stars.length ? 6 : 0 }}>
                 <div style={{ width: 9, height: 9, borderRadius: "50%", background: color, boxShadow: `0 0 6px ${color}` }} />
-                <span style={{ color: "#fff", fontWeight: 800, fontSize: 13 }}>{schoolClass.className}</span>
+                <span style={{ color: "var(--text)", fontWeight: 800, fontSize: 13 }}>{schoolClass.className}</span>
                 {!stars.length && (
-                  <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 11, marginInlineStart: "auto" }}>
+                  <span style={{ color: "rgb(var(--fg) / 0.35)", fontSize: 11, marginInlineStart: "auto" }}>
                     {loading ? "..." : "لا توجد تسجيلات بعد"}
                   </span>
                 )}
@@ -5189,11 +5432,11 @@ function WeeklyStars({
                   key={star.name}
                   style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "3px 0" }}
                 >
-                  <span style={{ color: "#fff", fontSize: 13, fontWeight: 700 }}>
+                  <span style={{ color: "var(--text)", fontSize: 13, fontWeight: 700 }}>
                     <span style={{ marginInlineEnd: 6 }}>{MEDALS[star.rank - 1] || "🏅"}</span>
                     {star.name}
                   </span>
-                  <span style={{ color: "#fde047", fontWeight: 800, fontSize: 12, fontFamily: "monospace" }}>
+                  <span style={{ color: "var(--gold)", fontWeight: 800, fontSize: 12, fontFamily: "monospace" }}>
                     {formatPoints(star.total)} نقطة
                   </span>
                 </div>
@@ -5514,9 +5757,9 @@ function RegistrationsManager({
   const chipStyle = (selected: boolean, c: SchoolClass): React.CSSProperties => ({
     padding: "9px 13px",
     borderRadius: 12,
-    border: `1.5px solid ${selected ? classColorBySlot(c.slot) : "rgba(255,255,255,0.12)"}`,
-    background: selected ? `${classColorBySlot(c.slot)}33` : "rgba(255,255,255,0.05)",
-    color: selected ? "#fff" : "rgba(255,255,255,0.55)",
+    border: `1.5px solid ${selected ? classColorBySlot(c.slot) : "rgb(var(--fg) / 0.12)"}`,
+    background: selected ? `${classColorBySlot(c.slot)}33` : "rgb(var(--fg) / 0.05)",
+    color: selected ? "var(--text)" : "rgb(var(--fg) / 0.55)",
     fontSize: 12,
     fontWeight: 800,
     cursor: "pointer",
@@ -5536,7 +5779,7 @@ function RegistrationsManager({
     >
       <div
         style={{
-          background: "#0f172a",
+          background: "var(--sheet)",
           border: "1.5px solid rgba(56,189,248,0.4)",
           borderRadius: "22px 22px 0 0",
           width: "100%",
@@ -5563,12 +5806,12 @@ function RegistrationsManager({
             position: "sticky",
             top: 0,
             zIndex: 2,
-            background: "#0f172a",
+            background: "var(--sheet)",
             margin: "0 -16px 12px",
             padding: "18px 16px 12px",
           }}
         >
-          <div style={{ color: "#fff", fontWeight: 900, fontSize: 16 }}>🗂️ التسجيلات</div>
+          <div style={{ color: "var(--text)", fontWeight: 900, fontSize: 16 }}>🗂️ التسجيلات</div>
           <button onClick={onClose} className="smooth-btn" style={{ ...S.clearBtn, fontSize: 12 }}>
             ✕ إغلاق
           </button>
@@ -5602,9 +5845,9 @@ function RegistrationsManager({
               style={{
                 padding: "8px 13px",
                 borderRadius: 12,
-                border: "1.5px solid rgba(255,255,255,0.12)",
-                background: "rgba(255,255,255,0.05)",
-                color: "rgba(255,255,255,0.55)",
+                border: "1.5px solid rgb(var(--fg) / 0.12)",
+                background: "rgb(var(--fg) / 0.05)",
+                color: "rgb(var(--fg) / 0.55)",
                 fontSize: 12,
                 fontWeight: 800,
                 cursor: "pointer",
@@ -5648,9 +5891,9 @@ function RegistrationsManager({
                   flex: 1,
                   padding: "9px 6px",
                   borderRadius: 12,
-                  border: `1.5px solid ${listFilter === opt.key ? accentColor : "rgba(255,255,255,0.12)"}`,
-                  background: listFilter === opt.key ? `${accentColor}30` : "rgba(255,255,255,0.05)",
-                  color: listFilter === opt.key ? "#fff" : "rgba(255,255,255,0.55)",
+                  border: `1.5px solid ${listFilter === opt.key ? accentColor : "rgb(var(--fg) / 0.12)"}`,
+                  background: listFilter === opt.key ? `${accentColor}30` : "rgb(var(--fg) / 0.05)",
+                  color: listFilter === opt.key ? "var(--text)" : "rgb(var(--fg) / 0.55)",
                   fontSize: 12,
                   fontWeight: 800,
                   cursor: "pointer",
@@ -5663,14 +5906,14 @@ function RegistrationsManager({
         )}
         <div>
           {loading && (
-            <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, textAlign: "center", padding: 18 }}>
+            <div style={{ color: "rgb(var(--fg) / 0.5)", fontSize: 12, textAlign: "center", padding: 18 }}>
               ⏳ جارٍ التحميل...
             </div>
           )}
           {!loading && showMissing && !adding && currentClass && (
             <div>
               {missingStudents.length === 0 && (
-                <div style={{ color: "#86efac", fontSize: 13, fontWeight: 800, textAlign: "center", padding: 16 }}>
+                <div style={{ color: "var(--ok)", fontSize: 13, fontWeight: 800, textAlign: "center", padding: 16 }}>
                   ✅ كل طلاب الحلقة مسجّلون في هذا اليوم
                 </div>
               )}
@@ -5684,12 +5927,12 @@ function RegistrationsManager({
                     gap: 8,
                     padding: "9px 12px",
                     borderRadius: 12,
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgb(var(--fg) / 0.08)",
+                    background: "rgb(var(--fg) / 0.04)",
                     marginBottom: 6,
                   }}
                 >
-                  <span style={{ color: "#fff", fontWeight: 800, fontSize: 13 }}>
+                  <span style={{ color: "var(--text)", fontWeight: 800, fontSize: 13 }}>
                     {name}
                     {autoAbsentNames.has(normalizeStudentName(name)) && (
                       <span style={{ ...S.badge, marginInlineStart: 6 }}>غياب تلقائي</span>
@@ -5725,7 +5968,7 @@ function RegistrationsManager({
 
           {!loading && !showMissing && entries.length === 0 && !adding && (
             <div style={{ textAlign: "center", padding: "16px 12px" }}>
-              <div style={{ color: "rgba(255,255,255,0.35)", fontSize: 12, marginBottom: 12 }}>
+              <div style={{ color: "rgb(var(--fg) / 0.35)", fontSize: 12, marginBottom: 12 }}>
                 لا توجد تسجيلات بهذا اليوم لهذه الحلقة
               </div>
               {currentClass && (
@@ -5769,7 +6012,7 @@ function RegistrationsManager({
                 borderRadius: 12,
                 border: "1px dashed rgba(34,197,94,0.5)",
                 background: "rgba(34,197,94,0.1)",
-                color: "#bbf7d0",
+                color: "var(--ok)",
                 fontSize: 12,
                 fontWeight: 800,
                 cursor: "pointer",
@@ -5790,11 +6033,11 @@ function RegistrationsManager({
                 marginBottom: 10,
               }}
             >
-              <div style={{ color: "#fff", fontWeight: 900, fontSize: 13, marginBottom: 8 }}>
+              <div style={{ color: "var(--text)", fontWeight: 900, fontSize: 13, marginBottom: 8 }}>
                 ➕ إضافة تسجيل ليوم {dateStr}
               </div>
 
-              <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontWeight: 700, marginBottom: 6 }}>
+              <div style={{ color: "rgb(var(--fg) / 0.5)", fontSize: 11, fontWeight: 700, marginBottom: 6 }}>
                 اختر الطالب
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
@@ -5809,9 +6052,9 @@ function RegistrationsManager({
                     style={{
                       padding: "7px 11px",
                       borderRadius: 10,
-                      border: `1.5px solid ${pickStudent === name && !manualName.trim() ? "#22c55e" : "rgba(255,255,255,0.12)"}`,
-                      background: pickStudent === name && !manualName.trim() ? "rgba(34,197,94,0.25)" : "rgba(255,255,255,0.05)",
-                      color: pickStudent === name && !manualName.trim() ? "#fff" : "rgba(255,255,255,0.55)",
+                      border: `1.5px solid ${pickStudent === name && !manualName.trim() ? "#22c55e" : "rgb(var(--fg) / 0.12)"}`,
+                      background: pickStudent === name && !manualName.trim() ? "rgba(34,197,94,0.25)" : "rgb(var(--fg) / 0.05)",
+                      color: pickStudent === name && !manualName.trim() ? "var(--text)" : "rgb(var(--fg) / 0.55)",
                       fontSize: 12,
                       fontWeight: 800,
                       cursor: "pointer",
@@ -5821,7 +6064,7 @@ function RegistrationsManager({
                   </button>
                 ))}
                 {currentClass.students.length === 0 && (
-                  <div style={{ color: "rgba(255,255,255,0.35)", fontSize: 11 }}>لا يوجد طلاب في هذه الحلقة</div>
+                  <div style={{ color: "rgb(var(--fg) / 0.35)", fontSize: 11 }}>لا يوجد طلاب في هذه الحلقة</div>
                 )}
               </div>
 
@@ -5851,7 +6094,7 @@ function RegistrationsManager({
 
               <div style={{ display: "flex", gap: 14, margin: "10px 0" }}>
                 <label
-                  style={{ display: "flex", alignItems: "center", gap: 6, color: "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+                  style={{ display: "flex", alignItems: "center", gap: 6, color: "rgb(var(--fg) / 0.7)", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
                 >
                   <input
                     type="checkbox"
@@ -5862,7 +6105,7 @@ function RegistrationsManager({
                   حقيبة: {addValues.haqiba ? "نعم" : "لا"}
                 </label>
                 <label
-                  style={{ display: "flex", alignItems: "center", gap: 6, color: "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+                  style={{ display: "flex", alignItems: "center", gap: 6, color: "rgb(var(--fg) / 0.7)", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
                 >
                   <input
                     type="checkbox"
@@ -5874,7 +6117,7 @@ function RegistrationsManager({
                 </label>
               </div>
 
-              <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10.5, marginBottom: 8 }}>
+              <div style={{ color: "rgb(var(--fg) / 0.4)", fontSize: 10.5, marginBottom: 8 }}>
                 يُحسب الحضور تلقائياً (+10) — ويُحدّث صف هذا اليوم بنفس التاريخ في تقرير الحلقة.
               </div>
 
@@ -5888,8 +6131,8 @@ function RegistrationsManager({
                     padding: "11px",
                     borderRadius: 12,
                     border: "none",
-                    background: saving ? "rgba(255,255,255,0.08)" : "linear-gradient(180deg,#22c55e,#15803d)",
-                    color: saving ? "rgba(255,255,255,0.35)" : "#fff",
+                    background: saving ? "rgb(var(--fg) / 0.08)" : "linear-gradient(180deg,#22c55e,#15803d)",
+                    color: saving ? "rgb(var(--fg) / 0.35)" : "#fff",
                     fontSize: 13,
                     fontWeight: 900,
                     cursor: saving ? "not-allowed" : "pointer",
@@ -5921,14 +6164,14 @@ function RegistrationsManager({
                 style={{
                   padding: "10px 12px",
                   borderRadius: 12,
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgb(var(--fg) / 0.08)",
+                  background: "rgb(var(--fg) / 0.04)",
                   marginBottom: 8,
                 }}
               >
                 {editing?.studentName === entry.studentName ? (
                   <>
-                    <div style={{ color: "#fff", fontWeight: 800, fontSize: 13, marginBottom: 8 }}>
+                    <div style={{ color: "var(--text)", fontWeight: 800, fontSize: 13, marginBottom: 8 }}>
                       ✏️ تعديل: {entry.studentName}
                     </div>
                     <SurahRangeField
@@ -5949,7 +6192,7 @@ function RegistrationsManager({
                     />
                     <div style={{ display: "flex", gap: 14, margin: "10px 0" }}>
                       <label
-                        style={{ display: "flex", alignItems: "center", gap: 6, color: "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+                        style={{ display: "flex", alignItems: "center", gap: 6, color: "rgb(var(--fg) / 0.7)", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
                       >
                         <input
                           type="checkbox"
@@ -5960,7 +6203,7 @@ function RegistrationsManager({
                         حقيبة: {editValues.haqiba ? "نعم" : "لا"}
                       </label>
                       <label
-                        style={{ display: "flex", alignItems: "center", gap: 6, color: "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+                        style={{ display: "flex", alignItems: "center", gap: 6, color: "rgb(var(--fg) / 0.7)", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
                       >
                         <input
                           type="checkbox"
@@ -5981,8 +6224,8 @@ function RegistrationsManager({
                           padding: "11px",
                           borderRadius: 12,
                           border: "none",
-                          background: saving ? "rgba(255,255,255,0.08)" : "linear-gradient(180deg,#22c55e,#15803d)",
-                          color: saving ? "rgba(255,255,255,0.35)" : "#fff",
+                          background: saving ? "rgb(var(--fg) / 0.08)" : "linear-gradient(180deg,#22c55e,#15803d)",
+                          color: saving ? "rgb(var(--fg) / 0.35)" : "#fff",
                           fontSize: 13,
                           fontWeight: 900,
                           cursor: saving ? "not-allowed" : "pointer",
@@ -6005,10 +6248,10 @@ function RegistrationsManager({
                 ) : (
                   <>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                      <span style={{ color: "#fff", fontWeight: 800, fontSize: 13 }}>{entry.studentName}</span>
-                      <span style={{ color: "#fde047", fontWeight: 900, fontSize: 13 }}>{entry.total} نقطة</span>
+                      <span style={{ color: "var(--text)", fontWeight: 800, fontSize: 13 }}>{entry.studentName}</span>
+                      <span style={{ color: "var(--gold)", fontWeight: 900, fontSize: 13 }}>{entry.total} نقطة</span>
                     </div>
-                    <div style={{ color: "rgba(255,255,255,0.45)", fontSize: 11, lineHeight: 1.7, marginBottom: 8 }}>
+                    <div style={{ color: "rgb(var(--fg) / 0.45)", fontSize: 11, lineHeight: 1.7, marginBottom: 8 }}>
                       حفظ: {entry.hifzFrom || "—"} → {entry.hifzTo || "—"} ({entry.hifzScore || "—"}) | مراجعة: {entry.muraFrom || "—"} → {entry.muraTo || "—"} ({entry.muraScore || "—"}) | حقيبة: {entry.haqiba || "—"} | استماع: {entry.istima || "—"}
                     </div>
                     {confirmDelete === entry.studentName ? (
@@ -6023,7 +6266,7 @@ function RegistrationsManager({
                             borderRadius: 10,
                             border: "1px solid rgba(239,68,68,0.5)",
                             background: "rgba(239,68,68,0.25)",
-                            color: "#fecaca",
+                            color: "var(--danger-text)",
                             fontSize: 12,
                             fontWeight: 800,
                             cursor: saving ? "not-allowed" : "pointer",
@@ -6046,7 +6289,7 @@ function RegistrationsManager({
                             borderRadius: 10,
                             border: "1px solid rgba(56,189,248,0.35)",
                             background: "rgba(56,189,248,0.12)",
-                            color: "#bae6fd",
+                            color: "var(--info-text)",
                             fontSize: 12,
                             fontWeight: 800,
                             cursor: "pointer",
@@ -6061,9 +6304,9 @@ function RegistrationsManager({
                             flex: 1,
                             padding: "9px",
                             borderRadius: 10,
-                            border: "1px solid rgba(255,255,255,0.12)",
-                            background: "rgba(255,255,255,0.06)",
-                            color: "rgba(255,255,255,0.5)",
+                            border: "1px solid rgb(var(--fg) / 0.12)",
+                            background: "rgb(var(--fg) / 0.06)",
+                            color: "rgb(var(--fg) / 0.5)",
                             fontSize: 12,
                             fontWeight: 700,
                             cursor: "pointer",
