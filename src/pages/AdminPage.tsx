@@ -5190,8 +5190,10 @@ function RegistrationsManager({
 
   // إضافة تسجيل ليوم محدد (حتى لو كان اليوم بعيداً بأسبوع أو أكثر).
   const [adding, setAdding] = useState(false);
-  // عرض «لم يتم التسجيل»: طلاب الحلقة الذين ليس لهم تسجيل من المعلم في اليوم المختار.
-  const [showMissing, setShowMissing] = useState(false);
+  // فلتر القائمة: الكل (افتراضي)، تم التسجيل (بدون الغياب التلقائي)،
+  // لم يتم التسجيل (طلاب الحلقة الذين ليس لهم تسجيل من المعلم في اليوم المختار).
+  const [listFilter, setListFilter] = useState<"all" | "done" | "missing">("all");
+  const showMissing = listFilter === "missing";
   const [pickStudent, setPickStudent] = useState("");
   const [manualName, setManualName] = useState("");
   const [addValues, setAddValues] = useState<HistoryFormValues>(emptyHistoryForm());
@@ -5247,9 +5249,8 @@ function RegistrationsManager({
   const autoAbsentNames = new Set(
     entries.filter((e) => String(e.hudur || "").trim() === "غائب").map((e) => normalizeStudentName(e.studentName)),
   );
-  const registeredNames = new Set(
-    entries.filter((e) => String(e.hudur || "").trim() !== "غائب").map((e) => normalizeStudentName(e.studentName)),
-  );
+  const registeredEntries = entries.filter((e) => String(e.hudur || "").trim() !== "غائب");
+  const registeredNames = new Set(registeredEntries.map((e) => normalizeStudentName(e.studentName)));
   const missingStudents = (currentClass?.students || []).filter(
     (name) => !registeredNames.has(normalizeStudentName(name)),
   );
@@ -5592,21 +5593,22 @@ function RegistrationsManager({
         </label>
         {currentClass && !loading && !adding && (
           <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
-            {[
-              { missing: false, label: `📋 التسجيلات (${entries.length})` },
-              { missing: true, label: `⏳ لم يتم التسجيل (${missingStudents.length})` },
-            ].map((opt) => (
+            {([
+              { key: "all", label: `📋 الكل (${entries.length})` },
+              { key: "done", label: `✅ تم التسجيل (${registeredEntries.length})` },
+              { key: "missing", label: `⏳ لم يتم التسجيل (${missingStudents.length})` },
+            ] as const).map((opt) => (
               <button
-                key={opt.label}
-                onClick={() => setShowMissing(opt.missing)}
+                key={opt.key}
+                onClick={() => setListFilter(opt.key)}
                 className="smooth-btn"
                 style={{
                   flex: 1,
-                  padding: "9px 8px",
+                  padding: "9px 6px",
                   borderRadius: 12,
-                  border: `1.5px solid ${showMissing === opt.missing ? accentColor : "rgba(255,255,255,0.12)"}`,
-                  background: showMissing === opt.missing ? `${accentColor}30` : "rgba(255,255,255,0.05)",
-                  color: showMissing === opt.missing ? "#fff" : "rgba(255,255,255,0.55)",
+                  border: `1.5px solid ${listFilter === opt.key ? accentColor : "rgba(255,255,255,0.12)"}`,
+                  background: listFilter === opt.key ? `${accentColor}30` : "rgba(255,255,255,0.05)",
+                  color: listFilter === opt.key ? "#fff" : "rgba(255,255,255,0.55)",
                   fontSize: 12,
                   fontWeight: 800,
                   cursor: "pointer",
@@ -5653,7 +5655,7 @@ function RegistrationsManager({
                   </span>
                   <button
                     onClick={() => {
-                      setShowMissing(false);
+                      setListFilter("all");
                       setAdding(true);
                       setPickStudent(name);
                       setManualName("");
@@ -5871,7 +5873,7 @@ function RegistrationsManager({
 
           {!loading &&
             !showMissing &&
-            entries.map((entry) => (
+            (listFilter === "done" ? registeredEntries : entries).map((entry) => (
               <div
                 key={entry.studentName}
                 style={{
