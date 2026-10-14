@@ -8,6 +8,7 @@
 | `ParentReport.gs` / `ParentReportWeb.gs` | التقرير الأسبوعي لولي الأمر |
 | `ParentPeriodReport.gs` | التقرير الختامي لولي الأمر |
 | `ParentReportsDashboard.gs` | لوحة تقارير أولياء الأمور |
+| `ReportsApi.gs` | بيانات JSON سريعة لصفحات التقارير في الموقع (`#/reports` و `#/report`) |
 | `*.html` | قوالب صفحات التقارير |
 
 ## التطبيق

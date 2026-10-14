@@ -21,7 +21,7 @@ function showParentReportWeb_(e) {
   const p = (e && e.parameter) || {};
   const studentName = String(p.studentName || PWR_DEFAULT_STUDENT).trim();
   const teamId = pwrNormalizeTeamId_(p.teamId || PWR_DEFAULT_TEAM_ID);
-  const weekNumber = Math.max(1, Math.min(6, Number(p.week || p.weekNumber || PWR_DEFAULT_WEEK)));
+  const weekNumber = Math.max(1, Math.min((typeof COURSE_WEEKS_COUNT !== 'undefined') ? COURSE_WEEKS_COUNT : 16, Number(p.week || p.weekNumber || PWR_DEFAULT_WEEK)));
   const teacherName = String(p.teacherName || PWR_DEFAULT_TEACHER).trim();
 
   const report = pwrBuildParentReportData_(studentName, teamId, weekNumber, teacherName);

@@ -5104,6 +5104,9 @@ function doGet(e) {
   if (action === 'teamPeriodReport') return showTeamPeriodReportWeb_(e);
   if (action === 'parentReports') return showParentReportsDashboard_(e);
 
+  // بيانات JSON لصفحات التقارير السريعة في الموقع
+  if (action === 'reportData' || action === 'reportsDashboardData') return handleReportsApi_(e);
+
   if (action === 'getClasses') {
     try {
       const ss = SpreadsheetApp.openById(SPREADSHEET_ID);

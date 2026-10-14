@@ -2429,6 +2429,12 @@ export default function AdminPage() {
               onClick={() => { setSettingsOpen(false); setRosterModalOpen(true); }}
             />
             <SettingsRow
+              icon="📄"
+              title="تقارير أولياء الأمور"
+              sub="روابط التقارير الأسبوعية وإرسالها واتساب"
+              onClick={() => { setSettingsOpen(false); window.location.hash = "#/reports"; }}
+            />
+            <SettingsRow
               icon="🔄"
               title="تحديث الأسماء من الشيت"
               sub={studentsLoading ? "جارٍ التحديث…" : "إعادة قراءة الحلقات والطلاب"}
