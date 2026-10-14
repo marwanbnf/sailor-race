@@ -50,9 +50,15 @@ function getParentReportsDashboardUrl() {
 
 
 function prdGetPublicWebAppUrl_() {
+  // الرابط العام الثابت للنشر (من Deploy ← Manage deployments ← Web app URL)،
+  // محفوظ في خصائص السكربت باسم PUBLIC_WEB_APP_URL.
+  // ScriptApp.getService().getUrl() يرجع رابط «رأس» المشروع وليس رابط النشر الفعلي،
+  // فروابطه تطلب «إذن الدخول» من أولياء الأمور، لذلك نستخدمه احتياطاً فقط.
+  let saved = '';
+  try { saved = String(PropertiesService.getScriptProperties().getProperty('PUBLIC_WEB_APP_URL') || '').trim(); } catch (e) {}
+  if (saved) return saved.replace(/\?.*$/, '').replace(/\/dev$/, '/exec');
   const raw = String(ScriptApp.getService().getUrl() || '').trim();
   if (!raw) return '';
-  // رابط /dev يحتاج صلاحية على مشروع Apps Script. رابط /exec هو رابط النشر العام.
   return raw.replace(/\/dev(?:\?.*)?$/, '/exec');
 }
 
