@@ -227,7 +227,7 @@ function Bar({ label, value, icon }: { label: string; value: number; icon: strin
         <b style={{ color: toneFor(value) }}>{value}%</b>
       </div>
       <div className="rq-bar-track">
-        <div className="rq-bar-fill" style={{ width: `${value}%`, background: toneFor(value) }} />
+        <div className="rq-bar-fill" style={{ transform: `scaleX(${value / 100})`, background: toneFor(value) }} />
       </div>
     </div>
   );
@@ -584,7 +584,7 @@ export function ReportsDashboardPage() {
                       )}
                     </div>
                     <div className="rq-bar-track rq-row-bar">
-                      <div className="rq-bar-fill" style={{ width: `${r.percent}%`, background: toneFor(r.percent) }} />
+                      <div className="rq-bar-fill" style={{ transform: `scaleX(${r.percent / 100})`, background: toneFor(r.percent) }} />
                     </div>
                   </Link>
                   <div className="rq-row-actions">
@@ -664,7 +664,7 @@ body { background: var(--page-bg); color: var(--text); }
 .rq-bars { display: flex; flex-direction: column; gap: 12px; }
 .rq-bar-head { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 6px; }
 .rq-bar-track { height: 8px; border-radius: 999px; background: rgb(var(--fg) / 0.08); overflow: hidden; }
-.rq-bar-fill { height: 100%; border-radius: 999px; transition: width 0.8s ease; }
+.rq-bar-fill { width: 100%; height: 100%; border-radius: 999px; transform-origin: right center; transition: transform 0.8s ease; }
 .rq-assign { display: grid; gap: 10px; }
 .rq-assign > div { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); }
 .rq-assign b { font-weight: 700; }
