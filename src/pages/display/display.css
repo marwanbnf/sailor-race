@@ -1,0 +1,789 @@
+/* ── Race board: the living Gulf sea ─────────────────────────────────────
+   Projector-first: thick strokes, large type, transform-only motion. */
+
+:root {
+  --sea-shallow: #46cfd9;
+  --sea-mid: #1a9cc2;
+  --sea-deep: #0e6c9c;
+  --sea-abyss: #0a4775;
+  --lagoon: #8ff0dd;
+  --foam: #f4fffd;
+  --sand: #f2d28b;
+  --sand-deep: #c9974a;
+  --rope: #e9c37a;
+  --rope-dark: #a5732f;
+  --gold: #ffd25c;
+  --gold-hot: #ffb627;
+  --coral: #ff5d4f;
+  --coral-deep: #c9372e;
+  --ink: #062a3b;
+  --ink-2: #0a3a50;
+  --ink-line: rgba(143, 240, 221, 0.18);
+  --paper: #fff8e8;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --font-display: "Baloo Bhaijaan 2", "Tajawal", sans-serif;
+  --font-body: "Tajawal", sans-serif;
+}
+
+body.display-page {
+  background: var(--ink);
+  overflow: hidden;
+}
+body.display-page ::selection {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+.rb-root {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  direction: rtl;
+  display: grid;
+  grid-template-columns: var(--rb-board-w, clamp(270px, 21vw, 380px)) 1fr;
+  font-family: var(--font-body);
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* ── Board (map area) ── */
+.rb-board {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(120% 90% at 16% 6%, rgba(255, 252, 214, 0.32) 0%, transparent 42%),
+    linear-gradient(162deg, var(--sea-shallow) 0%, var(--sea-mid) 30%, var(--sea-deep) 64%, var(--sea-abyss) 100%);
+}
+.rb-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* depth vignette */
+.rb-vignette {
+  background: radial-gradient(130% 110% at 50% 45%, transparent 55%, rgba(3, 30, 58, 0.42) 100%);
+  z-index: 3;
+}
+
+/* drifting wave glints: an oversized tile layer translated by exactly one tile */
+.rb-glints {
+  position: absolute;
+  top: -240px;
+  left: -360px;
+  right: -360px;
+  bottom: -240px;
+  background-repeat: repeat;
+  will-change: transform;
+}
+.rb-glints--near {
+  background-size: 360px 240px;
+  opacity: 0.55;
+  animation: rb-drift-near 38s linear infinite;
+}
+.rb-glints--far {
+  background-size: 220px 150px;
+  opacity: 0.35;
+  animation: rb-drift-far 64s linear infinite;
+}
+@keyframes rb-drift-near {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(360px, 240px, 0); }
+}
+@keyframes rb-drift-far {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-220px, 150px, 0); }
+}
+
+/* cloud shadows sliding over the water */
+.rb-cloud {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(4, 44, 78, 0.26), rgba(4, 44, 78, 0.12) 55%, transparent);
+  will-change: transform;
+  animation: rb-cloud linear infinite;
+}
+@keyframes rb-cloud {
+  from { transform: translate3d(-60vw, 0, 0); }
+  to { transform: translate3d(120vw, 0, 0); }
+}
+
+/* sun sparkle */
+.rb-sparkle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 10px 3px rgba(255, 255, 255, 0.7);
+  animation: rb-twinkle 3.2s ease-in-out infinite;
+}
+@keyframes rb-twinkle {
+  0%, 100% { opacity: 0; transform: scale(0.3); }
+  45% { opacity: 1; transform: scale(1); }
+  60% { opacity: 0.2; transform: scale(0.6); }
+}
+
+/* ── Islands ── */
+.rb-island {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 10;
+  pointer-events: none;
+}
+.rb-lagoon {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(143, 240, 221, 0.75) 0%, rgba(98, 222, 214, 0.45) 45%, rgba(70, 207, 217, 0.12) 78%, transparent 100%);
+}
+.rb-lagoon-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid rgba(244, 255, 253, 0.55);
+  animation: rb-ring 4.8s var(--ease-out) infinite;
+}
+@keyframes rb-ring {
+  0% { transform: scale(0.82); opacity: 0.9; }
+  100% { transform: scale(1.28); opacity: 0; }
+}
+.rb-island img {
+  position: relative;
+  display: block;
+  filter: drop-shadow(0 14px 14px rgba(3, 35, 60, 0.45));
+  animation: rb-island-float 7s ease-in-out infinite;
+}
+@keyframes rb-island-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.rb-island--reached img {
+  filter: drop-shadow(0 14px 14px rgba(3, 35, 60, 0.45)) drop-shadow(0 0 18px rgba(255, 210, 92, 0.65));
+}
+.rb-island--celebrate .rb-lagoon {
+  animation: rb-lagoon-flash 1.2s var(--ease-out) 3;
+}
+@keyframes rb-lagoon-flash {
+  0% { filter: brightness(1); }
+  30% { filter: brightness(1.6) saturate(1.3); }
+  100% { filter: brightness(1); }
+}
+.rb-plate {
+  position: relative;
+  margin-top: 6px;
+  padding: 0.18em 0.85em 0.22em;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #fff3cf, var(--sand));
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 1.1;
+  white-space: nowrap;
+  box-shadow: 0 4px 0 var(--sand-deep), 0 10px 18px rgba(3, 30, 55, 0.35);
+  text-align: center;
+}
+.rb-plate small {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3em;
+  font-family: var(--font-body);
+  font-weight: 800;
+  font-size: 0.66em;
+  color: #6b4a14;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Buoys ── */
+.rb-buoy {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+.rb-buoy-body {
+  animation: rb-bob 3.6s ease-in-out infinite;
+  transform-origin: 50% 85%;
+}
+@keyframes rb-bob {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-3px) rotate(3deg); }
+}
+.rb-buoy-lamp {
+  transition: fill 600ms var(--ease-out), opacity 600ms var(--ease-out);
+}
+.rb-buoy--lit .rb-buoy-lamp-glow {
+  animation: rb-lamp 2.4s ease-in-out infinite;
+}
+@keyframes rb-lamp {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+.rb-buoy-value {
+  margin-top: 2px;
+  padding: 0.05em 0.55em 0.1em;
+  border-radius: 999px;
+  background: rgba(6, 42, 59, 0.78);
+  color: var(--sand);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  line-height: 1.25;
+  box-shadow: 0 3px 8px rgba(3, 30, 55, 0.35);
+}
+.rb-buoy--lit .rb-buoy-value {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+/* traveled-route flow */
+.rb-route-flow {
+  animation: rb-flow 1.6s linear infinite;
+}
+@keyframes rb-flow {
+  to { stroke-dashoffset: -28; }
+}
+
+/* ── Ships ── */
+.rb-ship {
+  position: absolute;
+  left: 0;
+  top: 0;
+  will-change: transform;
+}
+.rb-ship-heading {
+  transition: transform 520ms var(--ease-out);
+}
+.rb-ship-bob {
+  animation: rb-ship-bob 4.4s ease-in-out infinite;
+  transform-origin: 50% 80%;
+}
+@keyframes rb-ship-bob {
+  0%, 100% { transform: translateY(0) rotate(-2.2deg); }
+  30% { transform: translateY(-4px) rotate(1.4deg); }
+  65% { transform: translateY(2px) rotate(2.4deg); }
+}
+.rb-ship--moving .rb-ship-bob {
+  animation-duration: 1.6s;
+}
+.rb-sail {
+  transform-box: fill-box;
+  transform-origin: 85% 100%;
+  animation: rb-sail 3.2s ease-in-out infinite;
+}
+@keyframes rb-sail {
+  0%, 100% { transform: scaleX(1); }
+  50% { transform: scaleX(1.035) skewY(-0.6deg); }
+}
+.rb-pennant {
+  transform-box: fill-box;
+  transform-origin: 100% 50%;
+  animation: rb-pennant 0.9s ease-in-out infinite;
+}
+@keyframes rb-pennant {
+  0%, 100% { transform: skewY(0deg) scaleX(1); }
+  50% { transform: skewY(-8deg) scaleX(0.9); }
+}
+.rb-wake {
+  opacity: 0;
+  transition: opacity 400ms var(--ease-out);
+}
+.rb-ship--moving .rb-wake {
+  opacity: 1;
+}
+.rb-wake-line {
+  stroke-dasharray: 10 8;
+  animation: rb-wake 0.7s linear infinite;
+}
+@keyframes rb-wake {
+  to { stroke-dashoffset: 18; }
+}
+.rb-spray {
+  animation: rb-spray 0.9s ease-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@keyframes rb-spray {
+  0% { opacity: 0.9; transform: translate(0, 0) scale(0.6); }
+  100% { opacity: 0; transform: translate(-6px, -10px) scale(1.3); }
+}
+.rb-ship-tag {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translate(-50%, -6px);
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.1em 0.6em 0.16em;
+  border-radius: 999px;
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 1.15;
+  white-space: nowrap;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.28), 0 8px 16px rgba(3, 30, 55, 0.4);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+}
+.rb-ship-tag b {
+  font-family: var(--font-body);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  padding: 0 0.4em;
+  border-radius: 999px;
+  background: rgba(6, 42, 59, 0.55);
+  color: var(--gold);
+  font-size: 0.86em;
+}
+.rb-crown {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translate(-50%, 4px);
+  animation: rb-crown 2.2s ease-in-out infinite;
+  filter: drop-shadow(0 4px 6px rgba(3, 30, 55, 0.45)) drop-shadow(0 0 10px rgba(255, 210, 92, 0.75));
+}
+@keyframes rb-crown {
+  0%, 100% { translate: 0 0; rotate: -4deg; }
+  50% { translate: 0 -6px; rotate: 4deg; }
+}
+
+/* ── Harbor tally (leaderboard) ── */
+.rb-tally {
+  position: relative;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: clamp(14px, 1.6vw, 26px) clamp(14px, 1.4vw, 24px) clamp(12px, 1.4vw, 22px);
+  background:
+    radial-gradient(120% 50% at 50% 0%, rgba(70, 207, 217, 0.18), transparent 70%),
+    linear-gradient(180deg, var(--ink-2) 0%, var(--ink) 55%, #041f2d 100%);
+  box-shadow: 10px 0 30px rgba(2, 20, 32, 0.55);
+}
+.rb-tally::after {
+  /* rope seam where the harbor meets the sea */
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 6px;
+  background: repeating-linear-gradient(135deg, var(--rope) 0 5px, var(--rope-dark) 5px 9px);
+  box-shadow: 0 0 0 1px rgba(3, 25, 38, 0.6);
+}
+.rb-logo {
+  display: block;
+  width: clamp(120px, 11vw, 190px);
+  height: auto;
+  margin: 0 auto clamp(10px, 1.4vh, 20px);
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.35)) drop-shadow(0 0 12px rgba(70, 207, 217, 0.35));
+}
+.rb-tally h2 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(20px, 1.7vw, 30px);
+  line-height: 1.1;
+  color: var(--sand);
+  margin-bottom: clamp(8px, 1.2vh, 16px);
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+}
+.rb-tally h2 span {
+  flex: 1;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(242, 210, 139, 0.45));
+}
+.rb-rows {
+  position: relative;
+  flex: none;
+}
+.rb-row {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: var(--row-h);
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  grid-template-rows: 1fr auto;
+  column-gap: clamp(8px, 0.7vw, 12px);
+  align-items: center;
+  padding: 0 clamp(10px, 0.8vw, 14px) clamp(7px, 0.9vh, 11px);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.045);
+  box-shadow: inset 0 0 0 1px var(--ink-line);
+  transition: transform 900ms var(--ease-out), background 400ms ease, box-shadow 400ms ease;
+  will-change: transform;
+}
+.rb-row--first {
+  background: linear-gradient(90deg, rgba(255, 210, 92, 0.08), rgba(255, 210, 92, 0.2));
+  box-shadow: inset 0 0 0 2px rgba(255, 210, 92, 0.55), 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+.rb-row--moving {
+  box-shadow: inset 0 0 0 2px var(--team), 0 0 24px color-mix(in srgb, var(--team) 55%, transparent);
+}
+.rb-rank {
+  grid-row: 1 / 3;
+  align-self: center;
+  width: 1.5em;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(24px, 2vw, 36px);
+  line-height: 1;
+  text-align: center;
+  color: rgba(242, 210, 139, 0.75);
+  font-variant-numeric: tabular-nums;
+}
+.rb-row--first .rb-rank {
+  color: var(--gold);
+  text-shadow: 0 0 16px rgba(255, 210, 92, 0.6);
+}
+.rb-row-sail {
+  grid-row: 1;
+  display: block;
+}
+.rb-row-name {
+  grid-row: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(17px, 1.45vw, 26px);
+  line-height: 1.2;
+  color: #fff;
+}
+.rb-row-pts {
+  grid-row: 1;
+  font-family: var(--font-body);
+  font-weight: 900;
+  font-size: clamp(20px, 1.75vw, 32px);
+  line-height: 1;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+  direction: ltr;
+}
+.rb-track {
+  grid-row: 2;
+  grid-column: 2 / 5;
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+}
+.rb-track-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--team);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--team) 70%, transparent);
+  transform-origin: 100% 50%;
+  transition: transform 500ms var(--ease-out);
+}
+.rb-track-tick {
+  position: absolute;
+  top: -3px;
+  width: 4px;
+  height: 14px;
+  margin-right: -2px;
+  border-radius: 2px;
+  background: rgba(242, 210, 139, 0.55);
+}
+.rb-track-tick--on {
+  background: var(--gold);
+  box-shadow: 0 0 8px rgba(255, 210, 92, 0.8);
+}
+
+.rb-tally-foot {
+  margin-top: auto;
+  padding-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.rb-legend {
+  font-size: clamp(12px, 0.85vw, 15px);
+  font-weight: 700;
+  color: rgba(242, 210, 139, 0.7);
+  line-height: 1.4;
+}
+.rb-icon-btn {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  border: 0;
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--sand);
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(242, 210, 139, 0.28);
+  transition: background 160ms ease, transform 160ms var(--ease-out), color 160ms ease;
+}
+.rb-icon-btn:hover {
+  background: rgba(242, 210, 139, 0.16);
+  color: #fff;
+}
+.rb-icon-btn:active {
+  transform: scale(0.94);
+}
+.rb-icon-btn:focus-visible,
+.rb-move-btn:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+}
+
+/* ── Move ships call to action ── */
+.rb-move-btn {
+  position: absolute;
+  bottom: clamp(16px, 3vh, 34px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0.55em 1.5em 0.65em;
+  border: 0;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(20px, 1.7vw, 30px);
+  color: var(--ink);
+  background: linear-gradient(180deg, #ffe08a, var(--gold-hot));
+  box-shadow: 0 6px 0 #b77a12, 0 16px 34px rgba(3, 30, 55, 0.5);
+  cursor: pointer;
+  transition: transform 160ms var(--ease-out), box-shadow 160ms var(--ease-out), filter 200ms ease;
+  animation: rb-call 2s ease-in-out infinite;
+}
+.rb-move-btn:hover:not(:disabled) {
+  transform: translateX(-50%) translateY(-2px);
+  box-shadow: 0 8px 0 #b77a12, 0 20px 40px rgba(3, 30, 55, 0.5);
+}
+.rb-move-btn:active:not(:disabled) {
+  transform: translateX(-50%) translateY(4px);
+  box-shadow: 0 2px 0 #b77a12, 0 10px 20px rgba(3, 30, 55, 0.5);
+}
+.rb-move-btn:disabled {
+  cursor: progress;
+  animation: none;
+  filter: saturate(0.4) brightness(0.85);
+}
+@keyframes rb-call {
+  0%, 100% { box-shadow: 0 6px 0 #b77a12, 0 16px 34px rgba(3, 30, 55, 0.5), 0 0 0 0 rgba(255, 210, 92, 0.55); }
+  50% { box-shadow: 0 6px 0 #b77a12, 0 16px 34px rgba(3, 30, 55, 0.5), 0 0 0 16px rgba(255, 210, 92, 0); }
+}
+
+/* ── Arrival banner ── */
+.rb-arrival {
+  position: absolute;
+  top: clamp(16px, 4vh, 44px);
+  left: 50%;
+  z-index: 200;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0.35em 1.1em 0.45em;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(24px, 2.6vw, 46px);
+  line-height: 1.15;
+  white-space: nowrap;
+  box-shadow: 0 0 0 4px var(--team), 0 0 0 8px rgba(6, 42, 59, 0.6), 0 24px 50px rgba(2, 20, 32, 0.55);
+  animation: rb-arrival-in 700ms var(--ease-out) both;
+}
+.rb-arrival em {
+  font-style: normal;
+  color: var(--gold);
+}
+.rb-arrival--out {
+  animation: rb-arrival-out 380ms ease-in both;
+}
+@keyframes rb-arrival-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(-40px) scale(0.9); filter: blur(8px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); filter: blur(0); }
+}
+@keyframes rb-arrival-out {
+  to { opacity: 0; transform: translateX(-50%) translateY(-24px) scale(0.96); }
+}
+
+/* ── Confetti ── */
+.rb-confetti {
+  position: absolute;
+  pointer-events: none;
+  z-index: 190;
+}
+.rb-confetti i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  border-radius: 2px;
+  animation: rb-burst var(--dur) cubic-bezier(0.2, 0.7, 0.3, 1) var(--delay) both;
+}
+@keyframes rb-burst {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(0.6); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(1); }
+}
+.rb-rain i {
+  position: absolute;
+  top: -4vh;
+  display: block;
+  border-radius: 2px;
+  animation: rb-fall var(--dur) linear var(--delay) both;
+}
+@keyframes rb-fall {
+  0% { opacity: 1; transform: translate3d(0, 0, 0) rotate(0deg); }
+  100% { opacity: 0.9; transform: translate3d(var(--sway), 112vh, 0) rotate(var(--rot)); }
+}
+
+/* ── Student announcement ── */
+.rb-ann {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(80% 70% at 50% 45%, rgba(6, 42, 59, 0.72), rgba(2, 16, 26, 0.92));
+  animation: rb-fade 380ms ease-out both;
+  direction: rtl;
+  overflow: hidden;
+}
+@keyframes rb-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.rb-ann-card {
+  position: relative;
+  width: min(1080px, 84vw);
+  padding: clamp(28px, 4.5vh, 56px) clamp(24px, 4vw, 72px) clamp(30px, 5vh, 60px);
+  border-radius: 40px;
+  text-align: center;
+  background:
+    radial-gradient(90% 60% at 50% 0%, color-mix(in srgb, var(--team) 38%, transparent), transparent 70%),
+    linear-gradient(180deg, var(--ink-2), var(--ink));
+  box-shadow: 0 0 0 5px var(--team), 0 0 0 11px rgba(6, 42, 59, 0.7), 0 40px 90px rgba(0, 0, 0, 0.6);
+  animation: rb-ann-in 720ms var(--ease-out) 60ms both;
+}
+@keyframes rb-ann-in {
+  from { opacity: 0; transform: translateY(40px) scale(0.9); filter: blur(10px); }
+  to { opacity: 1; transform: none; filter: blur(0); }
+}
+.rb-ann-team {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  padding: 0.15em 0.9em 0.22em;
+  border-radius: 999px;
+  background: var(--team);
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(20px, 2vw, 34px);
+  box-shadow: 0 5px 0 rgba(0, 0, 0, 0.3);
+  animation: rb-rise 600ms var(--ease-out) 260ms both;
+}
+.rb-ann-name {
+  margin-top: 0.3em;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(48px, 7vw, 120px);
+  line-height: 1.1;
+  color: #fff;
+  text-wrap: balance;
+  animation: rb-rise 700ms var(--ease-out) 360ms both;
+}
+.rb-ann-pts {
+  margin-top: 0.12em;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.25em;
+  font-family: var(--font-body);
+  font-weight: 900;
+  font-size: clamp(64px, 9vw, 160px);
+  line-height: 1;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 40px rgba(255, 210, 92, 0.45), 0 6px 0 rgba(120, 75, 10, 0.55);
+  animation: rb-pop 800ms var(--ease-out) 560ms both;
+}
+.rb-ann-pts .rb-ann-unit {
+  font-family: var(--font-display);
+  font-size: 0.34em;
+  color: var(--sand);
+  text-shadow: none;
+}
+.rb-ann-pts--replay {
+  font-size: clamp(44px, 5.5vw, 96px);
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+@keyframes rb-rise {
+  from { opacity: 0; transform: translateY(26px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes rb-pop {
+  0% { opacity: 0; transform: scale(0.5); }
+  60% { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* Narrow screens (phone preview): the board leads, the tally follows below. */
+@media (max-width: 760px) {
+  body.display-page {
+    overflow-y: auto;
+  }
+  .rb-root {
+    height: auto;
+    min-height: 100vh;
+    grid-template-columns: 1fr;
+    grid-template-rows: 70vh auto;
+  }
+  .rb-board {
+    order: 1;
+  }
+  .rb-tally {
+    order: 2;
+  }
+  .rb-tally::after {
+    top: 0;
+    bottom: auto;
+    left: 0;
+    right: 0;
+    width: auto;
+    height: 6px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rb-glints, .rb-cloud, .rb-sparkle, .rb-lagoon-ring, .rb-island img,
+  .rb-buoy-body, .rb-ship-bob, .rb-sail, .rb-pennant, .rb-crown, .rb-route-flow,
+  .rb-wake-line, .rb-spray, .rb-move-btn {
+    animation: none !important;
+  }
+  .rb-confetti, .rb-rain {
+    display: none;
+  }
+  .rb-ann-card, .rb-ann-name, .rb-ann-team, .rb-ann-pts, .rb-arrival {
+    animation-name: rb-fade !important;
+  }
+}

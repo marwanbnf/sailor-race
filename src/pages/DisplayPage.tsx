@@ -3,6 +3,18 @@ import { ISLAND_IMAGES, ISLAND_NAMES } from "./islandData.ts";
 import { AdminPanelEmbed } from "./AdminPanelEmbed.tsx";
 import * as wsClient from "../websocket/websocketClient.ts";
 import { LOGO_B64 } from "../utils/logo.ts";
+import "@fontsource/baloo-bhaijaan-2/700.css";
+import "@fontsource/baloo-bhaijaan-2/800.css";
+import "@fontsource/tajawal/400.css";
+import "@fontsource/tajawal/700.css";
+import "@fontsource/tajawal/800.css";
+import "@fontsource/tajawal/900.css";
+import "./display/display.css";
+import { SeaBackdrop } from "./display/SeaBackdrop.tsx";
+import { Dhow, DHOW_ANCHOR_X, DHOW_ANCHOR_Y, DHOW_VB_H, DHOW_VB_W } from "./display/Dhow.tsx";
+import { Leaderboard } from "./display/Leaderboard.tsx";
+import { ArrivalCelebration, StudentAnnouncement, type ArrivalData } from "./display/Celebrations.tsx";
+import { AnchorIcon, CoinIcon, CrownIcon, FullscreenIcon, HelmIcon } from "./display/icons.tsx";
 
 
 // ── Types ──────────────────────────────────────────────────────────────
@@ -196,13 +208,54 @@ function getPathPositions(): Position[] {
   return pos;
 }
 
-function getSvgPath(): string {
-  return SEGMENTS.map((seg, i) => {
-    const s = ISLANDS_POS[i],
-      e = ISLANDS_POS[i + 1],
-      pre = i === 0 ? `M ${s.x} ${s.y}` : "";
-    return `${pre} C ${seg.cp1.x} ${seg.cp1.y}, ${seg.cp2.x} ${seg.cp2.y}, ${e.x} ${e.y}`;
-  }).join(" ");
+// ── Board pixel geometry (visual layout only) ─────────────────────────
+type BoardSize = { w: number; h: number };
+const BOARD_PAD_X = 0.07;
+const BOARD_PAD_Y = 0.085;
+
+function boardPoint(p: Position, size: BoardSize): Position {
+  const px = size.w * BOARD_PAD_X;
+  const py = size.h * BOARD_PAD_Y;
+  return {
+    x: px + (p.x / 100) * (size.w - 2 * px),
+    y: py + (p.y / 100) * (size.h - 2 * py),
+  };
+}
+
+// Direction of travel (in px) at a square-index on the route.
+function indexToTangent(index: number, size: BoardSize): Position {
+  const maxIndex = TOTAL_POSITIONS - 1;
+  const clamped = Math.max(0, Math.min(index, maxIndex));
+  const seg = Math.min(Math.floor(clamped / SQUARES_PER_SEGMENT), SEGMENTS.length - 1);
+  const t = (clamped - seg * SQUARES_PER_SEGMENT) / SQUARES_PER_SEGMENT;
+  const p0 = ISLANDS_POS[seg];
+  const p1 = SEGMENTS[seg].cp1;
+  const p2 = SEGMENTS[seg].cp2;
+  const p3 = ISLANDS_POS[seg + 1];
+  const mt = 1 - t;
+  const dx = 3 * mt * mt * (p1.x - p0.x) + 6 * mt * t * (p2.x - p1.x) + 3 * t * t * (p3.x - p2.x);
+  const dy = 3 * mt * mt * (p1.y - p0.y) + 6 * mt * t * (p2.y - p1.y) + 3 * t * t * (p3.y - p2.y);
+  const sx = (size.w * (1 - 2 * BOARD_PAD_X)) / 100;
+  const sy = (size.h * (1 - 2 * BOARD_PAD_Y)) / 100;
+  const vx = dx * sx;
+  const vy = dy * sy;
+  const len = Math.hypot(vx, vy) || 1;
+  return { x: vx / len, y: vy / len };
+}
+
+// Route polyline in px from square-index 0 up to `upTo`.
+function routePathD(size: BoardSize, upTo: number): string {
+  const end = Math.max(0, Math.min(upTo, TOTAL_POSITIONS - 1));
+  if (end <= 0) return "";
+  const steps = Math.max(2, Math.ceil(end * 14));
+  const pathPositions = getPathPositions();
+  let d = "";
+  for (let i = 0; i <= steps; i++) {
+    const idx = (end * i) / steps;
+    const p = boardPoint(indexToExactPos(idx, pathPositions), size);
+    d += `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)} `;
+  }
+  return d;
 }
 
 // Each board interval is worth 500 points.
@@ -392,292 +445,6 @@ function callAppsScriptJsonp(
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────
-function RealisticShip({ color }: { color: string }) {
-  const dark = color + "cc",
-    darker = color + "99",
-    gid = color.replace("#", "");
-  return (
-    <div style={{ position: "relative", width: 64, height: 48 }}>
-      <div
-        style={{
-          position: "absolute",
-          bottom: -6,
-          left: "50%",
-          transform: "translateX(-50%)",
-          width: 56,
-          height: 12,
-          borderRadius: "50%",
-          opacity: 0.4,
-          background:
-            "radial-gradient(ellipse,rgba(255,255,255,0.9),transparent 70%)",
-          filter: "blur(3px)",
-        }}
-      />
-      <svg
-        viewBox="0 0 86 64"
-        width={64}
-        height={48}
-        style={{
-          position: "absolute",
-          inset: 0,
-          overflow: "visible",
-          filter: "drop-shadow(0 5px 7px rgba(0,0,0,0.5))",
-        }}
-      >
-        <defs>
-          <linearGradient id={`hull-${gid}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} />
-            <stop offset="55%" stopColor={dark} />
-            <stop offset="100%" stopColor={darker} />
-          </linearGradient>
-          <linearGradient id={`upper-${gid}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#fff" />
-            <stop offset="100%" stopColor="#cbd5e1" />
-          </linearGradient>
-          <linearGradient id={`win-${gid}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#0ea5e9" />
-            <stop offset="100%" stopColor="#0c4a6e" />
-          </linearGradient>
-        </defs>
-        <line
-          x1="43"
-          y1="6"
-          x2="43"
-          y2="22"
-          stroke="#1e293b"
-          strokeWidth="1"
-          strokeLinecap="round"
-        />
-        <circle cx="43" cy="6" r="1.5" fill={color} />
-        <ellipse cx="43" cy="22" rx="5" ry="1.6" fill="#475569" />
-        <path
-          d="M 22 36 L 26 22 L 60 22 L 64 36 Z"
-          fill={`url(#upper-${gid})`}
-          stroke="rgba(0,0,0,0.35)"
-          strokeWidth="0.5"
-        />
-        <path
-          d="M 28 26 L 58 26 L 60 33 L 26 33 Z"
-          fill={`url(#win-${gid})`}
-          stroke="rgba(0,0,0,0.4)"
-          strokeWidth="0.4"
-        />
-        <line
-          x1="36"
-          y1="26"
-          x2="35"
-          y2="33"
-          stroke="rgba(255,255,255,0.5)"
-          strokeWidth="0.5"
-        />
-        <line
-          x1="43"
-          y1="26"
-          x2="43"
-          y2="33"
-          stroke="rgba(255,255,255,0.5)"
-          strokeWidth="0.5"
-        />
-        <line
-          x1="50"
-          y1="26"
-          x2="51"
-          y2="33"
-          stroke="rgba(255,255,255,0.5)"
-          strokeWidth="0.5"
-        />
-        <rect
-          x="20"
-          y="36"
-          width="46"
-          height="3"
-          fill={color}
-          stroke="rgba(0,0,0,0.4)"
-          strokeWidth="0.4"
-        />
-        <path
-          d="M 8 39 L 78 39 Q 82 39 80 44 Q 76 54 64 56 L 22 56 Q 12 56 8 49 Z"
-          fill={`url(#hull-${gid})`}
-          stroke="rgba(0,0,0,0.5)"
-          strokeWidth="0.6"
-        />
-        <path
-          d="M 12 44 L 76 44"
-          stroke="rgba(255,255,255,0.5)"
-          strokeWidth="0.7"
-          fill="none"
-        />
-        <circle cx="22" cy="46" r="1.3" fill="#fde047" />
-        <circle cx="32" cy="46" r="1.3" fill="#fde047" />
-        <circle cx="54" cy="46" r="1.3" fill="#fde047" />
-        <circle cx="64" cy="46" r="1.3" fill="#fde047" />
-        <path d="M 78 39 Q 84 41 80 44" fill={darker} />
-        <line
-          x1="10"
-          y1="39"
-          x2="10"
-          y2="30"
-          stroke="#1e293b"
-          strokeWidth="0.7"
-        />
-        <path d="M 10 30 L 16 32 L 10 34 Z" fill={color} />
-        <path
-          d="M 80 50 Q 84 48 86 51"
-          stroke="rgba(255,255,255,0.8)"
-          strokeWidth="0.7"
-          fill="none"
-        />
-        <path
-          d="M 4 48 Q 6 46 9 49"
-          stroke="rgba(255,255,255,0.7)"
-          strokeWidth="0.6"
-          fill="none"
-        />
-      </svg>
-    </div>
-  );
-}
-
-function Announcement({ ann }: { ann: AnnouncementData }) {
-  const particles = useMemo(
-    () =>
-      Array.from({ length: 16 }, (_, i) => ({
-        id: i,
-        angle: (i / 16) * 360,
-        dist: 80 + Math.random() * 60,
-        size: 6 + Math.random() * 10,
-        color: [
-          "#fde047",
-          "#f59e0b",
-          "#22c55e",
-          "#3b82f6",
-          "#a855f7",
-          "#ef4444",
-        ][i % 6],
-        delay: Math.random() * 0.3,
-      })),
-    [],
-  );
-  if (!ann) return null;
-  const pointsNumber = Number((ann as any).displayPoints ?? ann.points ?? 0);
-  // displayOnly مع displayPoints أكبر من صفر يجب أن يعرض النقاط السابقة مثل +100،
-  // ولا يتحول إلى عبارة "إعادة عرض" إلا إذا لم تُرسل نقاط للعرض.
-  const isDisplayOnly = Boolean((ann as any).displayOnly) && pointsNumber === 0;
-  const pointsLabel = pointsNumber > 0 ? `+${formatPoints(pointsNumber)}` : formatPoints(pointsNumber);
-  return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 300,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        animation: "ann-bg-in 0.4s ease-out forwards",
-      }}
-    >
-      <div
-        style={{
-          position: "relative",
-          textAlign: "center",
-          background: `radial-gradient(ellipse at top,${ann.teamColor}33,transparent 70%),linear-gradient(160deg,#1e293b,#0f172a)`,
-          border: `4px solid ${ann.teamColor}`,
-          borderRadius: 34,
-          padding: "clamp(28px,8vw,48px) clamp(22px,8vw,64px)",
-          boxShadow: `0 0 0 2px rgba(0,0,0,0.35), 0 14px 0 -3px ${ann.teamColor}77, 0 38px 80px rgba(0,0,0,0.8), 0 0 60px ${ann.teamColor}22`,
-          width: "min(360px,92vw)",
-          boxSizing: "border-box",
-          fontFamily: "'Tajawal',sans-serif",
-          direction: "rtl",
-          animation: "ann-card-in 0.7s cubic-bezier(0.2,1.3,0.4,1) 0.05s both",
-        }}
-      >
-        {particles.map((p) => (
-          <div
-            key={p.id}
-            style={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              width: p.size,
-              height: p.size,
-              borderRadius: "50%",
-              background: p.color,
-              animation: `ann-particle 1.2s ease-out ${p.delay + 0.3}s both`,
-              pointerEvents: "none",
-              marginLeft: -p.size / 2,
-              marginTop: -p.size / 2,
-            }}
-          />
-        ))}
-        {["-140px,0", "-70px,-100px", "70px,-100px", "140px,0"].map(
-          (pos, i) => (
-            <div
-              key={i}
-              style={{
-                position: "absolute",
-                top: "30%",
-                left: "50%",
-                transform: `translate(${pos})`,
-                fontSize: 20,
-                animation: `ann-stars 2s ease-in-out ${i * 0.2 + 0.5}s infinite`,
-                pointerEvents: "none",
-              }}
-            >
-              ✨
-            </div>
-          ),
-        )}
-        <div
-          style={{
-            fontSize: "clamp(28px,9vw,42px)",
-            fontWeight: 900,
-            color: "#fff",
-            marginBottom: 12,
-            animation: "ann-name-in 0.5s cubic-bezier(0.2,1.2,0.4,1) 0.3s both",
-            lineHeight: 1.1,
-          }}
-        >
-          {ann.studentName}
-        </div>
-        <div
-          style={{
-            fontSize: "clamp(13px,3.5vw,15px)",
-            color: ann.teamColor,
-            fontWeight: 700,
-            marginBottom: 16,
-            animation: "ann-glow 2s ease-in-out 0.8s infinite",
-          }}
-        >
-          {ann.teamName} 🚢
-        </div>
-        <div
-          style={{
-            fontSize: "clamp(40px,13vw,58px)",
-            fontWeight: 900,
-            color: "#fde047",
-            lineHeight: 1,
-            animation: "ann-pts-in 0.6s cubic-bezier(0.2,1.5,0.4,1) 0.55s both",
-            textShadow: "0 0 30px rgba(253,224,71,0.8)",
-          }}
-        >
-          {isDisplayOnly ? "إعادة عرض" : pointsLabel}
-        </div>
-        <div
-          style={{
-            fontSize: "clamp(13px,4vw,16px)",
-            color: "rgba(255,255,255,0.5)",
-            marginTop: 6,
-            animation: "ann-name-in 0.5s ease-out 0.8s both",
-          }}
-        >
-          {isDisplayOnly ? "بدون إضافة نقاط 🏆" : "نقطة 🏆"}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function SettingsPanel({
   teams,
   onClose,
@@ -1671,19 +1438,48 @@ export default function DisplayPage() {
   const shipMoveStepMsRef = useRef(DEFAULT_MOVE_STEP_MS);
 
   const positions = useMemo(() => getPathPositions(), []);
-  const svgPath = useMemo(() => getSvgPath(), []);
-  const bubbles = useMemo(
-    () =>
-      Array.from({ length: 8 }, (_, i) => ({
-        key: i,
-        w: 4 + Math.random() * 6,
-        left: 5 + Math.random() * 90,
-        bottom: Math.random() * 100,
-        dur: 6 + Math.random() * 8,
-        delay: Math.random() * 5,
-      })),
-    [],
-  );
+
+  // Board size in px: the route, islands and ships are laid out in real pixels
+  // so strokes stay even and ships can turn to face their heading.
+  const boardRef = useRef<HTMLDivElement | null>(null);
+  const [boardSize, setBoardSize] = useState<BoardSize>({ w: 1440, h: 900 });
+  const boardSizeRef = useRef<BoardSize>({ w: 1440, h: 900 });
+  useEffect(() => {
+    const el = boardRef.current;
+    if (!el) return;
+    const update = () => {
+      const next = { w: el.clientWidth || 1, h: el.clientHeight || 1 };
+      boardSizeRef.current = next;
+      setBoardSize(next);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // Island-arrival celebration (visual only; does not touch scores).
+  const [arrival, setArrival] = useState<ArrivalData | null>(null);
+  const arrivalTimersRef = useRef<number[]>([]);
+  const celebrateArrival = (team: Team, islandIdx: number) => {
+    arrivalTimersRef.current.forEach((t) => window.clearTimeout(t));
+    const p = boardPoint(ISLANDS_POS[islandIdx], boardSizeRef.current);
+    const key = `${team.id}-${islandIdx}-${Date.now()}`;
+    setArrival({
+      key,
+      teamName: team.name || `فصل ${team.slot || ""}`,
+      color: getTeamColor(team),
+      islandName: ISLAND_NAMES[islandIdx],
+      islandIdx,
+      x: p.x,
+      y: p.y,
+    });
+    arrivalTimersRef.current = [
+      window.setTimeout(() => setArrival((a) => (a && a.key === key ? { ...a, leaving: true } : a)), 3600),
+      window.setTimeout(() => setArrival((a) => (a && a.key === key ? null : a)), 4000),
+    ];
+  };
+  useEffect(() => () => arrivalTimersRef.current.forEach((t) => window.clearTimeout(t)), []);
 
   useEffect(() => {
     document.body.className = "display-page";
@@ -2043,6 +1839,16 @@ export default function DisplayPage() {
         finalPoints: round3(indexToPoints(endPos)),
       });
 
+      // احتفال عند الوصول لجزيرة جديدة أثناء هذه الحركة (للأمام فقط).
+      const reachedIslands = ISLAND_INDICES.filter(
+        (k) => k > 0 && startPos < k - POSITION_EPSILON && endPos >= k - POSITION_EPSILON,
+      );
+      if (reachedIslands.length > 0) {
+        const islandIndex = ISLAND_INDICES.indexOf(Math.max(...reachedIslands));
+        celebrateArrival(next, islandIndex);
+        await sleep(2200);
+      }
+
       await sleep(250);
     }
 
@@ -2179,30 +1985,74 @@ export default function DisplayPage() {
 
   const displayName = (t: Team) => t.name || `فصل ${t.slot || ""}`;
 
+  // ── Board layout in px ──
+  const k = Math.max(0.62, Math.min(1.6, Math.min(boardSize.w / 1400, boardSize.h / 880)));
+  const islandScale = k * 1.08;
+  const shipW = Math.round(Math.max(boardSize.w < 700 ? 58 : 92, Math.min(150, boardSize.w * 0.076)));
+  const shipH = (shipW * DHOW_VB_H) / DHOW_VB_W;
+  const shipAnchorX = (shipW * DHOW_ANCHOR_X) / DHOW_VB_W;
+  const shipAnchorY = (shipW * DHOW_ANCHOR_Y) / DHOW_VB_W;
+  const buoySize = Math.round(Math.max(40, Math.min(66, 46 * k)));
+  const fullRouteD = routePathD(boardSize, TOTAL_POSITIONS - 1);
+  const leaderRouteD = routePathD(boardSize, leaderPosition);
+
+  // Ships sharing a stretch of route fan out across it (perpendicular to the
+  // route), so every class stays visible. Progress along the route is untouched.
+  const shipLayouts = (() => {
+    const base = [...teams].sort(compareTeamsBySlot).map((team) => {
+      const pos = getShipPos(team);
+      const pt = boardPoint({ x: pos.x, y: pos.y }, boardSize);
+      const tan = indexToTangent(pos.boardIndex, boardSize);
+      const flip: 1 | -1 = tan.x >= 0 ? 1 : -1;
+      const rawRot = flip === 1 ? Math.atan2(tan.y, tan.x) : Math.atan2(-tan.y, -tan.x);
+      const rot = Math.max(-20, Math.min(20, (rawRot * 180) / Math.PI));
+      return { team, x: pt.x, y: pt.y, tan, flip, rot, boardIndex: pos.boardIndex, effectivePts: pos.effectivePts };
+    });
+    const byIndex = [...base].sort((a, b) => a.boardIndex - b.boardIndex || compareTeamsBySlot(a.team, b.team));
+    const groups: (typeof base)[] = [];
+    byIndex.forEach((s) => {
+      const g = groups[groups.length - 1];
+      if (g && s.boardIndex - g[g.length - 1].boardIndex < 0.45) g.push(s);
+      else groups.push([s]);
+    });
+    groups.forEach((g) => {
+      if (g.length < 2) return;
+      const spacing = shipW * (g.length > 3 ? 0.72 : 0.86);
+      const ordered = [...g].sort((a, b) => compareTeamsBySlot(a.team, b.team));
+      ordered.forEach((s, j) => {
+        let nx = -s.tan.y;
+        let ny = s.tan.x;
+        if (ny < 0) {
+          nx = -nx;
+          ny = -ny;
+        }
+        const off = (j - (ordered.length - 1) / 2) * spacing;
+        s.x += nx * off;
+        s.y += ny * off;
+      });
+    });
+    return base;
+  })();
+
+  const tallyEntries = teams.map((t) => ({
+    id: t.id,
+    name: displayName(t),
+    slot: Number(t.slot || 0),
+    color: getTeamColor(t),
+    points: indexToPoints(posOf(t)),
+  }));
+
+  const announcementPoints = announcement ? Number(announcement.displayPoints ?? announcement.points ?? 0) : 0;
+  // displayOnly مع displayPoints أكبر من صفر يجب أن يعرض النقاط السابقة مثل +100،
+  // ولا يتحول إلى عبارة "إعادة عرض" إلا إذا لم تُرسل نقاط للعرض.
+  const announcementReplay = Boolean(announcement?.displayOnly) && announcementPoints === 0;
+
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800;900&display=swap');
         *{box-sizing:border-box;margin:0;padding:0;}
-        body{overflow:hidden;background:#0f172a;}
-        @keyframes ship-wave{0%,100%{transform:translateY(0) rotate(0deg)}20%{transform:translateY(-4px) rotate(1deg)}50%{transform:translateY(3px) rotate(-1deg)}80%{transform:translateY(-2px) rotate(0.5deg)}}
-        @keyframes wave-ring{0%{transform:scale(0.8);opacity:0.5}100%{transform:scale(1.6);opacity:0}}
-        @keyframes wave-sweep{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
-        @keyframes float-bubble{0%{transform:translateY(0) scale(1);opacity:0.25}100%{transform:translateY(-70px) scale(0.4);opacity:0}}
-        @keyframes shimmer-move{0%{opacity:0.12;transform:translateX(-5%)}50%{opacity:0.35;transform:translateX(5%)}100%{opacity:0.12;transform:translateX(-5%)}}
-        @keyframes palm-sway{0%,100%{transform:rotate(0deg)}25%{transform:rotate(5deg)}75%{transform:rotate(-4deg)}}
-        @keyframes island-glow{0%,100%{opacity:0.3}50%{opacity:0.8}}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
         @keyframes move-ready{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,0.7)}50%{box-shadow:0 0 0 14px rgba(34,197,94,0)}}
-        @keyframes ann-bg-in{to{background:rgba(0,0,0,0.72);backdrop-filter:blur(8px)}}
-        @keyframes ann-card-in{0%{opacity:0;transform:scale(0.5) rotate(-4deg)}60%{transform:scale(1.06) rotate(1deg)}100%{opacity:1;transform:scale(1) rotate(0deg)}}
-        @keyframes ann-name-in{0%{opacity:0;transform:translateY(30px)}100%{opacity:1;transform:translateY(0)}}
-        @keyframes ann-pts-in{0%{opacity:0;transform:scale(0.3)}60%{transform:scale(1.2)}100%{opacity:1;transform:scale(1)}}
-        @keyframes ann-particle{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(0)}}
-        @keyframes ann-glow{0%,100%{text-shadow:0 0 20px currentColor,0 0 40px currentColor}50%{text-shadow:0 0 40px currentColor,0 0 80px currentColor}}
-        @keyframes ann-stars{0%{opacity:0;transform:scale(0) rotate(0deg)}50%{opacity:1;transform:scale(1.2) rotate(180deg)}100%{opacity:0;transform:scale(0) rotate(360deg)}}
-        @keyframes logo-float{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-8px) rotate(1deg)}}
-        @keyframes logo-glow{0%,100%{filter:drop-shadow(0 5px 10px rgba(0,0,0,0.30)) drop-shadow(0 0 8px rgba(45,212,191,0.42))}50%{filter:drop-shadow(0 7px 14px rgba(0,0,0,0.36)) drop-shadow(0 0 14px rgba(45,212,191,0.62))}}
         /* زر كرتوني: حدود سميكة + ظل صلب سفلي (تأثير 3D) + ضغطة نازلة واضحة */
         .smooth-btn {
           transition: transform 0.14s ease, box-shadow 0.14s ease, filter 0.16s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease !important;
@@ -2257,512 +2107,286 @@ export default function DisplayPage() {
         }
       `}</style>
 
-      <div
-        style={{
-          position: "relative",
-          width: "100vw",
-          height: "100vh",
-          overflow: "hidden",
-          fontFamily: "'Tajawal',sans-serif",
-          direction: "rtl",
-          background:
-            "linear-gradient(180deg,hsl(195,55%,48%) 0%,hsl(200,60%,38%) 30%,hsl(205,65%,28%) 60%,hsl(210,70%,20%) 100%)",
-        }}
-      >
-        {/* Water effects */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 0,
-            overflow: "hidden",
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              top: 0,
-              bottom: 0,
-              left: 0,
-              width: "60%",
-              background:
-                "radial-gradient(ellipse 100% 100% at 50% 50%,rgba(255,255,255,0.18) 0%,transparent 60%)",
-              animation: "wave-sweep 5s ease-in-out infinite",
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              background:
-                "radial-gradient(ellipse at 40% 30%,rgba(255,255,255,0.13),transparent 60%)",
-              animation: "shimmer-move 8s ease-in-out infinite",
-            }}
-          />
-          {bubbles.map((b) => (
-            <div
-              key={b.key}
-              style={{
-                position: "absolute",
-                borderRadius: "50%",
-                background: "rgba(255,255,255,0.12)",
-                width: b.w,
-                height: b.w,
-                left: `${b.left}%`,
-                bottom: `${b.bottom}%`,
-                animation: `float-bubble ${b.dur}s ease-in-out ${b.delay}s infinite`,
-              }}
-            />
-          ))}
-        </div>
+      <div className="rb-root">
+        <Leaderboard
+          entries={tallyEntries}
+          maxPoints={indexToPoints(TOTAL_POSITIONS - 1)}
+          movingId={movingId}
+          logoSrc={`data:image/png;base64,${LOGO_B64}`}
+          footer={
+            <>
+              <div className="rb-legend">
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <CoinIcon size={16} /> كل عوّامة = {formatPoints(POINTS_PER_SQUARE)} نقطة
+                </span>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  type="button"
+                  className="rb-icon-btn"
+                  onClick={toggleFullscreen}
+                  title={isFullscreen ? "تصغير" : "ملء الشاشة"}
+                  aria-label={isFullscreen ? "تصغير" : "ملء الشاشة"}
+                >
+                  <FullscreenIcon exit={isFullscreen} />
+                </button>
+                <button
+                  type="button"
+                  className="rb-icon-btn"
+                  onClick={() => setShowSettings(true)}
+                  title="الإعدادات"
+                  aria-label="الإعدادات"
+                >
+                  <HelmIcon />
+                </button>
+              </div>
+            </>
+          }
+        />
 
-        {/* SVG Path */}
-        <svg
-          viewBox="0 0 100 100"
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            zIndex: 1,
-          }}
-          preserveAspectRatio="none"
-        >
-          <path
-            d={svgPath}
-            fill="none"
-            stroke="rgba(0,0,0,0.12)"
-            strokeWidth="1.0"
-            strokeLinecap="round"
-          />
-          <path
-            d={svgPath}
-            fill="none"
-            stroke="hsl(45,85%,62%)"
-            strokeWidth="0.45"
-            strokeDasharray="1.5 1.8"
-            strokeLinecap="round"
-          />
-        </svg>
+        <main className="rb-board" ref={boardRef} aria-label="خريطة السباق">
+          <SeaBackdrop />
 
-        {/* Islands & Squares */}
-        {positions.map((pos, i) => {
-          const isIsland = ISLAND_INDICES.includes(i);
-          const islandIdx = ISLAND_INDICES.indexOf(i);
-          const cost = POINTS_PER_SQUARE * i;
-          return (
-            <div
-              key={`node-${i}`}
-              style={{
-                position: "absolute",
-                left: `${pos.x}%`,
-                top: `${pos.y}%`,
-                transform: "translate(-50%,-50%)",
-                zIndex: isIsland ? 10 : 5,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-              }}
-            >
-              {isIsland ? (
-                <>
-                  {[0, 1, 2].map((r) => (
-                    <div
-                      key={r}
-                      style={{
-                        position: "absolute",
-                        borderRadius: "50%",
-                        border: "1px solid rgba(103,232,249,0.12)",
-                        inset: -12 - r * 8,
-                        animation: `wave-ring 4s ease-out ${r * 0.8}s infinite`,
-                      }}
-                    />
-                  ))}
-                  <img
-                    src={ISLAND_IMAGES[islandIdx]}
-                    alt="island"
-                    style={{
-                      width: ISLAND_SIZES[islandIdx],
-                      filter: "drop-shadow(0 10px 15px rgba(0,0,0,0.45))",
-                      zIndex: 2,
-                      position: "relative",
-                    }}
-                  />
-                  {(islandIdx === 0 || islandIdx === 1) && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "-5%",
-                        left: islandIdx === 0 ? "20%" : "70%",
-                        transformOrigin: "bottom center",
-                        animation: "palm-sway 4s ease-in-out infinite",
-                        zIndex: 3,
-                      }}
-                    >
-                      <span style={{ fontSize: 22 }}>🌴</span>
-                    </div>
-                  )}
-                  <div
-                    style={{
-                      color: "#fde047",
-                      fontWeight: 900,
-                      fontSize: 12,
-                      marginTop: 5,
-                      textShadow:
-                        "0 2px 4px rgba(0,0,0,1),-1px -1px 0 #000,1px 1px 0 #000",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {ISLAND_NAMES[islandIdx]}
-                  </div>
-                  {i !== 0 && (
-                    <div
-                      style={{
-                        color: "#fde047",
-                        fontSize: 10,
-                        marginTop: 2,
-                        fontWeight: 800,
-                        textShadow: "0 1px 3px rgba(0,0,0,1)",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      🪙{formatPoints(cost)}
-                    </div>
-                  )}
-                </>
-              ) : i === 0 ? (
-                /* بداية المسابقة */
-                <>
-                  <div
-                    style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 8,
-                      transform: "rotate(45deg)",
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      background:
-                        "linear-gradient(135deg,rgba(34,197,94,0.45),rgba(21,128,61,0.3))",
-                      boxShadow: "0 2px 8px rgba(34,197,94,0.25)",
-                      border: "1.5px solid rgba(34,197,94,0.5)",
-                    }}
-                  >
-                    <span
-                      style={{
-                        transform: "rotate(-45deg)",
-                        fontSize: 16,
-                      }}
-                    >
-                      🏁
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      color: "#22c55e",
-                      fontSize: 10,
-                      marginTop: 4,
-                      fontWeight: 800,
-                      textShadow: "0 1px 3px rgba(0,0,0,1)",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    البداية
-                  </div>
-                </>
-              ) : (
-                /* مربع عادي */
-                <>
-                  <div
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 8,
-                      transform: "rotate(45deg)",
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      background:
-                        "linear-gradient(135deg,rgba(255,255,255,0.25),rgba(255,255,255,0.08))",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                      border: "1.5px solid rgba(255,255,255,0.25)",
-                    }}
-                  >
-                    <span
-                      style={{
-                        transform: "rotate(-45deg)",
-                        fontSize: 11,
-                        fontWeight: "bold",
-                        color: "#fff",
-                        opacity: 0.85,
-                      }}
-                    >
-                      {i}
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      color: "#fde047",
-                      fontSize: 9,
-                      marginTop: 4,
-                      fontWeight: 700,
-                      textShadow: "0 1px 3px rgba(0,0,0,1)",
-                    }}
-                  >
-                    🪙{formatPoints(cost)}
-                  </div>
-                </>
-              )}
-            </div>
-          );
-        })}
-
-        {/* Ships */}
-        {[...teams]
-          .sort((a, b) => compareTeamsBySlot(a, b))
-          .map((team, myIdx) => {
-            const target = getShipPos(team);
-            const leading = isLeader(team);
-            const shipTransitionMs = transitionDurations[team.id] ?? 140;
-            const shipLocationPoints = target.effectivePts;
+          {/* Lagoons sit under the route so the channel reads as leaving the shallows */}
+          {ISLANDS_POS.map((pos, islandIdx) => {
+            const p = boardPoint(pos, boardSize);
+            const size = ISLAND_SIZES[islandIdx] * islandScale;
             return (
               <div
-                key={team.id}
-                style={{
-                  position: "absolute",
-                  left: `${target.x}%`,
-                  top: `${target.y}%`,
-                  transition:
-                    shipTransitionMs === 0
-                      ? `opacity 180ms ease, filter 180ms ease`
-                      : `left ${shipTransitionMs}ms cubic-bezier(0.25,0.46,0.45,0.94),top ${shipTransitionMs}ms cubic-bezier(0.25,0.46,0.45,0.94),opacity 180ms ease,filter 180ms ease`,
-                  transform: "translate(-50%,-50%)",
-                  // عند فتح الإعدادات تبقى السفن خلف النافذة ولا تبرز من خلال الخلفية.
-                  opacity: showSettings ? 0.06 : 1,
-                  filter: showSettings ? "blur(2px)" : "none",
-                  pointerEvents: showSettings ? "none" : "auto",
-                  zIndex: showSettings
-                    ? 0
-                    : 20 +
-                      Math.round(target.boardIndex) +
-                      (team.slot || myIdx),
-                }}
+                key={`lagoon-${islandIdx}`}
+                className="rb-layer"
+                style={{ zIndex: 4 }}
+                aria-hidden="true"
               >
                 <div
+                  className="rb-lagoon"
                   style={{
-                    position: "relative",
-                    width: 64,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    animation: `ship-wave 5s ease-in-out ${myIdx * 0.3}s infinite`,
-                    filter:
-                      movingId === team.id
-                        ? `drop-shadow(0 0 16px ${getTeamColor(team)})`
-                        : "none",
-                    transition: "filter 0.5s",
+                    left: p.x - size * 1.05,
+                    top: p.y - size * 0.62,
+                    width: size * 2.1,
+                    height: size * 1.36,
                   }}
-                >
-                  {leading && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "-52px",
-                        left: "50%",
-                        transform: "translateX(-50%)",
-                        zIndex: 99999,
-                        pointerEvents: "none",
-                        fontSize: "38px",
-                        lineHeight: 1,
-                        filter:
-                          "drop-shadow(0 0 8px #ffd34d) drop-shadow(0 0 20px #ffae00)",
-                        textShadow: "0 0 10px rgba(0,0,0,0.9)",
-                        animation: "crownBob 1.6s ease-in-out infinite",
-                      }}
-                    >
-                      👑
-                    </div>
-                  )}
-                  <RealisticShip color={getTeamColor(team)} />
-                  <div
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 800,
-                      textAlign: "center",
-                      marginTop: 4,
-                      whiteSpace: "nowrap",
-                      color: "#fff",
-                      textShadow:
-                        "0 2px 4px rgba(0,0,0,1),-1px -1px 0 #000,1px 1px 0 #000",
-                    }}
-                  >
-                    {displayName(team)}
-                  </div>
+                />
+                <div
+                  className="rb-lagoon-ring"
+                  style={{
+                    left: p.x - size * 0.78,
+                    top: p.y - size * 0.44,
+                    width: size * 1.56,
+                    height: size * 1.0,
+                    animationDelay: `${islandIdx * 0.9}s`,
+                  }}
+                />
+              </div>
+            );
+          })}
 
-                  <div
-                    style={{
-                      fontSize: 10,
-                      fontWeight: 700,
-                      textAlign: "center",
-                      color: "#fde047",
-                      textShadow: "0 1px 3px rgba(0,0,0,1)",
-                      marginTop: 2,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {formatPoints(shipLocationPoints)} نقطة
-                  </div>
+          {/* Route: shallow channel, rope, and the leader's lit wake */}
+          <svg
+            className="rb-layer"
+            style={{ zIndex: 5 }}
+            width={boardSize.w}
+            height={boardSize.h}
+            viewBox={`0 0 ${boardSize.w} ${boardSize.h}`}
+            aria-hidden="true"
+          >
+            <defs>
+              <filter id="rb-route-glow" x="-10%" y="-10%" width="120%" height="120%">
+                <feGaussianBlur stdDeviation={4 * k} result="b" />
+                <feMerge>
+                  <feMergeNode in="b" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+            <path d={fullRouteD} fill="none" stroke="rgba(143,240,221,0.2)" strokeWidth={50 * k} strokeLinecap="round" strokeLinejoin="round" />
+            <path d={fullRouteD} fill="none" stroke="rgba(244,255,253,0.1)" strokeWidth={30 * k} strokeLinecap="round" strokeLinejoin="round" />
+            <path d={fullRouteD} fill="none" stroke="rgba(3,30,55,0.38)" strokeWidth={12 * k} strokeLinecap="round" transform={`translate(0 ${3 * k})`} />
+            <path d={fullRouteD} fill="none" stroke="var(--rope)" strokeWidth={8 * k} strokeLinecap="round" />
+            <path d={fullRouteD} fill="none" stroke="var(--rope-dark)" strokeWidth={8 * k} strokeDasharray={`${3 * k} ${7 * k}`} />
+            {leaderRouteD && (
+              <>
+                <path d={leaderRouteD} fill="none" stroke="var(--gold)" strokeWidth={10 * k} strokeLinecap="round" filter="url(#rb-route-glow)" />
+                <path
+                  className="rb-route-flow"
+                  d={leaderRouteD}
+                  fill="none"
+                  stroke="rgba(255,255,255,0.85)"
+                  strokeWidth={3.5 * k}
+                  strokeLinecap="round"
+                  strokeDasharray="6 22"
+                />
+              </>
+            )}
+          </svg>
 
-                  {movingId === team.id && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: -16,
-                        left: "50%",
-                        transform: "translateX(-50%)",
-                        fontSize: 11,
-                        fontWeight: 700,
-                        color: "#fde047",
-                        whiteSpace: "nowrap",
-                        textShadow: "0 0 8px rgba(253,224,71,0.8)",
-                        animation: "island-glow 0.6s ease-in-out infinite",
-                      }}
-                    >
-                      ⛵ يتحرك...
-                    </div>
+          {/* Channel buoys: one per 500 points */}
+          {positions.map((pos, i) => {
+            if (ISLAND_INDICES.includes(i)) return null;
+            const p = boardPoint(pos, boardSize);
+            const lit = leaderPosition >= i - POSITION_EPSILON;
+            return (
+              <div
+                key={`buoy-${i}`}
+                className={`rb-buoy${lit ? " rb-buoy--lit" : ""}`}
+                style={{
+                  transform: `translate(${p.x - buoySize / 2}px, ${p.y - buoySize * 1.05}px)`,
+                  width: buoySize,
+                }}
+              >
+                <svg className="rb-buoy-body" width={buoySize} height={buoySize * 1.3} viewBox="0 0 40 52" aria-hidden="true">
+                  <ellipse cx="20" cy="46" rx="17" ry="4" fill="rgba(244,255,253,0.5)" />
+                  {lit && <circle className="rb-buoy-lamp-glow" cx="20" cy="6" r="9" fill="rgba(255,210,92,0.55)" />}
+                  <path d="M20 9 L20 17 M14 17 L26 17" stroke="#16323f" strokeWidth="2.2" strokeLinecap="round" />
+                  <circle className="rb-buoy-lamp" cx="20" cy="6" r="4" fill={lit ? "#ffd25c" : "#5d7480"} stroke="#16323f" strokeWidth="1.6" />
+                  <path d="M7 27 Q7 17 20 17 Q33 17 33 27 L34 41 Q20 48 6 41 Z" fill="var(--coral)" stroke="#5a1410" strokeWidth="1.8" strokeLinejoin="round" />
+                  <path d="M6.6 26 L33.4 26 L33.9 37 Q20 41 6.1 37 Z" fill="#fff8e8" />
+                  <path d="M10 20 Q14 18 18 18.4" stroke="rgba(255,255,255,0.65)" strokeWidth="1.8" fill="none" strokeLinecap="round" />
+                  <text x="20" y="35.2" textAnchor="middle" fontSize="11.5" fontWeight="900" fontFamily="Tajawal, sans-serif" fill="#062a3b">
+                    {i}
+                  </text>
+                </svg>
+                <div className="rb-buoy-value" style={{ fontSize: Math.round(buoySize * 0.3) }}>
+                  {formatPoints(POINTS_PER_SQUARE * i)}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Islands */}
+          {ISLANDS_POS.map((pos, islandIdx) => {
+            const p = boardPoint(pos, boardSize);
+            const size = ISLAND_SIZES[islandIdx] * islandScale;
+            const islandSquare = ISLAND_INDICES[islandIdx];
+            const reached = islandIdx > 0 && leaderPosition >= islandSquare - POSITION_EPSILON;
+            const celebrating = arrival?.islandIdx === islandIdx && !arrival.leaving;
+            return (
+              <div
+                key={`island-${islandIdx}`}
+                className={`rb-island${reached ? " rb-island--reached" : ""}${celebrating ? " rb-island--celebrate" : ""}`}
+                style={{
+                  transform: `translate(${p.x - size / 2}px, ${p.y - size / 2}px)`,
+                  width: size,
+                }}
+              >
+                <img
+                  src={ISLAND_IMAGES[islandIdx]}
+                  alt=""
+                  style={{ width: size, height: size, animationDelay: `${islandIdx * -1.7}s` }}
+                />
+                <div className="rb-plate" style={{ fontSize: Math.round(19 * k) }}>
+                  {ISLAND_NAMES[islandIdx]}
+                  {islandIdx > 0 && (
+                    <small>
+                      <CoinIcon size={Math.round(13 * k)} />
+                      {formatPoints(POINTS_PER_SQUARE * islandSquare)}
+                    </small>
                   )}
                 </div>
               </div>
             );
           })}
 
-        {/* Logo */}
-        <div
-          style={{
-            position: "absolute",
-            top: 8,
-            right: 8,
-            zIndex: 100,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            animation:
-              "logo-float 4s ease-in-out infinite, logo-glow 4s ease-in-out infinite",
-            cursor: "default",
-            userSelect: "none",
-          }}
-        >
-          <img
-            src={`data:image/png;base64,${LOGO_B64}`}
-            alt="ربيع القلوب"
-            style={{
-              width: "clamp(105px,16vw,168px)",
-              height: "auto",
-              objectFit: "contain",
-            }}
+          {/* Ships */}
+          {shipLayouts.map(({ team, x, y, flip, rot, boardIndex }) => {
+            const color = getTeamColor(team);
+            const moving = movingId === team.id;
+            const shipTransitionMs = moving ? transitionDurations[team.id] ?? 140 : 650;
+            return (
+              <div
+                key={team.id}
+                className={`rb-ship${moving ? " rb-ship--moving" : ""}`}
+                style={{
+                  transform: `translate(${x}px, ${y}px)`,
+                  transition:
+                    shipTransitionMs === 0
+                      ? "opacity 180ms ease, filter 180ms ease"
+                      : `transform ${shipTransitionMs}ms ${moving ? "linear" : "cubic-bezier(0.16,1,0.3,1)"}, opacity 180ms ease, filter 180ms ease`,
+                  // عند فتح الإعدادات تبقى السفن خلف النافذة ولا تبرز من خلال الخلفية.
+                  opacity: showSettings ? 0.06 : 1,
+                  filter: showSettings ? "blur(2px)" : "none",
+                  pointerEvents: showSettings ? "none" : "auto",
+                  zIndex: showSettings ? 0 : moving ? 90 : 20 + Math.round(boardIndex) + (team.slot || 0),
+                }}
+              >
+                <div
+                  className="rb-ship-heading"
+                  style={{
+                    position: "absolute",
+                    left: -shipAnchorX,
+                    top: -shipAnchorY,
+                    width: shipW,
+                    height: shipH,
+                    transformOrigin: `${shipAnchorX}px ${shipAnchorY}px`,
+                    transform: `rotate(${rot}deg) scaleX(${flip})`,
+                  }}
+                >
+                  <div className="rb-ship-bob" style={{ animationDelay: `${(team.slot || 0) * -0.7}s` }}>
+                    <Dhow color={color} label={team.slot || ""} flip={flip} width={shipW} />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Name tags and crowns ride above every hull so no class is ever hidden */}
+          {shipLayouts.map(({ team, x, y, effectivePts }) => {
+            const color = getTeamColor(team);
+            const moving = movingId === team.id;
+            const shipTransitionMs = moving ? transitionDurations[team.id] ?? 140 : 650;
+            return (
+              <div
+                key={`tag-${team.id}`}
+                className="rb-ship"
+                aria-hidden="true"
+                style={{
+                  transform: `translate(${x}px, ${y}px)`,
+                  transition:
+                    shipTransitionMs === 0
+                      ? "opacity 180ms ease"
+                      : `transform ${shipTransitionMs}ms ${moving ? "linear" : "cubic-bezier(0.16,1,0.3,1)"}, opacity 180ms ease`,
+                  opacity: showSettings ? 0 : 1,
+                  pointerEvents: "none",
+                  zIndex: moving ? 96 : 95,
+                }}
+              >
+                {isLeader(team) && (
+                  <div className="rb-crown" style={{ bottom: shipW * 0.64 }}>
+                    <CrownIcon size={Math.round(shipW * 0.4)} />
+                  </div>
+                )}
+                <div
+                  className="rb-ship-tag"
+                  style={{ background: color, fontSize: Math.round(shipW * 0.17), top: shipW * 0.09 }}
+                >
+                  {displayName(team)}
+                  <b>{formatPoints(effectivePts)}</b>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Move ships button */}
+          {pendingPos && (
+            <button type="button" className="rb-move-btn" onClick={handleMoveShips} disabled={isMoving}>
+              <AnchorIcon size={26} />
+              {isMoving ? "السفن تبحر…" : "تحريك السفن"}
+            </button>
+          )}
+
+          {arrival && <ArrivalCelebration key={arrival.key} arrival={arrival} />}
+        </main>
+
+        {announcement && (
+          <StudentAnnouncement
+            key={announcement.id}
+            studentName={announcement.studentName}
+            teamName={announcement.teamName}
+            teamColor={announcement.teamColor}
+            points={announcementPoints}
+            replay={announcementReplay}
           />
-        </div>
-
-        {/* Fullscreen & Settings buttons */}
-        <div
-          style={{
-            position: "fixed",
-            bottom: 18,
-            right: 18,
-            zIndex: 130,
-            display: "flex",
-            flexDirection: "column",
-            gap: 8,
-          }}
-        >
-          <button
-            onClick={toggleFullscreen}
-            title={isFullscreen ? "تصغير" : "ملء الشاشة"}
-            className="smooth-btn"
-            style={{
-              width: 42,
-              height: 42,
-              borderRadius: "50%",
-              border: "1px solid rgba(255,255,255,0.22)",
-              background:
-                "linear-gradient(180deg,rgba(56,189,248,0.32),rgba(15,23,42,0.7))",
-              backdropFilter: "blur(10px)",
-              color: "rgba(255,255,255,0.92)",
-              fontSize: 17,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow:
-                "0 4px 16px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.18)",
-            }}
-          >
-            {isFullscreen ? "⊡" : "⛶"}
-          </button>
-          <button
-            onClick={() => setShowSettings(true)}
-            className="smooth-btn"
-            style={{
-              width: 42,
-              height: 42,
-              borderRadius: "50%",
-              border: "1px solid rgba(255,255,255,0.22)",
-              background:
-                "linear-gradient(180deg,rgba(167,139,250,0.32),rgba(15,23,42,0.7))",
-              backdropFilter: "blur(10px)",
-              color: "rgba(255,255,255,0.92)",
-              fontSize: 17,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow:
-                "0 4px 16px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.18)",
-            }}
-          >
-            ⚙️
-          </button>
-        </div>
-
-        {/* Move ships button */}
-        {pendingPos && (
-          <button
-            onClick={handleMoveShips}
-            disabled={isMoving}
-            className={isMoving ? "btn-float" : "btn-float btn-shine"}
-            style={{
-              position: "fixed",
-              bottom: 24,
-              left: "50%",
-              transform: "translateX(-50%)",
-              zIndex: 150,
-              padding: "16px 44px",
-              borderRadius: 26,
-              border: "none",
-              background: isMoving
-                ? "#475569"
-                : "linear-gradient(180deg,#22c55e,#15803d)",
-              color: "#fff",
-              fontSize: 18,
-              fontWeight: 900,
-              fontFamily: "'Tajawal',sans-serif",
-              cursor: isMoving ? "not-allowed" : "pointer",
-              animation: isMoving
-                ? "none"
-                : "move-ready 1.5s ease-in-out infinite",
-              boxShadow: isMoving
-                ? "0 6px 30px rgba(0,0,0,0.5)"
-                : "0 8px 34px rgba(34,197,94,0.45), inset 0 1px 0 rgba(255,255,255,0.3)",
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-            }}
-          >
-            {isMoving ? "⏳ تتحرك سفينة..." : "🚢 تحريك السفن"}
-          </button>
         )}
-
-        <Announcement ann={announcement!} />
 
         {showSettings && (
           <SettingsPanel
@@ -2780,17 +2404,6 @@ export default function DisplayPage() {
           />
         )}
       </div>
-      <style>{`
-        @keyframes crownBob {
-          0%, 100% { transform: translateX(-50%) translateY(0) rotate(-3deg); }
-          50% { transform: translateX(-50%) translateY(-6px) rotate(3deg); }
-        }
-
-        @keyframes sparkle {
-          0%, 100% { opacity: 0; transform: scale(0.4) rotate(0deg); }
-          50% { opacity: 1; transform: scale(1.2) rotate(180deg); }
-        }
-      `}</style>
     </>
   );
 }
