@@ -376,7 +376,7 @@ body.display-page ::selection {
   top: clamp(12px, 2vh, 24px);
   right: clamp(12px, 1.4vw, 26px);
   z-index: 120;
-  width: clamp(140px, 11vw, 220px);
+  width: clamp(92px, 6.5vw, 132px);
   pointer-events: none;
   animation:
     rb-logo-in 1100ms var(--ease-out) both,
