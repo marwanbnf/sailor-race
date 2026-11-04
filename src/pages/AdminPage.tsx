@@ -1567,19 +1567,28 @@ export default function AdminPage() {
       .then((result: { status?: string; entries?: HistoryEntry[] }) => {
         if (!active || result?.status === "error") return;
         const entries: HistoryEntry[] = Array.isArray(result?.entries) ? result.entries : [];
-        setDoneTodayNames(
-          new Set(
-            entries
-              .filter((e) => String(e.hudur || "").trim() !== "غائب")
-              .map((e) => normalizeStudentName(e.studentName)),
-          ),
+        const doneNames = new Set(
+          entries
+            .filter((e) => String(e.hudur || "").trim() !== "غائب")
+            .map((e) => normalizeStudentName(e.studentName)),
         );
+        setDoneTodayNames(doneNames);
+
+        // بونص الحضور الكامل: كل طلاب الحلقة سُجّلوا اليوم.
+        const roster = teamStudents[selectedTeam] || [];
+        if (roster.length && roster.every((st) => doneNames.has(normalizeStudentName(st.name)))) {
+          const today = getRiyadhDateISO();
+          wsClient.claimFullAttendanceBonus(selectedTeam, today);
+          if (markFullAttendanceCelebrated(selectedTeam, today)) {
+            setToast({ msg: `🎉 حضور كامل! +${FULL_ATTENDANCE_BONUS} نقطة لسفينة الحلقة`, ok: true });
+          }
+        }
       })
       .catch(() => {});
     return () => {
       active = false;
     };
-  }, [selectedTeam, sheetStats.saved]);
+  }, [selectedTeam, sheetStats.saved, teamStudents]);
 
   // Reset student name and the special First Circle path when team changes.
   useEffect(() => {
@@ -4442,6 +4451,24 @@ export default function AdminPage() {
       </nav>
     </div>
   );
+}
+
+// ── بونص الحضور الكامل ────────────────────────────────────────────────────
+// القيمة الفعلية يضيفها السيرفر (FULL_ATTENDANCE_BONUS في server.ts)؛ هذه للعرض فقط.
+const FULL_ATTENDANCE_BONUS = 100;
+const FULL_ATTENDANCE_KEY = "sailor-race:full-attendance-v1";
+
+// يرجع true أول مرة فقط لكل حلقة في اليوم على هذا الجهاز، حتى لا تتكرر رسالة التهنئة.
+function markFullAttendanceCelebrated(teamId: string, date: string): boolean {
+  const key = `${teamId}|${date}`;
+  try {
+    const seen: string[] = JSON.parse(localStorage.getItem(FULL_ATTENDANCE_KEY) || "[]");
+    if (seen.includes(key)) return false;
+    localStorage.setItem(FULL_ATTENDANCE_KEY, JSON.stringify([...seen.slice(-30), key]));
+  } catch {
+    // التخزين المحلي اختياري
+  }
+  return true;
 }
 
 // ── الثيم والمكوّنات الصغيرة للتصميم الجديد ─────────────────────────────
