@@ -12,7 +12,6 @@ import "@fontsource/tajawal/900.css";
 import "./display/display.css";
 import { SeaBackdrop } from "./display/SeaBackdrop.tsx";
 import { Dhow, DHOW_ANCHOR_X, DHOW_ANCHOR_Y, DHOW_VB_H, DHOW_VB_W } from "./display/Dhow.tsx";
-import { Leaderboard, TweenedPoints } from "./display/Leaderboard.tsx";
 import { ArrivalCelebration, StudentAnnouncement, type ArrivalData } from "./display/Celebrations.tsx";
 import { AnchorIcon, CoinIcon, CrownIcon, FullscreenIcon, HelmIcon } from "./display/icons.tsx";
 
@@ -1763,7 +1762,6 @@ export default function DisplayPage() {
       const startPos =
         displayPositionsRef.current[next.id] ?? next.prevPosition ?? 0;
       const endPos = storedPositionToIndex(next.position);
-      const direction = endPos >= startPos ? 1 : -1;
       const distance = Math.abs(endPos - startPos);
 
       console.log("[DrainMoveQueue:start]", {
@@ -1806,37 +1804,25 @@ export default function DisplayPage() {
         continue;
       }
 
-      // حركة تدريجية على المسار: كل خطوة تغيّر الموضع الكسري فقط، وReact
-      // يعيد حساب left/top من pointsToExactPos على نفس منحنى SVG، فتتحرك السفينة فوق المنحنى
-      // بدل خط مستقيم طويل يقطع أسفل/أعلى المسار.
-      let current = startPos;
-      while (Math.abs(endPos - current) > POSITION_EPSILON) {
-        const remaining = Math.abs(endPos - current);
-        const step = Math.min(MOVE_STEP_INDEX, remaining);
-        const nextStep = current + direction * step;
-        const currentStepMs = shipMoveStepMsRef.current;
-
-        transitionDurationsRef.current = {
-          ...transitionDurationsRef.current,
-          [next.id]: currentStepMs,
+      // حركة متصلة على نفس منحنى المسار: تتسارع السفينة عند الإقلاع وتهدأ عند الوصول.
+      // المدة الكلية مبنية على إعداد السرعة نفسه (مدة كل 0.15 مربع).
+      const stepMs = shipMoveStepMsRef.current;
+      const totalMs = Math.max(900, (distance / MOVE_STEP_INDEX) * (stepMs + 30));
+      await new Promise<void>((resolve) => {
+        const t0 = performance.now();
+        const frame = (now: number) => {
+          const t = Math.min(1, (now - t0) / totalMs);
+          const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+          displayPositionsRef.current = {
+            ...displayPositionsRef.current,
+            [next.id]: startPos + (endPos - startPos) * eased,
+          };
+          setDisplayPositions({ ...displayPositionsRef.current });
+          if (t < 1) requestAnimationFrame(frame);
+          else resolve();
         };
-        setTransitionDurations({ ...transitionDurationsRef.current });
-
-        displayPositionsRef.current = {
-          ...displayPositionsRef.current,
-          [next.id]: nextStep,
-        };
-        setDisplayPositions({ ...displayPositionsRef.current });
-
-        console.log("[DrainMoveQueue:step]", {
-          team: next.id,
-          index: nextStep,
-          points: round3(indexToPoints(nextStep)),
-        });
-
-        current = nextStep;
-        await sleep(currentStepMs + 30);
-      }
+        requestAnimationFrame(frame);
+      });
 
       transitionDurationsRef.current = {
         ...transitionDurationsRef.current,
@@ -2006,7 +1992,7 @@ export default function DisplayPage() {
   // ── Board layout in px ──
   const k = Math.max(0.62, Math.min(1.6, Math.min(boardSize.w / 1400, boardSize.h / 880)));
   const islandScale = k * 1.08;
-  const shipW = Math.round(Math.max(boardSize.w < 700 ? 58 : 92, Math.min(150, boardSize.w * 0.076)));
+  const shipW = Math.round(Math.max(boardSize.w < 700 ? 52 : 78, Math.min(124, boardSize.w * 0.056)));
   const shipH = (shipW * DHOW_VB_H) / DHOW_VB_W;
   const shipAnchorX = (shipW * DHOW_ANCHOR_X) / DHOW_VB_W;
   const shipAnchorY = (shipW * DHOW_ANCHOR_Y) / DHOW_VB_W;
@@ -2030,13 +2016,15 @@ export default function DisplayPage() {
     const groups: (typeof base)[] = [];
     byIndex.forEach((s) => {
       const g = groups[groups.length - 1];
-      if (g && s.boardIndex - g[g.length - 1].boardIndex < 0.45) g.push(s);
+      const prev = g?.[g.length - 1];
+      // Ships whose hulls would touch (closer than one hull length on screen) share a group.
+      if (prev && Math.hypot(s.x - prev.x, s.y - prev.y) < shipW * 0.95) g.push(s);
       else groups.push([s]);
     });
     groups.forEach((g) => {
       if (g.length < 2) return;
-      const spacing = shipW * (g.length > 3 ? 0.92 : 1.12);
-      const ordered = [...g].sort((a, b) => compareTeamsBySlot(a.team, b.team));
+      const spacing = shipW * (g.length > 3 ? 0.38 : 0.42);
+      const ordered = g;
       ordered.forEach((s, j) => {
         let nx = -s.tan.y;
         let ny = s.tan.x;
@@ -2044,21 +2032,37 @@ export default function DisplayPage() {
           nx = -nx;
           ny = -ny;
         }
-        const off = (j - (ordered.length - 1) / 2) * spacing;
-        s.x += nx * off;
-        s.y += ny * off;
+        // Echelon (fleet) formation: across the route and slightly along it,
+        // so no hull or sail hides behind a neighbour's name tag.
+        const step = j - (ordered.length - 1) / 2;
+        const across = step * spacing;
+        const along = step * shipW * (g.length > 3 ? 0.86 : 0.96);
+        s.x += nx * across + s.tan.x * along;
+        s.y += ny * across + s.tan.y * along;
+      });
+    });
+    // Keep every ship (sail, hull and name tag) inside the board. A fanned-out
+    // group shifts together so its members keep their spacing.
+    const minX = shipW * 0.62;
+    const maxX = boardSize.w - shipW * 0.62;
+    const minY = shipW * 0.72;
+    const maxY = boardSize.h - shipW * 0.42;
+    groups.forEach((g) => {
+      let dx = 0;
+      let dy = 0;
+      g.forEach((s) => {
+        if (s.x + dx < minX) dx = minX - s.x;
+        if (s.x + dx > maxX) dx = maxX - s.x;
+        if (s.y + dy < minY) dy = minY - s.y;
+        if (s.y + dy > maxY) dy = maxY - s.y;
+      });
+      g.forEach((s) => {
+        s.x += dx;
+        s.y += dy;
       });
     });
     return base;
   })();
-
-  const tallyEntries = teams.map((t) => ({
-    id: t.id,
-    name: displayName(t),
-    slot: Number(t.slot || 0),
-    color: getTeamColor(t),
-    points: indexToPoints(posOf(t)),
-  }));
 
   const announcementPoints = announcement ? Number(announcement.displayPoints ?? announcement.points ?? 0) : 0;
   // displayOnly مع displayPoints أكبر من صفر يجب أن يعرض النقاط السابقة مثل +100،
@@ -2126,41 +2130,6 @@ export default function DisplayPage() {
       `}</style>
 
       <div className="rb-root">
-        <Leaderboard
-          entries={tallyEntries}
-          maxPoints={indexToPoints(TOTAL_POSITIONS - 1)}
-          movingId={movingId}
-          logoSrc={`data:image/png;base64,${LOGO_B64}`}
-          footer={
-            <>
-              <div className="rb-legend">
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                  <CoinIcon size={16} /> كل عوّامة = {formatPoints(POINTS_PER_SQUARE)} نقطة
-                </span>
-              </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button
-                  type="button"
-                  className="rb-icon-btn"
-                  onClick={toggleFullscreen}
-                  title={isFullscreen ? "تصغير" : "ملء الشاشة"}
-                  aria-label={isFullscreen ? "تصغير" : "ملء الشاشة"}
-                >
-                  <FullscreenIcon exit={isFullscreen} />
-                </button>
-                <button
-                  type="button"
-                  className="rb-icon-btn"
-                  onClick={() => setShowSettings(true)}
-                  title="الإعدادات"
-                  aria-label="الإعدادات"
-                >
-                  <HelmIcon />
-                </button>
-              </div>
-            </>
-          }
-        />
 
         <main className="rb-board" ref={boardRef} aria-label="خريطة السباق">
           <SeaBackdrop />
@@ -2341,8 +2310,10 @@ export default function DisplayPage() {
                     transform: `rotate(${rot}deg) scaleX(${flip})`,
                   }}
                 >
-                  <div className="rb-ship-bob" style={{ animationDelay: `${(team.slot || 0) * -0.7}s` }}>
-                    <Dhow color={color} label={team.slot || ""} flip={flip} width={shipW} />
+                  <div className="rb-ship-scale">
+                    <div className="rb-ship-bob" style={{ animationDelay: `${(team.slot || 0) * -0.7}s` }}>
+                      <Dhow color={color} label={team.slot || ""} flip={flip} width={shipW} />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2377,12 +2348,10 @@ export default function DisplayPage() {
                 )}
                 <div
                   className="rb-ship-tag"
-                  style={{ background: color, fontSize: Math.round(shipW * 0.17), top: shipW * 0.09 }}
+                  style={{ background: color, fontSize: Math.max(15, Math.round(shipW * 0.19)), top: shipW * 0.09 }}
                 >
                   {displayName(team)}
-                  <b>
-                    <TweenedPoints value={effectivePts} />
-                  </b>
+                  <b>{formatPoints(effectivePts)}</b>
                 </div>
               </div>
             );
@@ -2395,6 +2364,29 @@ export default function DisplayPage() {
               {isMoving ? "السفن تبحر…" : "تحريك السفن"}
             </button>
           )}
+
+          <img className="rb-logo" src={`data:image/png;base64,${LOGO_B64}`} alt="ربيع القلوب" />
+
+          <div className="rb-controls">
+            <button
+              type="button"
+              className="rb-icon-btn"
+              onClick={toggleFullscreen}
+              title={isFullscreen ? "تصغير" : "ملء الشاشة"}
+              aria-label={isFullscreen ? "تصغير" : "ملء الشاشة"}
+            >
+              <FullscreenIcon exit={isFullscreen} />
+            </button>
+            <button
+              type="button"
+              className="rb-icon-btn"
+              onClick={() => setShowSettings(true)}
+              title="الإعدادات"
+              aria-label="الإعدادات"
+            >
+              <HelmIcon />
+            </button>
+          </div>
 
           {arrival && <ArrivalCelebration key={arrival.key} arrival={arrival} />}
         </main>
