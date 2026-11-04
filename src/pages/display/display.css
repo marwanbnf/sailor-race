@@ -377,11 +377,6 @@ body.display-page ::selection {
   right: clamp(12px, 1.4vw, 26px);
   z-index: 120;
   width: clamp(140px, 11vw, 220px);
-  padding: clamp(8px, 0.7vw, 12px) clamp(10px, 0.9vw, 16px);
-  border-radius: 24px;
-  overflow: hidden;
-  background: rgba(255, 253, 248, 0.94);
-  box-shadow: 0 10px 24px rgba(3, 30, 55, 0.35), inset 0 0 0 2px rgba(23, 166, 151, 0.35);
   pointer-events: none;
   animation:
     rb-logo-in 1100ms var(--ease-out) both,
@@ -398,6 +393,11 @@ body.display-page ::selection {
 .rb-logo-art {
   position: relative;
   aspect-ratio: 436 / 478;
+  /* بدون لوحة: هالة بيضاء رفيعة حول الحروف تكفي لقراءتها فوق البحر */
+  filter:
+    drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.95))
+    drop-shadow(0 0 5px rgba(255, 255, 255, 0.6))
+    drop-shadow(0 6px 12px rgba(3, 30, 55, 0.35));
 }
 .rb-logo-layer {
   position: absolute;
@@ -428,16 +428,24 @@ body.display-page ::selection {
   60% { transform: scale(1.05) rotate(10deg); filter: drop-shadow(0 0 3px rgba(255, 190, 40, 0.6)); }
 }
 /* لمعة تمر على اللوحة كل فترة */
+.rb-logo-shine-mask {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
 .rb-logo-shine {
   position: absolute;
   top: -20%;
   bottom: -20%;
   left: 0;
   width: 38%;
-  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.75), transparent);
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.55), transparent);
   transform: translateX(-160%) skewX(-18deg);
   animation: rb-logo-shine 7s ease-in-out 1.4s infinite;
-  mix-blend-mode: soft-light;
 }
 @keyframes rb-logo-shine {
   0%, 70% { transform: translateX(-160%) skewX(-18deg); }

@@ -203,7 +203,6 @@ Depth is atmospheric and always blurred. The sea gets depth from its gradient, a
 ### Shadow Vocabulary
 - **Island lift** (`filter: drop-shadow(0 14px 14px rgba(3, 35, 60, 0.45))`): island art. Reached islands add `drop-shadow(0 0 18px rgba(255, 210, 92, 0.65))`.
 - **Label float** (`box-shadow: 0 3px 8px rgba(0, 0, 0, 0.32), 0 10px 20px rgba(3, 30, 55, 0.4)`): ship tags. Plates use the sand-tinted variant `0 3px 6px rgba(120, 80, 20, 0.45), 0 12px 22px rgba(3, 30, 55, 0.38)`.
-- **Plaque float** (`box-shadow: 0 10px 24px rgba(3, 30, 55, 0.35), inset 0 0 0 2px rgba(23, 166, 151, 0.35)`): the logo plaque over the sea.
 - **Team ring** (`box-shadow: 0 0 0 4px var(--team), 0 0 0 8px rgba(6, 42, 59, 0.6), 0 24px 50px rgba(2, 20, 32, 0.55)`): the arrival banner. The announcement card uses 5px, 11px, and 0 40px 90px.
 - **Gold call** (`box-shadow: 0 6px 14px rgba(150, 95, 10, 0.55), 0 16px 34px rgba(3, 30, 55, 0.5)`): the Move Ships button, plus a 16px gold pulse ring.
 
@@ -228,8 +227,17 @@ A coral buoy with a cream band, a 13.5-unit ink numeral, and a lamp. Unlit lamps
 ### Island Plate
 A sand gradient pill (#fff3cf to sand) in ink Baloo 800, with a coin icon and the island's point value in brown Tajawal 900 below.
 
-### Logo Plaque
-The Riyada volunteer-team logo sits on a near-white plaque (rgba(255, 253, 248, 0.94), 24px corners, width clamp(140px, 11vw, 220px)) with a 2px teal inset ring and the plaque-float shadow. The plaque floats at the top right of the sea and takes no pointer events. The logo ships as three stacked transparent layers in `src/assets/riyada/` (base, flag, star), so the flag waves from its pole (1.8s skew) and the star twinkles with a gold glow (3.2s). A soft-light shine sweeps the plaque every 7s. The plaque drops in from a blur once (1100ms) and then floats 5px on a 6s loop. Reduced motion stops all logo loops.
+### Logo
+The Riyada volunteer-team logo floats directly on the sea at the top right, with no plaque. Its width is clamp(140px, 11vw, 220px), and it takes no pointer events. Instead of a plaque, a thin white halo keeps the navy lettering readable over the water: a 1.5px white drop-shadow, a 5px soft white glow, and a 12px navy cast below.
+
+The logo ships as three stacked transparent layers in `src/assets/riyada/` (base, flag, star):
+- The flag waves from its pole on a 1.8s skew.
+- The star twinkles with a gold glow on a 3.2s loop.
+- A white shine sweeps across every 7s, masked to the logo's own shape.
+- On load the logo drops in from a blur once (1100ms), then floats 5px on a 6s loop.
+- Reduced motion stops all of these loops.
+
+The registration page header uses `mark.png`, the same mark without its text, at 46px with the same halo.
 
 ### Buttons
 - **Icon button:** 46px square, 14px corners, a 60% ink wash, sand glyph, and a sand inset hairline. On hover it brightens to a sand tint with a white glyph. On press it scales to 0.94. Glyphs are authored SVG at a 2 to 2.2 stroke. The fullscreen and settings buttons float together at the bottom right at 0.55 opacity, rising to 1 over 200ms on hover or keyboard focus.
