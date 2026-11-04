@@ -7,7 +7,7 @@
 web
 
 ## Users
-- **Audience on the display screen:** students grouped into five classes (فصول) who compete in a sailing race. Inferred from the Apps Script fields (حضور، حفظ، مراجعة، حقيبة، استماع) and the "ربيع القلوب" brand: this looks like a Quran memorization program, not a school. *(Inferred: confirm.)*
+- **Audience on the display screen:** students grouped into five classes (فصول) who compete in a sailing race. Inferred from the Apps Script fields (حضور، حفظ، مراجعة، حقيبة، استماع) and the original brand: this looks like a Quran memorization program, not a school. *(Inferred: confirm.)*
 - **Operator:** the program supervisor. They run the display from a laptop and use the settings panel to move ships, adjust points, and review the day's entries.
 
 ## Product Purpose
@@ -24,7 +24,7 @@ Make weekly effort visible and exciting. Students earn points, the class points 
 - Deployed to GitHub Pages with `bun run build`.
 
 ## Brand Commitments
-- Name and logo: **ربيع القلوب** (`src/utils/logo.ts`, `public/mawadda-*`).
+- Display-screen logo: **فريق ريادة التطوعي — المرحلة الابتدائية الأولية** (`src/assets/riyada/`, split into base, flag and star layers so the flag waves and the star twinkles). It replaced the earlier "ربيع القلوب" logo on the display.
 - Arabic, RTL.
 - The four island illustrations in `src/pages/islandData.ts` are existing assets.
 
