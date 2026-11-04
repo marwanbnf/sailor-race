@@ -2017,8 +2017,8 @@ export default function DisplayPage() {
     byIndex.forEach((s) => {
       const g = groups[groups.length - 1];
       const prev = g?.[g.length - 1];
-      // Ships whose hulls would touch (closer than one hull length on screen) share a group.
-      if (prev && Math.hypot(s.x - prev.x, s.y - prev.y) < shipW * 0.95) g.push(s);
+      // Ships whose name tags would touch (closer than 1.25 hull lengths on screen) share a group.
+      if (prev && Math.hypot(s.x - prev.x, s.y - prev.y) < shipW * 1.25) g.push(s);
       else groups.push([s]);
     });
     groups.forEach((g) => {
