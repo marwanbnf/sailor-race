@@ -2,16 +2,6 @@
   "detector": {
     "ignoreRules": [],
     "ignoreFiles": [],
-    "ignoreValues": [
-      {
-        "rule": "side-tab",
-        "value": "*",
-        "files": [
-          "src/pages/display/display.css"
-        ],
-        "createdAt": "2026-11-04T20:42:21.991Z",
-        "reason": "finish reviewer: .rb-tally::after is a full-height twisted-rope seam between harbor panel and sea (world element per direction contract), not a card accent"
-      }
-    ]
+    "ignoreValues": []
   }
 }
