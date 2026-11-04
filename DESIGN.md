@@ -228,7 +228,7 @@ A coral buoy with a cream band, a 13.5-unit ink numeral, and a lamp. Unlit lamps
 A sand gradient pill (#fff3cf to sand) in ink Baloo 800, with a coin icon and the island's point value in brown Tajawal 900 below.
 
 ### Logo
-The Riyada volunteer-team logo floats directly on the sea at the top right, with no plaque. Its width is clamp(140px, 11vw, 220px), and it takes no pointer events. Instead of a plaque, a thin white halo keeps the navy lettering readable over the water: a 1.5px white drop-shadow, a 5px soft white glow, and a 12px navy cast below.
+The Riyada volunteer-team logo floats directly on the sea at the top right, with no plaque. Its width is clamp(92px, 6.5vw, 132px), and it takes no pointer events. Instead of a plaque, a thin white halo keeps the navy lettering readable over the water: a 1.5px white drop-shadow, a 5px soft white glow, and a 12px navy cast below.
 
 The logo ships as three stacked transparent layers in `src/assets/riyada/` (base, flag, star):
 - The flag waves from its pole on a 1.8s skew.
