@@ -376,14 +376,72 @@ body.display-page ::selection {
   top: clamp(12px, 2vh, 24px);
   right: clamp(12px, 1.4vw, 26px);
   z-index: 120;
-  display: block;
-  width: clamp(104px, 8.5vw, 160px);
-  height: auto;
-  padding: clamp(8px, 0.7vw, 12px) clamp(12px, 1vw, 18px);
-  border-radius: 22px;
-  background: rgba(255, 248, 232, 0.92);
-  box-shadow: 0 10px 24px rgba(3, 30, 55, 0.35), inset 0 0 0 2px rgba(201, 151, 74, 0.5);
+  width: clamp(140px, 11vw, 220px);
+  padding: clamp(8px, 0.7vw, 12px) clamp(10px, 0.9vw, 16px);
+  border-radius: 24px;
+  overflow: hidden;
+  background: rgba(255, 253, 248, 0.94);
+  box-shadow: 0 10px 24px rgba(3, 30, 55, 0.35), inset 0 0 0 2px rgba(23, 166, 151, 0.35);
   pointer-events: none;
+  animation:
+    rb-logo-in 1100ms var(--ease-out) both,
+    rb-logo-float 6s ease-in-out 1100ms infinite;
+}
+@keyframes rb-logo-in {
+  from { opacity: 0; transform: translateY(-24px) scale(0.86); filter: blur(8px); }
+  to { opacity: 1; transform: none; filter: blur(0); }
+}
+@keyframes rb-logo-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+.rb-logo-art {
+  position: relative;
+  aspect-ratio: 436 / 478;
+}
+.rb-logo-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  user-select: none;
+}
+/* العلم يرفرف من عند السارية */
+.rb-logo-flag {
+  transform-origin: 79.6% 9.2%;
+  animation: rb-logo-flag 1.8s ease-in-out infinite;
+}
+@keyframes rb-logo-flag {
+  0%, 100% { transform: skewY(0deg) scaleX(1); }
+  30% { transform: skewY(-7deg) scaleX(0.94); }
+  65% { transform: skewY(4deg) scaleX(1.02); }
+}
+/* النجمة تلمع وتدور قليلاً */
+.rb-logo-star {
+  transform-origin: 68.3% 5.9%;
+  animation: rb-logo-star 3.2s ease-in-out infinite;
+}
+@keyframes rb-logo-star {
+  0%, 100% { transform: scale(0.88) rotate(0deg); filter: drop-shadow(0 0 0 rgba(255, 190, 40, 0)); }
+  45% { transform: scale(1.22) rotate(18deg); filter: drop-shadow(0 0 6px rgba(255, 190, 40, 0.95)); }
+  60% { transform: scale(1.05) rotate(10deg); filter: drop-shadow(0 0 3px rgba(255, 190, 40, 0.6)); }
+}
+/* لمعة تمر على اللوحة كل فترة */
+.rb-logo-shine {
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  left: 0;
+  width: 38%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.75), transparent);
+  transform: translateX(-160%) skewX(-18deg);
+  animation: rb-logo-shine 7s ease-in-out 1.4s infinite;
+  mix-blend-mode: soft-light;
+}
+@keyframes rb-logo-shine {
+  0%, 70% { transform: translateX(-160%) skewX(-18deg); }
+  100% { transform: translateX(420%) skewX(-18deg); }
 }
 .rb-controls {
   position: absolute;
@@ -640,6 +698,9 @@ body.display-page ::selection {
   .rb-glints, .rb-cloud, .rb-sparkle, .rb-lagoon-ring, .rb-island img,
   .rb-buoy-body, .rb-ship-bob, .rb-sail, .rb-pennant, .rb-crown, .rb-route-flow,
   .rb-wake-line, .rb-spray, .rb-move-btn {
+    animation: none !important;
+  }
+  .rb-logo, .rb-logo-flag, .rb-logo-star, .rb-logo-shine {
     animation: none !important;
   }
   .rb-confetti, .rb-rain {

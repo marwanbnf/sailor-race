@@ -2,7 +2,6 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import { ISLAND_IMAGES, ISLAND_NAMES } from "./islandData.ts";
 import { AdminPanelEmbed } from "./AdminPanelEmbed.tsx";
 import * as wsClient from "../websocket/websocketClient.ts";
-import { LOGO_B64 } from "../utils/logo.ts";
 import "@fontsource/baloo-bhaijaan-2/700.css";
 import "@fontsource/baloo-bhaijaan-2/800.css";
 import "@fontsource/tajawal/400.css";
@@ -11,6 +10,7 @@ import "@fontsource/tajawal/800.css";
 import "@fontsource/tajawal/900.css";
 import "./display/display.css";
 import { SeaBackdrop } from "./display/SeaBackdrop.tsx";
+import { RiyadaLogo } from "./display/RiyadaLogo.tsx";
 import { Dhow, DHOW_ANCHOR_X, DHOW_ANCHOR_Y, DHOW_VB_H, DHOW_VB_W } from "./display/Dhow.tsx";
 import { ArrivalCelebration, StudentAnnouncement, type ArrivalData } from "./display/Celebrations.tsx";
 import { AnchorIcon, CoinIcon, CrownIcon, FullscreenIcon, HelmIcon } from "./display/icons.tsx";
@@ -1399,7 +1399,7 @@ function SettingsPanel({
 export default function DisplayPage() {
   useEffect(() => {
     const previousTitle = document.title;
-    document.title = "ربيع القلوب";
+    document.title = "فريق ريادة التطوعي";
     return () => {
       document.title = previousTitle;
     };
@@ -2365,7 +2365,7 @@ export default function DisplayPage() {
             </button>
           )}
 
-          <img className="rb-logo" src={`data:image/png;base64,${LOGO_B64}`} alt="ربيع القلوب" />
+          <RiyadaLogo />
 
           <div className="rb-controls">
             <button
