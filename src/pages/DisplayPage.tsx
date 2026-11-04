@@ -12,7 +12,7 @@ import "@fontsource/tajawal/900.css";
 import "./display/display.css";
 import { SeaBackdrop } from "./display/SeaBackdrop.tsx";
 import { Dhow, DHOW_ANCHOR_X, DHOW_ANCHOR_Y, DHOW_VB_H, DHOW_VB_W } from "./display/Dhow.tsx";
-import { Leaderboard } from "./display/Leaderboard.tsx";
+import { Leaderboard, TweenedPoints } from "./display/Leaderboard.tsx";
 import { ArrivalCelebration, StudentAnnouncement, type ArrivalData } from "./display/Celebrations.tsx";
 import { AnchorIcon, CoinIcon, CrownIcon, FullscreenIcon, HelmIcon } from "./display/icons.tsx";
 
@@ -1992,7 +1992,7 @@ export default function DisplayPage() {
   const shipH = (shipW * DHOW_VB_H) / DHOW_VB_W;
   const shipAnchorX = (shipW * DHOW_ANCHOR_X) / DHOW_VB_W;
   const shipAnchorY = (shipW * DHOW_ANCHOR_Y) / DHOW_VB_W;
-  const buoySize = Math.round(Math.max(40, Math.min(66, 46 * k)));
+  const buoySize = Math.round(Math.max(56, Math.min(92, 72 * k)));
   const fullRouteD = routePathD(boardSize, TOTAL_POSITIONS - 1);
   const leaderRouteD = routePathD(boardSize, leaderPosition);
 
@@ -2017,7 +2017,7 @@ export default function DisplayPage() {
     });
     groups.forEach((g) => {
       if (g.length < 2) return;
-      const spacing = shipW * (g.length > 3 ? 0.72 : 0.86);
+      const spacing = shipW * (g.length > 3 ? 0.92 : 1.12);
       const ordered = [...g].sort((a, b) => compareTeamsBySlot(a.team, b.team));
       ordered.forEach((s, j) => {
         let nx = -s.tan.y;
@@ -2206,15 +2206,16 @@ export default function DisplayPage() {
             <path d={fullRouteD} fill="none" stroke="var(--rope-dark)" strokeWidth={8 * k} strokeDasharray={`${3 * k} ${7 * k}`} />
             {leaderRouteD && (
               <>
-                <path d={leaderRouteD} fill="none" stroke="var(--gold)" strokeWidth={10 * k} strokeLinecap="round" filter="url(#rb-route-glow)" />
+                <path d={leaderRouteD} fill="none" stroke="rgba(255,210,92,0.55)" strokeWidth={16 * k} strokeLinecap="round" filter="url(#rb-route-glow)" />
+                <path d={leaderRouteD} fill="none" stroke="#ffe08a" strokeWidth={9 * k} strokeLinecap="round" />
                 <path
                   className="rb-route-flow"
                   d={leaderRouteD}
                   fill="none"
-                  stroke="rgba(255,255,255,0.85)"
-                  strokeWidth={3.5 * k}
-                  strokeLinecap="round"
-                  strokeDasharray="6 22"
+                  stroke="#c98a12"
+                  strokeWidth={9 * k}
+                  strokeDasharray={`${3 * k} ${7 * k}`}
+                  style={{ ["--rb-flow" as string]: `${-10 * k * 3}px` }}
                 />
               </>
             )}
@@ -2225,10 +2226,11 @@ export default function DisplayPage() {
             if (ISLAND_INDICES.includes(i)) return null;
             const p = boardPoint(pos, boardSize);
             const lit = leaderPosition >= i - POSITION_EPSILON;
+            const occupied = shipLayouts.some((sl) => Math.abs(sl.boardIndex - i) < 0.4);
             return (
               <div
                 key={`buoy-${i}`}
-                className={`rb-buoy${lit ? " rb-buoy--lit" : ""}`}
+                className={`rb-buoy${lit ? " rb-buoy--lit" : ""}${occupied ? " rb-buoy--occupied" : ""}`}
                 style={{
                   transform: `translate(${p.x - buoySize / 2}px, ${p.y - buoySize * 1.05}px)`,
                   width: buoySize,
@@ -2242,11 +2244,11 @@ export default function DisplayPage() {
                   <path d="M7 27 Q7 17 20 17 Q33 17 33 27 L34 41 Q20 48 6 41 Z" fill="var(--coral)" stroke="#5a1410" strokeWidth="1.8" strokeLinejoin="round" />
                   <path d="M6.6 26 L33.4 26 L33.9 37 Q20 41 6.1 37 Z" fill="#fff8e8" />
                   <path d="M10 20 Q14 18 18 18.4" stroke="rgba(255,255,255,0.65)" strokeWidth="1.8" fill="none" strokeLinecap="round" />
-                  <text x="20" y="35.2" textAnchor="middle" fontSize="11.5" fontWeight="900" fontFamily="Tajawal, sans-serif" fill="#062a3b">
+                  <text x="20" y="35.2" textAnchor="middle" fontSize="13.5" fontWeight="900" fontFamily="Tajawal, sans-serif" fill="#062a3b">
                     {i}
                   </text>
                 </svg>
-                <div className="rb-buoy-value" style={{ fontSize: Math.round(buoySize * 0.3) }}>
+                <div className="rb-buoy-value" style={{ fontSize: Math.round(buoySize * 0.32) }}>
                   {formatPoints(POINTS_PER_SQUARE * i)}
                 </div>
               </div>
@@ -2274,11 +2276,11 @@ export default function DisplayPage() {
                   alt=""
                   style={{ width: size, height: size, animationDelay: `${islandIdx * -1.7}s` }}
                 />
-                <div className="rb-plate" style={{ fontSize: Math.round(19 * k) }}>
+                <div className="rb-plate" style={{ fontSize: Math.round(22 * k) }}>
                   {ISLAND_NAMES[islandIdx]}
                   {islandIdx > 0 && (
                     <small>
-                      <CoinIcon size={Math.round(13 * k)} />
+                      <CoinIcon size={Math.round(18 * k)} />
                       {formatPoints(POINTS_PER_SQUARE * islandSquare)}
                     </small>
                   )}
@@ -2360,7 +2362,9 @@ export default function DisplayPage() {
                   style={{ background: color, fontSize: Math.round(shipW * 0.17), top: shipW * 0.09 }}
                 >
                   {displayName(team)}
-                  <b>{formatPoints(effectivePts)}</b>
+                  <b>
+                    <TweenedPoints value={effectivePts} />
+                  </b>
                 </div>
               </div>
             );

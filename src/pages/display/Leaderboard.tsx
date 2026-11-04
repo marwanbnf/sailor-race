@@ -10,7 +10,7 @@ export interface TallyEntry {
   points: number;
 }
 
-function TallyPoints({ value }: { value: number }) {
+export function TweenedPoints({ value }: { value: number }) {
   const shown = useTweenedNumber(value);
   return <>{Math.round(shown).toLocaleString("en-US")}</>;
 }
@@ -69,10 +69,10 @@ export function Leaderboard({
               }}
             >
               <div className="rb-rank">{rank}</div>
-              <SailChip color={e.color} size={30} label={e.slot} />
+              <SailChip color={e.color} size={32} />
               <div className="rb-row-name">{e.name}</div>
               <div className="rb-row-pts">
-                <TallyPoints value={e.points} />
+                <TweenedPoints value={e.points} />
               </div>
               <div className="rb-track" aria-hidden="true">
                 <div className="rb-track-fill" style={{ transform: `scaleX(${pct / 100})` }} />

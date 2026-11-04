@@ -4,8 +4,8 @@
 :root {
   --sea-shallow: #46cfd9;
   --sea-mid: #1a9cc2;
-  --sea-deep: #0e6c9c;
-  --sea-abyss: #0a4775;
+  --sea-deep: #0b6e88;
+  --sea-abyss: #07485e;
   --lagoon: #8ff0dd;
   --foam: #f4fffd;
   --sand: #f2d28b;
@@ -184,7 +184,7 @@ body.display-page ::selection {
   font-weight: 800;
   line-height: 1.1;
   white-space: nowrap;
-  box-shadow: 0 4px 0 var(--sand-deep), 0 10px 18px rgba(3, 30, 55, 0.35);
+  box-shadow: 0 3px 6px rgba(120, 80, 20, 0.45), 0 12px 22px rgba(3, 30, 55, 0.38);
   text-align: center;
 }
 .rb-plate small {
@@ -193,8 +193,8 @@ body.display-page ::selection {
   justify-content: center;
   gap: 0.3em;
   font-family: var(--font-body);
-  font-weight: 800;
-  font-size: 0.66em;
+  font-weight: 900;
+  font-size: 0.86em;
   color: #6b4a14;
   font-variant-numeric: tabular-nums;
 }
@@ -240,6 +240,12 @@ body.display-page ::selection {
   line-height: 1.25;
   box-shadow: 0 3px 8px rgba(3, 30, 55, 0.35);
 }
+.rb-buoy-value {
+  transition: opacity 300ms ease;
+}
+.rb-buoy--occupied .rb-buoy-value {
+  opacity: 0;
+}
 .rb-buoy--lit .rb-buoy-value {
   background: var(--gold);
   color: var(--ink);
@@ -247,10 +253,10 @@ body.display-page ::selection {
 
 /* traveled-route flow */
 .rb-route-flow {
-  animation: rb-flow 1.6s linear infinite;
+  animation: rb-flow 1.2s linear infinite;
 }
 @keyframes rb-flow {
-  to { stroke-dashoffset: -28; }
+  to { stroke-dashoffset: var(--rb-flow, -30px); }
 }
 
 /* ── Ships ── */
@@ -301,11 +307,11 @@ body.display-page ::selection {
   opacity: 1;
 }
 .rb-wake-line {
-  stroke-dasharray: 10 8;
+  stroke-dasharray: 18 10;
   animation: rb-wake 0.7s linear infinite;
 }
 @keyframes rb-wake {
-  to { stroke-dashoffset: 18; }
+  to { stroke-dashoffset: 28; }
 }
 .rb-spray {
   animation: rb-spray 0.9s ease-out infinite;
@@ -331,7 +337,7 @@ body.display-page ::selection {
   font-weight: 800;
   line-height: 1.15;
   white-space: nowrap;
-  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.28), 0 8px 16px rgba(3, 30, 55, 0.4);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.32), 0 10px 20px rgba(3, 30, 55, 0.4);
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
 }
 .rb-ship-tag b {
@@ -383,10 +389,13 @@ body.display-page ::selection {
 }
 .rb-logo {
   display: block;
-  width: clamp(120px, 11vw, 190px);
+  width: clamp(150px, 13vw, 230px);
   height: auto;
   margin: 0 auto clamp(10px, 1.4vh, 20px);
-  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.35)) drop-shadow(0 0 12px rgba(70, 207, 217, 0.35));
+  padding: clamp(10px, 1vw, 18px) clamp(18px, 1.6vw, 28px);
+  border-radius: 28px;
+  background: radial-gradient(closest-side, rgba(255, 248, 232, 0.96), rgba(255, 248, 232, 0.9) 70%, rgba(255, 248, 232, 0.82));
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35), inset 0 0 0 2px rgba(201, 151, 74, 0.55);
 }
 .rb-tally h2 {
   font-family: var(--font-display);
@@ -515,9 +524,9 @@ body.display-page ::selection {
   gap: 10px;
 }
 .rb-legend {
-  font-size: clamp(12px, 0.85vw, 15px);
-  font-weight: 700;
-  color: rgba(242, 210, 139, 0.7);
+  font-size: clamp(14px, 1.05vw, 20px);
+  font-weight: 800;
+  color: var(--sand);
   line-height: 1.4;
 }
 .rb-icon-btn {
@@ -564,18 +573,18 @@ body.display-page ::selection {
   font-size: clamp(20px, 1.7vw, 30px);
   color: var(--ink);
   background: linear-gradient(180deg, #ffe08a, var(--gold-hot));
-  box-shadow: 0 6px 0 #b77a12, 0 16px 34px rgba(3, 30, 55, 0.5);
+  box-shadow: 0 6px 14px rgba(150, 95, 10, 0.55), 0 16px 34px rgba(3, 30, 55, 0.5);
   cursor: pointer;
   transition: transform 160ms var(--ease-out), box-shadow 160ms var(--ease-out), filter 200ms ease;
   animation: rb-call 2s ease-in-out infinite;
 }
 .rb-move-btn:hover:not(:disabled) {
   transform: translateX(-50%) translateY(-2px);
-  box-shadow: 0 8px 0 #b77a12, 0 20px 40px rgba(3, 30, 55, 0.5);
+  box-shadow: 0 9px 18px rgba(150, 95, 10, 0.55), 0 20px 40px rgba(3, 30, 55, 0.5);
 }
 .rb-move-btn:active:not(:disabled) {
   transform: translateX(-50%) translateY(4px);
-  box-shadow: 0 2px 0 #b77a12, 0 10px 20px rgba(3, 30, 55, 0.5);
+  box-shadow: 0 2px 6px rgba(150, 95, 10, 0.55), 0 10px 20px rgba(3, 30, 55, 0.5);
 }
 .rb-move-btn:disabled {
   cursor: progress;
@@ -583,8 +592,8 @@ body.display-page ::selection {
   filter: saturate(0.4) brightness(0.85);
 }
 @keyframes rb-call {
-  0%, 100% { box-shadow: 0 6px 0 #b77a12, 0 16px 34px rgba(3, 30, 55, 0.5), 0 0 0 0 rgba(255, 210, 92, 0.55); }
-  50% { box-shadow: 0 6px 0 #b77a12, 0 16px 34px rgba(3, 30, 55, 0.5), 0 0 0 16px rgba(255, 210, 92, 0); }
+  0%, 100% { box-shadow: 0 6px 14px rgba(150, 95, 10, 0.55), 0 16px 34px rgba(3, 30, 55, 0.5), 0 0 0 0 rgba(255, 210, 92, 0.55); }
+  50% { box-shadow: 0 6px 14px rgba(150, 95, 10, 0.55), 0 16px 34px rgba(3, 30, 55, 0.5), 0 0 0 16px rgba(255, 210, 92, 0); }
 }
 
 /* ── Arrival banner ── */
@@ -687,6 +696,9 @@ body.display-page ::selection {
   from { opacity: 0; transform: translateY(40px) scale(0.9); filter: blur(10px); }
   to { opacity: 1; transform: none; filter: blur(0); }
 }
+.rb-ann-for {
+  margin-top: 0.5em;
+}
 .rb-ann-team {
   display: inline-flex;
   align-items: center;
@@ -698,17 +710,17 @@ body.display-page ::selection {
   font-family: var(--font-display);
   font-weight: 800;
   font-size: clamp(20px, 2vw, 34px);
-  box-shadow: 0 5px 0 rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
   animation: rb-rise 600ms var(--ease-out) 260ms both;
 }
 .rb-ann-name {
   margin-top: 0.3em;
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: clamp(48px, 7vw, 120px);
+  font-size: clamp(46px, 6vw, 108px);
   line-height: 1.1;
   color: #fff;
-  text-wrap: balance;
+  text-wrap: pretty;
   animation: rb-rise 700ms var(--ease-out) 360ms both;
 }
 .rb-ann-pts {
@@ -723,7 +735,7 @@ body.display-page ::selection {
   line-height: 1;
   color: var(--gold);
   font-variant-numeric: tabular-nums;
-  text-shadow: 0 0 40px rgba(255, 210, 92, 0.45), 0 6px 0 rgba(120, 75, 10, 0.55);
+  text-shadow: 0 0 40px rgba(255, 210, 92, 0.45), 0 6px 16px rgba(120, 75, 10, 0.6);
   animation: rb-pop 800ms var(--ease-out) 560ms both;
 }
 .rb-ann-pts .rb-ann-unit {

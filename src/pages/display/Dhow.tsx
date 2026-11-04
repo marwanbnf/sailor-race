@@ -59,26 +59,27 @@ export function Dhow({
 
       {/* wake: trails astern (to the left) while sailing */}
       <g className="rb-wake">
+        <path d="M 26 94 L -70 70 L -70 118 Z" fill="rgba(244,255,253,0.18)" />
         <path
           className="rb-wake-line"
-          d="M 22 92 Q -14 86 -62 76"
-          stroke="rgba(244,255,253,0.85)"
-          strokeWidth="4"
+          d="M 22 92 Q -14 86 -70 70"
+          stroke="rgba(244,255,253,0.95)"
+          strokeWidth="9"
           strokeLinecap="round"
           fill="none"
         />
         <path
           className="rb-wake-line"
-          d="M 22 96 Q -14 104 -62 114"
-          stroke="rgba(244,255,253,0.85)"
-          strokeWidth="4"
+          d="M 22 96 Q -14 104 -70 118"
+          stroke="rgba(244,255,253,0.95)"
+          strokeWidth="9"
           strokeLinecap="round"
           fill="none"
         />
-        <path d="M 30 94 Q -6 94 -44 95" stroke="rgba(244,255,253,0.35)" strokeWidth="10" strokeLinecap="round" fill="none" />
-        <circle className="rb-spray" cx="134" cy="84" r="3.2" fill="#fff" />
-        <circle className="rb-spray" cx="138" cy="88" r="2.4" fill="#fff" style={{ animationDelay: "0.3s" }} />
-        <circle className="rb-spray" cx="130" cy="80" r="2" fill="#fff" style={{ animationDelay: "0.6s" }} />
+        <path d="M 30 94 Q -6 94 -44 95" stroke="rgba(244,255,253,0.55)" strokeWidth="18" strokeLinecap="round" fill="none" />
+        <circle className="rb-spray" cx="134" cy="84" r="5.5" fill="#fff" />
+        <circle className="rb-spray" cx="140" cy="90" r="4.5" fill="#fff" style={{ animationDelay: "0.3s" }} />
+        <circle className="rb-spray" cx="128" cy="80" r="4" fill="#fff" style={{ animationDelay: "0.6s" }} />
       </g>
 
       {/* shadow and foam at the waterline */}

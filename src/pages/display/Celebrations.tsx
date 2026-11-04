@@ -138,10 +138,6 @@ export function StudentAnnouncement({
     <div className="rb-ann" style={{ ["--team" as string]: teamColor }} role="status">
       <ConfettiRain color={teamColor} count={56} />
       <div className="rb-ann-card">
-        <div className="rb-ann-team">
-          <SailChip color="#ffffff" size={34} />
-          {teamName}
-        </div>
         <div className="rb-ann-name">{studentName}</div>
         {replay ? (
           <div className="rb-ann-pts rb-ann-pts--replay">إعادة عرض</div>
@@ -153,6 +149,12 @@ export function StudentAnnouncement({
             <span className="rb-ann-unit">نقطة</span>
           </div>
         )}
+        <div className="rb-ann-for">
+          <span className="rb-ann-team">
+            <SailChip color="#ffffff" size={34} />
+            {teamName}
+          </span>
+        </div>
       </div>
     </div>
   );
