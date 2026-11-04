@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-04T20:41:29.771Z",
+  "generatedAt": "2026-11-04T21:03:52.000Z",
   "title": "Design System: ربيع القلوب: Sailor Race",
   "extensions": {
     "colorMeta": {
@@ -230,7 +230,7 @@
       },
       "ink": {
         "role": "neutral",
-        "displayName": "Harbor Ink",
+        "displayName": "Deep Ink",
         "canonical": "#062a3b",
         "oklch": "oklch(26.9% 0.050 233.9)",
         "tonalRamp": [
@@ -246,7 +246,7 @@
       },
       "ink-2": {
         "role": "neutral",
-        "displayName": "Harbor Ink Raised",
+        "displayName": "Raised Ink",
         "canonical": "#0a3a50",
         "oklch": "oklch(32.9% 0.062 233.8)",
         "tonalRamp": [
@@ -384,19 +384,15 @@
       },
       "title": {
         "displayName": "Title",
-        "purpose": "Class names in tally rows, ship tags, island plates (tags and plates scale from the board)."
+        "purpose": "Class names on ship tags (ship width x 0.19, 15px floor); island plates at 22px x board factor."
       },
       "numeral-hero": {
         "displayName": "Numeral Hero",
-        "purpose": "Announcement points, gold with glow, tweened count-up."
+        "purpose": "Announcement points, gold with glow, 1100ms count-up."
       },
       "numeral": {
         "displayName": "Numeral",
-        "purpose": "Tally points, tag points, buoy and plate values; tabular, LTR."
-      },
-      "label": {
-        "displayName": "Label",
-        "purpose": "Tally legend."
+        "purpose": "Ship-tag points and island-plate values at 0.86em of the host label; tabular, LTR."
       }
     },
     "shadows": [
@@ -426,21 +422,6 @@
         "purpose": "Buoy value pills."
       },
       {
-        "name": "harbor-cast",
-        "value": "10px 0 30px rgba(2, 20, 32, 0.55)",
-        "purpose": "Tally board over the sea."
-      },
-      {
-        "name": "leader-row",
-        "value": "inset 0 0 0 2px rgba(255, 210, 92, 0.55), 0 8px 20px rgba(0, 0, 0, 0.3)",
-        "purpose": "Rank-1 tally row."
-      },
-      {
-        "name": "moving-row",
-        "value": "inset 0 0 0 2px var(--team), 0 0 24px color-mix(in srgb, var(--team) 55%, transparent)",
-        "purpose": "Row of the class currently sailing."
-      },
-      {
         "name": "team-ring",
         "value": "0 0 0 4px var(--team), 0 0 0 8px rgba(6, 42, 59, 0.6), 0 24px 50px rgba(2, 20, 32, 0.55)",
         "purpose": "Arrival banner."
@@ -457,15 +438,15 @@
       },
       {
         "name": "logo-plaque",
-        "value": "0 10px 24px rgba(0, 0, 0, 0.35), inset 0 0 0 2px rgba(201, 151, 74, 0.55)",
-        "purpose": "Paper plaque behind the logo."
+        "value": "0 10px 24px rgba(3, 30, 55, 0.35), inset 0 0 0 2px rgba(201, 151, 74, 0.5)",
+        "purpose": "Translucent paper plaque behind the logo, floating on the sea."
       }
     ],
     "motion": [
       {
         "name": "ease-out",
         "value": "cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "Default easing for every settle, rise, and re-rank."
+        "purpose": "Default easing for every settle, rise, and scale."
       },
       {
         "name": "ship-heading",
@@ -473,24 +454,34 @@
         "purpose": "Hull turning to face its heading."
       },
       {
-        "name": "row-rerank",
-        "value": "900ms ease-out (transform)",
-        "purpose": "Tally FLIP re-rank."
+        "name": "ship-sail",
+        "value": "ease-in-out cubic, requestAnimationFrame, max(900ms, distance-based)",
+        "purpose": "One continuous glide along the route per move."
       },
       {
-        "name": "track-fill",
-        "value": "500ms ease-out (scaleX)",
-        "purpose": "Progress track growth."
+        "name": "ship-scale",
+        "value": "600ms ease-out to scale(1.14)",
+        "purpose": "The sailing ship grows above the fleet."
       },
       {
-        "name": "score-tween",
-        "value": "650ms ease-out cubic",
-        "purpose": "Shared count-up for tally and tag points (1100ms on announcements)."
+        "name": "ship-settle",
+        "value": "650ms ease-out (transform)",
+        "purpose": "Ships at rest re-settling into formation."
+      },
+      {
+        "name": "announce-count",
+        "value": "1100ms ease-out cubic",
+        "purpose": "Announcement points count-up. Ship tags show raw points without a tween."
       },
       {
         "name": "control",
         "value": "160ms ease-out",
         "purpose": "Button hover/press."
+      },
+      {
+        "name": "controls-reveal",
+        "value": "200ms ease, opacity 0.55 to 1",
+        "purpose": "Floating fullscreen/settings controls on hover or focus."
       },
       {
         "name": "arrival-in",
@@ -510,33 +501,25 @@
       {
         "name": "reduced-motion",
         "value": "prefers-reduced-motion: reduce",
-        "purpose": "All loops off, confetti removed, entrances become a plain fade, score tween is instant."
+        "purpose": "All loops off, confetti removed, entrances become a plain fade, announcement count is instant."
       }
     ],
     "breakpoints": [
       {
-        "name": "stacked",
-        "value": "760px",
-        "purpose": "At or below: board 70vh on top, tally below, page scrolls, rope seam horizontal."
+        "name": "compact-board",
+        "value": "700px",
+        "purpose": "Board narrower than this: ship width floor drops from 78px to 52px."
       }
     ]
   },
   "components": [
     {
-      "name": "Tally Row",
-      "kind": "card",
-      "refersTo": "tally-row",
-      "description": "Ranked class row: rank, sail chip, name, tweened points, progress track with island ticks.",
-      "html": "<div dir=\"rtl\" style=\"background:#062a3b;padding:16px;display:grid;gap:10px;width:360px\"><div class=\"ds-row ds-row--first\" style=\"--team:#EF4444\"><div class=\"ds-rank\">1</div><svg width=\"32\" height=\"32\" viewBox=\"0 0 28 28\"><path d=\"M4 22 L24 22 Q22 26 18 26 L9 26 Q5 26 4 22 Z\" fill=\"#8a5a2b\" stroke=\"#3d240c\" stroke-width=\"1.2\"/><path d=\"M14 2 L14 22\" stroke=\"#3d240c\" stroke-width=\"1.6\" stroke-linecap=\"round\"/><path d=\"M14 3 Q24 10 22 20 L14 20 Z\" fill=\"#EF4444\" stroke=\"rgba(0,0,0,0.35)\"/><path d=\"M13 6 Q6 12 6 20 L13 20 Z\" fill=\"#EF4444\" opacity=\"0.7\"/></svg><div class=\"ds-name\">فصل 2</div><div class=\"ds-pts\">4,600</div><div class=\"ds-track\"><i style=\"transform:scaleX(0.77)\"></i></div></div><div class=\"ds-row\" style=\"--team:#3B82F6\"><div class=\"ds-rank\">2</div><svg width=\"32\" height=\"32\" viewBox=\"0 0 28 28\"><path d=\"M4 22 L24 22 Q22 26 18 26 L9 26 Q5 26 4 22 Z\" fill=\"#8a5a2b\" stroke=\"#3d240c\" stroke-width=\"1.2\"/><path d=\"M14 2 L14 22\" stroke=\"#3d240c\" stroke-width=\"1.6\" stroke-linecap=\"round\"/><path d=\"M14 3 Q24 10 22 20 L14 20 Z\" fill=\"#3B82F6\" stroke=\"rgba(0,0,0,0.35)\"/><path d=\"M13 6 Q6 12 6 20 L13 20 Z\" fill=\"#3B82F6\" opacity=\"0.7\"/></svg><div class=\"ds-name\">فصل 1</div><div class=\"ds-pts\">2,700</div><div class=\"ds-track\"><i style=\"transform:scaleX(0.45)\"></i></div></div></div>",
-      "css": ":host{--sea-shallow:#46cfd9;--ink:#062a3b;--ink-2:#0a3a50;--gold:#ffd25c;--gold-hot:#ffb627;--sand:#f2d28b;--paper:#fff8e8;--coral:#ff5d4f;--ease-out:cubic-bezier(0.16,1,0.3,1);--font-display:\"Baloo Bhaijaan 2\",\"Tajawal\",sans-serif;--font-body:\"Tajawal\",sans-serif;} .ds-row{position:relative;height:84px;display:grid;grid-template-columns:auto auto 1fr auto;grid-template-rows:1fr auto;column-gap:10px;align-items:center;padding:0 12px 9px;border-radius:16px;background:rgba(255,255,255,0.045);box-shadow:inset 0 0 0 1px rgba(143,240,221,0.18);color:var(--paper);transition:box-shadow 400ms ease,background 400ms ease}.ds-row:hover{box-shadow:inset 0 0 0 2px var(--team),0 0 24px color-mix(in srgb,var(--team) 55%,transparent)}.ds-row--first{background:linear-gradient(90deg,rgba(255,210,92,0.08),rgba(255,210,92,0.2));box-shadow:inset 0 0 0 2px rgba(255,210,92,0.55),0 8px 20px rgba(0,0,0,0.3)}.ds-rank{grid-row:1/3;width:1.5em;text-align:center;font-family:var(--font-display);font-weight:800;font-size:30px;line-height:1;color:rgba(242,210,139,0.75)}.ds-row--first .ds-rank{color:var(--gold);text-shadow:0 0 16px rgba(255,210,92,0.6)}.ds-name{font-family:var(--font-display);font-weight:800;font-size:22px;line-height:1.2;color:#fff}.ds-pts{font-family:var(--font-body);font-weight:900;font-size:26px;line-height:1;color:var(--gold);font-variant-numeric:tabular-nums;direction:ltr}.ds-track{grid-row:2;grid-column:2/5;position:relative;height:8px;border-radius:999px;background:rgba(255,255,255,0.1)}.ds-track i{position:absolute;inset:0;border-radius:inherit;background:var(--team);box-shadow:0 0 10px color-mix(in srgb,var(--team) 70%,transparent);transform-origin:100% 50%}"
-    },
-    {
       "name": "Ship Tag",
       "kind": "chip",
       "refersTo": "ship-tag",
-      "description": "Class-colour pill under each dhow: name in Baloo, points in a nested ink pill.",
+      "description": "Class-colour pill under each dhow: name in Baloo, raw points in a nested ink pill.",
       "html": "<div dir=\"rtl\" style=\"background:#1a9cc2;padding:24px;display:flex;gap:16px\"><span class=\"ds-tag\" style=\"background:#EF4444\">فصل 2 <b>4,600</b></span><span class=\"ds-tag\" style=\"background:#8B5CF6\">فصل 4 <b>2,700</b></span></div>",
-      "css": ":host{--sea-shallow:#46cfd9;--ink:#062a3b;--ink-2:#0a3a50;--gold:#ffd25c;--gold-hot:#ffb627;--sand:#f2d28b;--paper:#fff8e8;--coral:#ff5d4f;--ease-out:cubic-bezier(0.16,1,0.3,1);--font-display:\"Baloo Bhaijaan 2\",\"Tajawal\",sans-serif;--font-body:\"Tajawal\",sans-serif;} .ds-tag{display:inline-flex;align-items:center;gap:0.35em;padding:0.1em 0.6em 0.16em;border-radius:999px;color:#fff;font-family:var(--font-display);font-weight:800;font-size:20px;line-height:1.15;white-space:nowrap;box-shadow:0 3px 8px rgba(0,0,0,0.32),0 10px 20px rgba(3,30,55,0.4);text-shadow:0 1px 0 rgba(0,0,0,0.25)}.ds-tag b{font-family:var(--font-body);font-weight:900;font-variant-numeric:tabular-nums;padding:0 0.4em;border-radius:999px;background:rgba(6,42,59,0.55);color:var(--gold);font-size:0.86em}"
+      "css": ":host{--sea-shallow:#46cfd9;--ink:#062a3b;--ink-2:#0a3a50;--gold:#ffd25c;--gold-hot:#ffb627;--sand:#f2d28b;--paper:#fff8e8;--coral:#ff5d4f;--ease-out:cubic-bezier(0.16,1,0.3,1);--font-display:\"Baloo Bhaijaan 2\",\"Tajawal\",sans-serif;--font-body:\"Tajawal\",sans-serif;} .ds-tag{display:inline-flex;align-items:center;gap:0.35em;padding:0.1em 0.6em 0.16em;border-radius:999px;color:#fff;font-family:var(--font-display);font-weight:800;font-size:19px;line-height:1.15;white-space:nowrap;box-shadow:0 3px 8px rgba(0,0,0,0.32),0 10px 20px rgba(3,30,55,0.4);text-shadow:0 1px 0 rgba(0,0,0,0.25)}.ds-tag b{font-family:var(--font-body);font-weight:900;font-variant-numeric:tabular-nums;padding:0 0.4em;border-radius:999px;background:rgba(6,42,59,0.55);color:var(--gold);font-size:0.86em}"
     },
     {
       "name": "Channel Buoy",
@@ -555,12 +538,20 @@
       "css": ":host{--sea-shallow:#46cfd9;--ink:#062a3b;--ink-2:#0a3a50;--gold:#ffd25c;--gold-hot:#ffb627;--sand:#f2d28b;--paper:#fff8e8;--coral:#ff5d4f;--ease-out:cubic-bezier(0.16,1,0.3,1);--font-display:\"Baloo Bhaijaan 2\",\"Tajawal\",sans-serif;--font-body:\"Tajawal\",sans-serif;} .ds-plate{display:inline-block;padding:0.18em 0.85em 0.22em;border-radius:999px;background:linear-gradient(180deg,#fff3cf,var(--sand));color:var(--ink);font-family:var(--font-display);font-weight:800;font-size:24px;line-height:1.1;text-align:center;box-shadow:0 3px 6px rgba(120,80,20,0.45),0 12px 22px rgba(3,30,55,0.38)}.ds-plate small{display:flex;align-items:center;justify-content:center;gap:0.3em;font-family:var(--font-body);font-weight:900;font-size:0.86em;color:#6b4a14;font-variant-numeric:tabular-nums}"
     },
     {
+      "name": "Logo Plaque",
+      "kind": "custom",
+      "refersTo": "logo-plaque",
+      "description": "Translucent paper plaque carrying the logo at the top right of the sea.",
+      "html": "<div dir=\"rtl\" style=\"background:linear-gradient(162deg,#46cfd9,#1a9cc2);padding:24px;display:flex;justify-content:flex-start\"><div class=\"ds-logo\">ربيع القلوب</div></div>",
+      "css": ":host{--sea-shallow:#46cfd9;--ink:#062a3b;--ink-2:#0a3a50;--gold:#ffd25c;--gold-hot:#ffb627;--sand:#f2d28b;--paper:#fff8e8;--coral:#ff5d4f;--ease-out:cubic-bezier(0.16,1,0.3,1);--font-display:\"Baloo Bhaijaan 2\",\"Tajawal\",sans-serif;--font-body:\"Tajawal\",sans-serif;} .ds-logo{width:140px;padding:10px 16px;border-radius:22px;background:rgba(255,248,232,0.92);box-shadow:0 10px 24px rgba(3,30,55,0.35),inset 0 0 0 2px rgba(201,151,74,0.5);color:var(--ink);font-family:var(--font-display);font-weight:800;font-size:22px;text-align:center}"
+    },
+    {
       "name": "Icon Button",
       "kind": "button",
       "refersTo": "icon-button",
-      "description": "Discreet harbor control (fullscreen, settings) at the tally foot.",
-      "html": "<div style=\"background:#062a3b;padding:20px;display:flex;gap:8px\"><button class=\"ds-icon-btn\" aria-label=\"ملء الشاشة\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5\"/></svg></button><button class=\"ds-icon-btn\" aria-label=\"الإعدادات\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><circle cx=\"12\" cy=\"12\" r=\"6\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/><path d=\"M12 2v4M12 18v4M2 12h4M18 12h4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8\"/></svg></button></div>",
-      "css": ":host{--sea-shallow:#46cfd9;--ink:#062a3b;--ink-2:#0a3a50;--gold:#ffd25c;--gold-hot:#ffb627;--sand:#f2d28b;--paper:#fff8e8;--coral:#ff5d4f;--ease-out:cubic-bezier(0.16,1,0.3,1);--font-display:\"Baloo Bhaijaan 2\",\"Tajawal\",sans-serif;--font-body:\"Tajawal\",sans-serif;} .ds-icon-btn{width:46px;height:46px;display:grid;place-items:center;border-radius:14px;border:0;background:rgba(255,255,255,0.07);color:var(--sand);cursor:pointer;box-shadow:inset 0 0 0 1px rgba(242,210,139,0.28);transition:background 160ms ease,transform 160ms var(--ease-out),color 160ms ease}.ds-icon-btn:hover{background:rgba(242,210,139,0.16);color:#fff}.ds-icon-btn:active{transform:scale(0.94)}.ds-icon-btn:focus-visible{outline:3px solid var(--gold);outline-offset:3px}"
+      "description": "Fullscreen and settings controls floating at the bottom right of the sea, 0.55 opacity until hover or focus.",
+      "html": "<div style=\"background:#0b6e88;padding:20px\"><div class=\"ds-controls\"><button class=\"ds-icon-btn\" aria-label=\"ملء الشاشة\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5\"/></svg></button><button class=\"ds-icon-btn\" aria-label=\"الإعدادات\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><circle cx=\"12\" cy=\"12\" r=\"6\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/><path d=\"M12 2v4M12 18v4M2 12h4M18 12h4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8\"/></svg></button></div></div>",
+      "css": ":host{--sea-shallow:#46cfd9;--ink:#062a3b;--ink-2:#0a3a50;--gold:#ffd25c;--gold-hot:#ffb627;--sand:#f2d28b;--paper:#fff8e8;--coral:#ff5d4f;--ease-out:cubic-bezier(0.16,1,0.3,1);--font-display:\"Baloo Bhaijaan 2\",\"Tajawal\",sans-serif;--font-body:\"Tajawal\",sans-serif;} .ds-icon-btn{width:46px;height:46px;display:grid;place-items:center;border-radius:14px;border:0;background:rgba(6,42,59,0.6);color:var(--sand);cursor:pointer;box-shadow:inset 0 0 0 1px rgba(242,210,139,0.28);transition:background 160ms ease,transform 160ms var(--ease-out),color 160ms ease}.ds-icon-btn:hover{background:rgba(242,210,139,0.16);color:#fff}.ds-icon-btn:active{transform:scale(0.94)}.ds-icon-btn:focus-visible{outline:3px solid var(--gold);outline-offset:3px}.ds-controls{display:flex;gap:8px;opacity:0.55;transition:opacity 200ms ease}.ds-controls:hover,.ds-controls:focus-within{opacity:1}"
     },
     {
       "name": "Move Ships Button",
@@ -589,13 +580,14 @@
   ],
   "narrative": {
     "northStar": "The Living Gulf",
-    "overview": "The race board is a sunlit Gulf sea that five classes cross in dhows. Water runs from turquoise shallows in the upper corner down to deep teal and abyss, with wave glints drifting over it, cloud shadows sliding across, and lagoons ringing each island. A sand-gold rope marks the route. Coral-and-cream channel buoys carry big numerals, and each dhow flies a lateen sail in its class color. A deep-ink harbor board on the right holds the logo and the ranked tally, separated from the sea by a twisted rope seam.\n\nThe world is built for a projector at the back of a room. Everything is set thick, heavy, and large: 800 to 900 weights, fat strokes, pill-shaped labels on dark or sand grounds, and numerals in tabular figures. The race is read from the ships themselves and from one tally. Spectacle (bobbing hulls, a foam wake, buoy lamps lighting, confetti on arrival) serves the reveal but never competes with the standings. The whole surface is Arabic and right-to-left.\n\nDepth comes from water and light rather than cards: gradients, vignettes, blurred drop shadows under the islands and hulls, and soft glows on everything gold. The surface has no flat panels and no hard offset shadows.",
+    "overview": "The race board is a sunlit Gulf sea that five classes cross in dhows. Water runs from turquoise shallows in the upper corner down to deep teal and abyss, with wave glints drifting over it, cloud shadows sliding across, and lagoons ringing each island. A sand-gold rope marks the route. Coral-and-cream channel buoys carry big numerals, and each dhow flies a lateen sail in its class color. The sea fills the whole viewport. The logo rides on a cream plaque in the top corner, and two quiet controls float in the bottom corner.\n\nThe world is built for a projector at the back of a room. Everything is set thick, heavy, and large: 800 to 900 weights, fat strokes, pill-shaped labels on dark or sand grounds, and numerals in tabular figures. The race is read from the ships themselves: every dhow carries a tag with its class name and points, and the leader wears a crown. Spectacle (bobbing hulls, a foam wake, buoy lamps lighting, confetti on arrival) serves the reveal but never competes with the standings. The whole surface is Arabic and right-to-left.\n\nDepth comes from water and light rather than cards: gradients, vignettes, blurred drop shadows under the islands and hulls, and soft glows on everything gold. The surface has no flat panels and no hard offset shadows.",
     "keyCharacteristics": [
-      "Sea gradient, from turquoise shallows to deep-teal abyss, with drifting glint tiles and cloud shadows",
+      "Sea gradient, from turquoise shallows to deep-teal abyss, with drifting glint tiles and cloud shadows, filling the full viewport",
       "Sand-gold rope route, with the leader's travelled stretch gilded and flowing",
       "Authored SVG world objects (dhow, buoy, crown, sail chip, coin) instead of emoji or icon fonts",
       "Heavy rounded Arabic display type (Baloo Bhaijaan 2) over a Tajawal workhorse, with tabular numerals throughout",
       "Pills for every label that floats over water",
+      "Ships that would overlap sail in an echelon formation, so no class is ever hidden",
       "Motion runs on transforms only and has a full reduced-motion path"
     ],
     "rules": [
@@ -606,22 +598,17 @@
       },
       {
         "name": "The Class Owns Its Sail Rule",
-        "body": "Class color lives on canvas (sail, pennant, tag, track) and never on the sea, the route, or the harbor surface.",
+        "body": "Class color lives on canvas and labels (sail, pennant, gunwale band, tag, banner ring) and never on the sea or the route.",
         "section": "colors"
       },
       {
         "name": "The Two Voices Rule",
-        "body": "Names in Baloo, numbers in Tajawal 900 with tabular figures. A score never sets in the display face.",
+        "body": "Names in Baloo, numbers in Tajawal with tabular figures. A score never sets in the display face.",
         "section": "typography"
       },
       {
         "name": "The Back-Row Rule",
         "body": "No board text is lighter than 800 weight. Running text on the board does not exist.",
-        "section": "typography"
-      },
-      {
-        "name": "The Shared Count Rule",
-        "body": "Every on-screen score for a class (tally and ship tag) goes through the same tweened readout (650ms ease-out cubic; 1100ms on the announcement), so the numbers count up together and always land on the true value.",
         "section": "typography"
       },
       {
@@ -633,18 +620,18 @@
     "dos": [
       "Do draw the route as a thick rope (rope with rope-dark twists) over a soft lagoon channel, and gild only the leader's travelled stretch with the wake-gold core, wake-amber twist, and blurred glow.",
       "Do size everything from the board factor `k` so the map holds together from 1366 to 1920 and beyond.",
-      "Do set names in Baloo Bhaijaan 2 at 800 and every number in Tajawal 900 with tabular figures.",
+      "Do set names in Baloo Bhaijaan 2 at 800 and every number in Tajawal with tabular figures.",
       "Do put labels that float over water in pills with the label-float shadow.",
+      "Do resolve overlapping ships with the echelon formation and keep every group inside the board, so every hull, sail, and tag stays visible.",
       "Do animate only transform and opacity, and give every looping animation an off switch under prefers-reduced-motion. Confetti is removed entirely.",
-      "Do route every on-screen score through the shared tweened readout so the tally and tags agree.",
       "Do draw world objects as authored SVG with round joins and wood or ink outlines."
     ],
     "donts": [
       "Don't draw the route as a thin dashed line on a flat gradient. Dashes belong only inside the rope's twist and the wake lines.",
       "Don't use emoji or icon-font glyphs as markers. Buoys, ships, crowns, and coins are drawn.",
       "Don't use hard, unblurred offset shadows on the board.",
-      "Don't use tiny floating labels. Values on the map come in pills scaled from `k` or the buoy size, never below the 56px buoy floor.",
-      "Don't fill a hull with a class color, or put class color on the sea, route, or harbor surface.",
+      "Don't use tiny floating labels. Values on the map come in pills scaled from `k`, the buoy size, or the ship width, never below the 56px buoy floor or the 15px ship-tag floor.",
+      "Don't fill a hull with a class color, or put class color on the sea or the route.",
       "Don't spend gold on decoration."
     ]
   }
