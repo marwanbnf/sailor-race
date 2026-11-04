@@ -10,8 +10,15 @@ export function RiyadaLogo() {
         <img className="rb-logo-layer" src={baseUrl} alt="" draggable={false} />
         <img className="rb-logo-layer rb-logo-flag" src={flagUrl} alt="" draggable={false} />
         <img className="rb-logo-layer rb-logo-star" src={starUrl} alt="" draggable={false} />
+        {/* اللمعة محصورة داخل شكل الشعار نفسه */}
+        <span
+          className="rb-logo-shine-mask"
+          aria-hidden="true"
+          style={{ WebkitMaskImage: `url(${baseUrl})`, maskImage: `url(${baseUrl})` }}
+        >
+          <span className="rb-logo-shine" />
+        </span>
       </div>
-      <span className="rb-logo-shine" aria-hidden="true" />
     </div>
   );
 }
