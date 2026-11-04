@@ -192,7 +192,7 @@ The page is a single full-viewport sea board (100vw × 100vh, overflow hidden, r
 
 Two pieces of chrome float on the sea at the same edge inset (clamp(12px, 1.4vw, 26px) from the right). The logo plaque sits at the top right, and the fullscreen and settings icon buttons sit at the bottom right with an 8px gap. The Move Ships call to action is centred at the bottom, and the arrival banner is centred at the top.
 
-Ships closer than 0.95 × ship width on screen form a group and sail in an echelon formation. Each member steps across the route by 0.42 × ship width and along it by 0.96 × ship width (0.38 and 0.86 for groups larger than 3), centred on the group. Each group then shifts as a unit to stay inside the board (0.62 × ship width from the sides, 0.72 from the top, 0.42 from the bottom), so spacing inside the formation is preserved.
+Ships closer than 1.25 × ship width on screen form a group and sail in an echelon formation. Each member steps across the route by 0.42 × ship width and along it by 0.96 × ship width (0.38 and 0.86 for groups larger than 3), centred on the group. Each group then shifts as a unit to stay inside the board (0.62 × ship width from the sides, 0.72 from the top, 0.42 from the bottom), so spacing inside the formation is preserved.
 
 Layering on the board, bottom to top: glints, clouds, vignette, lagoons, route, buoys, islands, hulls, then tags and crowns (so no class is ever hidden), then the logo and controls, the call to action, the arrival banner, and the announcement overlay.
 
