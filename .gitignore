@@ -26,3 +26,6 @@ dist-ssr
 .env
 # playwright-cli output
 .playwright-cli/
+
+# desloppify local state
+.desloppify/
