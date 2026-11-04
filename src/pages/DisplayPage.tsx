@@ -386,6 +386,15 @@ function calcShipOffset(
   return { ox: 0, oy: 0, ptsNudge: 0 };
 }
 
+// تسجيل أقدم من هذا لا يُعرض كإعلان جديد (مثلاً بعد فتح الصفحة أو إعادة الاتصال).
+const DISPLAY_EVENT_MAX_AGE_MS = 60_000;
+
+function isStaleDisplayEvent(createdAt: unknown): boolean {
+  const ts = typeof createdAt === "number" ? createdAt : Date.parse(String(createdAt ?? ""));
+  if (!Number.isFinite(ts) || ts <= 0) return false;
+  return Date.now() - ts > DISPLAY_EVENT_MAX_AGE_MS;
+}
+
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 function callAppsScriptJsonp(
@@ -1409,6 +1418,7 @@ export default function DisplayPage() {
   const localQueueRef = useRef<AnnouncementData[]>([]);
   const isShowingRef = useRef(false);
   const lastActionSeenRef = useRef<string>("");
+  const firstStateSeenRef = useRef(false);
   const externalDisplayEventSeenRef = useRef<string>("");
   const recentAnnouncementKeysRef = useRef<Record<string, number>>({});
   const [showSettings, setShowSettings] = useState(false);
@@ -1585,7 +1595,7 @@ export default function DisplayPage() {
     processQueue();
   };
 
-  const handleExternalDisplayEvent = (raw: unknown) => {
+  const handleExternalDisplayEvent = (raw: unknown, primeOnly = false) => {
     try {
       const event: any = typeof raw === "string" ? JSON.parse(raw) : raw;
       if (!event || typeof event !== "object") return;
@@ -1599,6 +1609,10 @@ export default function DisplayPage() {
 
       if (!eventKey || eventKey === externalDisplayEventSeenRef.current) return;
       externalDisplayEventSeenRef.current = eventKey;
+
+      // آخر تسجيل يبقى محفوظاً في المتصفح؛ عند فتح الصفحة نعلّمه كمُشاهَد بدون عرضه،
+      // ولا نعرض أي تسجيل قديم وصل متأخراً.
+      if (primeOnly || isStaleDisplayEvent(event.createdAt)) return;
 
       enqueueAnnouncement({
         id: eventKey,
@@ -1636,11 +1650,15 @@ export default function DisplayPage() {
       // لكن AdminPage يرسل lastAction مع كل تسجيل. إذا وصل lastAction جديد
       // نعرض اسم الطالب في DisplayPage مثل النسخة القديمة تماماً.
       const action = state?.lastAction;
+      const isFirstState = !firstStateSeenRef.current;
+      firstStateSeenRef.current = true;
       if (action?.studentName) {
         const shownPoints = Number(action.displayPoints ?? action.points ?? 0);
         const actionKey = `${action.createdAt || ""}|${action.teamId || ""}|${action.studentName}|${shownPoints}`;
         if (actionKey !== lastActionSeenRef.current) {
           lastActionSeenRef.current = actionKey;
+          // أول حالة تصل عند فتح الصفحة تحمل آخر تسجيل قديم: لا نعرضه.
+          if (isFirstState || isStaleDisplayEvent(action.createdAt)) return;
           enqueueAnnouncement({
             id: actionKey,
             studentName: String(action.studentName || ""),
@@ -1658,14 +1676,14 @@ export default function DisplayPage() {
       enqueueAnnouncement(msg);
     });
 
-    const readStoredDisplayEvent = () => {
+    const readStoredDisplayEvent = (primeOnly = false) => {
       try {
         const raw = window.localStorage.getItem(DISPLAY_EVENT_STORAGE_KEY);
-        if (raw) handleExternalDisplayEvent(raw);
+        if (raw) handleExternalDisplayEvent(raw, primeOnly);
       } catch (err) {}
     };
 
-    readStoredDisplayEvent();
+    readStoredDisplayEvent(true);
 
     const onStorage = (event: StorageEvent) => {
       if (event.key === DISPLAY_EVENT_STORAGE_KEY && event.newValue) {
@@ -1682,7 +1700,7 @@ export default function DisplayPage() {
       channel = null;
     }
 
-    const pollTimer = window.setInterval(readStoredDisplayEvent, 700);
+    const pollTimer = window.setInterval(() => readStoredDisplayEvent(), 700);
 
     return () => {
       unsubState();
