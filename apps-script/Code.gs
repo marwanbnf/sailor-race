@@ -2268,6 +2268,49 @@ function removeStudentFromRoster_(teamId, studentName) {
 //  سجل التسجيلات: جلب/حذف تسجيل يوم محدد لحلقة محددة
 // ══════════════════════════════════════════════════════════════
 
+// آخر تسجيلات الحفظ والمراجعة لكل طالب في الحلقة (الأحدث أولاً، بحد limit لكل طالب).
+// التاريخ يرجع بصيغة YYYY-MM-DD حتى يُرتَّب بسهولة في الموقع.
+function getWirdHistory_(teamId, limit) {
+  const normalized = normalizeTeamId(teamId);
+  if (!normalized) throw new Error('teamId مطلوب أو غير صحيح');
+  limit = Math.max(1, Math.min(30, Number(limit) || 10));
+
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const logSheet = getOrCreateLogSheet(ss);
+  const students = {};
+  const lastRow = logSheet.getLastRow();
+  if (lastRow >= 2) {
+    const data = logSheet.getRange(2, 1, lastRow - 1, HEADERS.length).getValues();
+    data.forEach(function(row) {
+      const rowTeam = normalizeTeamId(row[COL.CLASS_ID - 1] || row[COL.TEAM - 1] || '');
+      if (rowTeam !== normalized) return;
+      const student = String(row[COL.STUDENT - 1] || '').trim();
+      const parts = dateValueToString(row[COL.DATE - 1]).split('/'); // شهر/يوم/سنة
+      if (!student || parts.length !== 3) return;
+      const date = parts[2] + '-' + ('0' + parts[0]).slice(-2) + '-' + ('0' + parts[1]).slice(-2);
+      const cell = function(col) { const v = row[col - 1]; return v === '' || v === null ? '' : String(v); };
+      (students[student] = students[student] || []).push({
+        date: date,
+        hudur: cell(COL.HUDUR),
+        hifzFrom: cell(COL.HIFZ_FROM),
+        hifzTo: cell(COL.HIFZ_TO),
+        hifzScore: cell(COL.HIFZ_SCORE),
+        muraFrom: cell(COL.MURA_FROM),
+        muraTo: cell(COL.MURA_TO),
+        muraScore: cell(COL.MURA_SCORE)
+      });
+    });
+  }
+
+  Object.keys(students).forEach(function(name) {
+    students[name] = students[name]
+      .sort(function(a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; })
+      .slice(0, limit);
+  });
+
+  return { status: 'ok', teamId: normalized, students: students };
+}
+
 function getEntriesForResult_(teamId, dateStr) {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   const logSheet = getOrCreateLogSheet(ss);
@@ -5187,6 +5230,16 @@ function doGet(e) {
       return jsonOrJsonp(callback, getEntriesForResult_(p.teamId || '', p.date || ''));
     } catch (err) {
       return jsonOrJsonp(callback, { status: 'error', entries: [], message: err && err.message ? err.message : String(err) });
+    }
+  }
+
+  // سجل الحفظ والمراجعة لكل طلاب الحلقة: يستخدمه الموقع لاقتراح الورد القادم.
+  if (action === 'getWirdHistory') {
+    try {
+      const p = e && e.parameter ? e.parameter : {};
+      return jsonOrJsonp(callback, getWirdHistory_(p.teamId || '', Number(p.limit) || 10));
+    } catch (err) {
+      return jsonOrJsonp(callback, { status: 'error', students: {}, message: err && err.message ? err.message : String(err) });
     }
   }
 
