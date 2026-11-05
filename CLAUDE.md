@@ -17,6 +17,9 @@
     (PolyForm Noncommercial 1.0.0): before using it for anything that earns
     money or is for a client, check with the owner (onetake Pro is the paid
     licence). For commercial work, use `hyperframes`.
+  - **Hand-painted 2D cartoon shorts and character animation** (brush
+    strokes, watercolour, no text) → `claude-animation-base` (p5.js +
+    p5.brush). Copy its kit into `videos/<name>/` and read its guide first.
   - Recreating or copying an existing video → `reverse-any-video`.
   - Porting Remotion, Lottie, Three.js or other animation code → `remotion-to-hyperframes`.
   - A video in a known explainer style → `style-sampling`.
@@ -46,5 +49,6 @@
 | impeccable (v4.5.0) + agents in `.claude/agents/` | [pbakaus/impeccable](https://github.com/pbakaus/impeccable). `${CLAUDE_PLUGIN_ROOT}` paths rewritten to `.claude/skills/impeccable`. Its plugin hooks are not installed. |
 | brandkit, brutalist-skill, gpt-tasteskill, image-to-code-skill, imagegen-frontend-mobile, imagegen-frontend-web, minimalist-skill, output-skill, redesign-skill, soft-skill, stitch-skill, taste-skill, taste-skill-v1 | [leonxlnx/taste-skill](https://github.com/leonxlnx/taste-skill) (MIT, see `.claude/skills/TASTE-SKILL-LICENSE`) |
 | onetake | [feitangyuan/onetake](https://github.com/feitangyuan/onetake) @ abb6d17. PolyForm Noncommercial 1.0.0, see `.claude/skills/onetake/LICENSE`. The case films' `.mp4`/`.gif` renders were left out (~220 MB); their sources and READMEs are included. |
+| claude-animation-base | [JohnHeibel/ClaudeAnimationBase](https://github.com/JohnHeibel/ClaudeAnimationBase) @ 0ac8bf2 (MIT). The repo has no SKILL.md, so the kit sits in `kit/` and a wrapper `SKILL.md` was written for it. The 6.7 MB animated `docs/emotions.webp` was left out; the `.jpg` model sheets are kept. |
 | ui-ux-pro-max | Owner's account skill. Only `SKILL.md` was available; its `scripts/search.py` data is missing, so use its written guidance. |
 | figma, hyperframes, hyperframes-cli, hyperframes-registry, media-use, remotion-to-hyperframes, reverse-any-video, slideshow, style-sampling | [heygen-com/hyperframes](https://github.com/heygen-com/hyperframes) `skills/` @ b7a8cfa (Apache-2.0, see `.claude/skills/HYPERFRAMES-LICENSE`) |
