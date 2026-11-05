@@ -12,7 +12,8 @@ const PRD_WEEKS_COUNT = (typeof COURSE_WEEKS_COUNT !== 'undefined') ? COURSE_WEE
 function showParentReportsDashboard_(e) {
   const params = (e && e.parameter) || {};
   const selectedTeamId = pwrNormalizeTeamId_(params.teamId || params.team || PRD_DEFAULT_TEAM_ID) || PRD_DEFAULT_TEAM_ID;
-  const selectedWeek = Math.max(1, Math.min(PRD_WEEKS_COUNT, Number(params.week || PRD_DEFAULT_WEEK)));
+  // بدون أسبوع في الرابط نفتح على الأسبوع الدراسي الحالي.
+  const selectedWeek = Math.max(1, Math.min(PRD_WEEKS_COUNT, Number(params.week || prdCurrentWeek_())));
   const teacherName = String(params.teacherName || PRD_DEFAULT_TEACHER).trim();
 
   const dashboard = prdBuildDashboardData_();
@@ -49,10 +50,26 @@ function getParentReportsDashboardUrl() {
 }
 
 
+function prdCurrentWeek_() {
+  // رقم أسبوع اليوم الدراسي الحالي (من Code.gs)، أو الأسبوع الأول احتياطاً.
+  try {
+    if (typeof getCourseWeekNumberForDate_ === 'function' && typeof getSchoolDayNow_ === 'function') {
+      return getCourseWeekNumberForDate_(getSchoolDayNow_()) || PRD_DEFAULT_WEEK;
+    }
+  } catch (e) {}
+  return PRD_DEFAULT_WEEK;
+}
+
 function prdGetPublicWebAppUrl_() {
+  // الرابط العام الثابت للنشر (من Deploy ← Manage deployments ← Web app URL)،
+  // محفوظ في خصائص السكربت باسم PUBLIC_WEB_APP_URL.
+  // ScriptApp.getService().getUrl() يرجع رابط «رأس» المشروع وليس رابط النشر الفعلي،
+  // فروابطه تطلب «إذن الدخول» من أولياء الأمور، لذلك نستخدمه احتياطاً فقط.
+  let saved = '';
+  try { saved = String(PropertiesService.getScriptProperties().getProperty('PUBLIC_WEB_APP_URL') || '').trim(); } catch (e) {}
+  if (saved) return saved.replace(/\?.*$/, '').replace(/\/dev$/, '/exec');
   const raw = String(ScriptApp.getService().getUrl() || '').trim();
   if (!raw) return '';
-  // رابط /dev يحتاج صلاحية على مشروع Apps Script. رابط /exec هو رابط النشر العام.
   return raw.replace(/\/dev(?:\?.*)?$/, '/exec');
 }
 
@@ -174,10 +191,13 @@ function prdBuildDashboardData_() {
 
   return {
     teams: teams,
-    weeks: [1, 2, 3, 4, 5, 6].map(function(week) {
+    // كل أسابيع السنة، مع تاريخ أحد كل أسبوع حتى يعرف المعلم الأسبوع المقصود.
+    weeks: Array.from({ length: PRD_WEEKS_COUNT }, function(_, i) { return i + 1; }).map(function(week) {
+      const dates = pwrGetWeekDates_(courseStart, week);
+      const startLabel = dates.length ? Utilities.formatDate(dates[0], 'Asia/Riyadh', 'dd/MM') : '';
       return {
         number: week,
-        title: 'الأسبوع ' + pwrOrdinal_(week),
+        title: 'الأسبوع ' + pwrOrdinal_(week) + (startLabel ? ' (' + startLabel + ')' : ''),
         target: weekTargets[week]
       };
     }),

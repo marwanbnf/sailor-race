@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import riyadaMarkUrl from "../assets/riyada/mark.png";
 import { createPortal } from "react-dom";
 import * as wsClient from "../websocket/websocketClient";
+import { suggestHifz, suggestMurajaa, type WirdDay, type WirdPoint, type WirdSuggestion } from "../utils/wird.js";
 
 
 // ── Types ──────────────────────────────────────────────────────────────
@@ -860,6 +861,9 @@ function surahRangeLabel(r: SurahRange): string {
   const toName   = r.to.surahIndex   !== null ? SURAHS[r.to.surahIndex].name   : null;
   if (!fromName && !toName) return "";
   if (fromName && toName) {
+    // سور كاملة بدون أرقام آيات: «الحاقة» أو «الملك – القلم».
+    if (r.from.ayah === null && r.to.ayah === null)
+      return r.from.surahIndex === r.to.surahIndex ? fromName : `${fromName} – ${toName}`;
     if (r.from.surahIndex === r.to.surahIndex)
       return `${fromName} (${r.from.ayah ?? "?"} - ${r.to.ayah ?? "?"})`;
     return `${fromName} آية ${r.from.ayah ?? "?"} → ${toName} آية ${r.to.ayah ?? "?"}`;
@@ -1327,6 +1331,8 @@ export default function AdminPage() {
   const [theme, setTheme] = useState<"dark" | "light">(() => readStoredTheme());
   const [studentSearch, setStudentSearch] = useState("");
   const [doneTodayNames, setDoneTodayNames] = useState<Set<string>>(() => new Set());
+  // سجل الحفظ والمراجعة لطلاب الحلقة المختارة (لاقتراح الورد القادم).
+  const [wirdHistory, setWirdHistory] = useState<{ teamId: string; students: Record<string, WirdDay[]> } | null>(null);
   const [rosterModalOpen, setRosterModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   // يزيد عند إغلاق نافذة التسجيلات حتى تُعاد قراءة «نجوم الأسبوع» بعد أي تعديل.
@@ -1568,13 +1574,39 @@ export default function AdminPage() {
       .then((result: { status?: string; entries?: HistoryEntry[] }) => {
         if (!active || result?.status === "error") return;
         const entries: HistoryEntry[] = Array.isArray(result?.entries) ? result.entries : [];
-        setDoneTodayNames(
-          new Set(
-            entries
-              .filter((e) => String(e.hudur || "").trim() !== "غائب")
-              .map((e) => normalizeStudentName(e.studentName)),
-          ),
+        const doneNames = new Set(
+          entries
+            .filter((e) => String(e.hudur || "").trim() !== "غائب")
+            .map((e) => normalizeStudentName(e.studentName)),
         );
+        setDoneTodayNames(doneNames);
+
+        // بونص الحضور الكامل: كل طلاب الحلقة سُجّلوا اليوم.
+        const roster = teamStudents[selectedTeam] || [];
+        if (roster.length && roster.every((st) => doneNames.has(normalizeStudentName(st.name)))) {
+          const today = getRiyadhDateISO();
+          wsClient.claimFullAttendanceBonus(selectedTeam, today);
+          if (markFullAttendanceCelebrated(selectedTeam, today)) {
+            setToast({ msg: `🎉 حضور كامل! +${FULL_ATTENDANCE_BONUS} نقطة لسفينة الحلقة`, ok: true });
+          }
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [selectedTeam, sheetStats.saved, teamStudents]);
+
+  // سجل الورد: من الشيت، مع نسخة محفوظة على الجهاز تظهر فوراً.
+  useEffect(() => {
+    if (!selectedTeam || !APPS_SCRIPT_URL.includes("script.google.com")) return;
+    let active = true;
+    callAppsScriptJsonp(APPS_SCRIPT_URL, "getWirdHistory", { teamId: selectedTeam, limit: "10" }, SHEET_READ_TIMEOUT_MS)
+      .then((result: { status?: string; students?: Record<string, WirdHistoryRecord[]> }) => {
+        if (!active || result?.status !== "ok" || !result.students) return;
+        const students = toWirdStudents(result.students);
+        writeCachedWird(selectedTeam, students);
+        setWirdHistory({ teamId: selectedTeam, students });
       })
       .catch(() => {});
     return () => {
@@ -1982,7 +2014,8 @@ export default function AdminPage() {
         });
       }
 
-      showToast(`✅ ${savedPayload.studentName} — ${parts.join(" | ")} (+${registrationPoints})`);
+      const tomorrowText = wirdTomorrowHifz ? ` · ورد الغد: ${wirdLabel(wirdTomorrowHifz)}` : "";
+      showToast(`✅ ${savedPayload.studentName} — ${parts.join(" | ")} (+${registrationPoints})${tomorrowText}`);
       resetForm();
       setSending(false);
 
@@ -2204,6 +2237,48 @@ export default function AdminPage() {
     } finally {
       setResetting(false);
     }
+  };
+
+  // ── الورد المقترح (الحفظ والمراجعة) ─────────────────────────────────────
+  // الحلقة الأولى مستثناة. «اليوم» يُحسب من الأيام السابقة فقط، حتى لو عُدّل تسجيل اليوم.
+  const wirdStudents = wirdHistory?.teamId === selectedTeam ? wirdHistory.students : readCachedWird(selectedTeam);
+  const wirdPastDays = !isFirstCircle && studentName
+    ? (wirdStudents[normalizeStudentName(studentName)] || []).filter((d) => d.date < getRiyadhDateISO())
+    : [];
+  const wirdToday: Record<string, WirdSuggestion | null> = {
+    hifz: suggestHifz(wirdPastDays),
+    murajaa: suggestMurajaa(wirdPastDays),
+  };
+  // ورد الغد: الأيام السابقة + ما يسجّله المعلم الآن.
+  const formHifz = effectiveItemValues.hifz;
+  const formMura = effectiveItemValues.murajaa;
+  const wirdFormDay: WirdDay = {
+    date: getRiyadhDateISO(),
+    hifzTo: formHifz && !formHifz.none ? surahPointToWird(formHifz.range.to) : null,
+    hifzOk: !!formHifz && !formHifz.absent && !formHifz.none && formHifz.range.to.surahIndex !== null,
+    muraFrom: formMura ? surahPointToWird(formMura.range.from) : null,
+    muraTo: formMura ? surahPointToWird(formMura.range.to) : null,
+    muraOk: !!formMura && !formMura.absent && formMura.range.to.surahIndex !== null,
+  };
+  const wirdTomorrowHifz = !isFirstCircle && studentName && formHifz && (wirdFormDay.hifzOk || formHifz.absent)
+    ? suggestHifz([...wirdPastDays, wirdFormDay])
+    : null;
+  const wirdTomorrowMura = !isFirstCircle && studentName && formMura && (wirdFormDay.muraOk || formMura.absent)
+    ? suggestMurajaa([...wirdPastDays, wirdFormDay])
+    : null;
+
+  const applyWird = (itemId: string, suggestion: WirdSuggestion) => {
+    setItemValues((prev) => ({
+      ...prev,
+      [itemId]: {
+        ...(prev[itemId] ?? emptyRegItemValue()),
+        none: false,
+        range: {
+          from: { surahIndex: suggestion.from.surahIndex, ayah: suggestion.from.ayah },
+          to: { surahIndex: suggestion.to.surahIndex, ayah: suggestion.to.ayah },
+        },
+      },
+    }));
   };
 
   // ── Render ────────────────────────────────────────────────────────────
@@ -2434,6 +2509,12 @@ export default function AdminPage() {
               title="إدارة الحلقات"
               sub="إضافة وحذف الطلاب"
               onClick={() => { setSettingsOpen(false); setRosterModalOpen(true); }}
+            />
+            <SettingsRow
+              icon="📄"
+              title="تقارير أولياء الأمور"
+              sub="روابط التقارير الأسبوعية وإرسالها واتساب"
+              onClick={() => { setSettingsOpen(false); window.location.hash = "#/reports"; }}
             />
             <SettingsRow
               icon="🔄"
@@ -3713,6 +3794,47 @@ export default function AdminPage() {
                       opacity: rangeLocked ? 0.45 : 1,
                     }}
                   >
+                    {(() => {
+                      const suggestion = wirdToday[item.id];
+                      if (!suggestion || rangeLocked || v.absent) return null;
+                      const applied =
+                        v.range.from.surahIndex === suggestion.from.surahIndex &&
+                        v.range.from.ayah === suggestion.from.ayah &&
+                        v.range.to.surahIndex === suggestion.to.surahIndex &&
+                        v.range.to.ayah === suggestion.to.ayah;
+                      return (
+                        <button
+                          onClick={() => applyWird(item.id, suggestion)}
+                          disabled={applied}
+                          className="smooth-btn"
+                          style={{
+                            width: "100%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: 8,
+                            marginBottom: 8,
+                            padding: "8px 10px",
+                            borderRadius: 10,
+                            border: `1.5px dashed ${applied ? "rgb(var(--fg) / 0.12)" : accentColor}`,
+                            background: applied ? "transparent" : `${accentColor}12`,
+                            color: "var(--text)",
+                            fontFamily: "'Tajawal',sans-serif",
+                            fontSize: 12.5,
+                            cursor: applied ? "default" : "pointer",
+                            textAlign: "right",
+                          }}
+                        >
+                          <span>
+                            💡 الورد المقترح: <b>{wirdLabel(suggestion)}</b>
+                            <span style={{ color: "rgb(var(--fg) / 0.5)" }}> · {wirdAmountLabel(suggestion)}</span>
+                          </span>
+                          <span style={{ fontWeight: 800, color: applied ? "var(--ok)" : accentColor, whiteSpace: "nowrap" }}>
+                            {applied ? "✓ معتمد" : "اعتماد"}
+                          </span>
+                        </button>
+                      );
+                    })()}
                     {rangeLabel && !rangeLocked && (
                       <div
                         style={{
@@ -3785,6 +3907,15 @@ export default function AdminPage() {
                         </button>
                       )}
                     </div>
+                    {(() => {
+                      const tomorrow = item.id === "hifz" ? wirdTomorrowHifz : item.id === "murajaa" ? wirdTomorrowMura : null;
+                      if (!tomorrow) return null;
+                      return (
+                        <div style={{ marginTop: 8, fontSize: 12, color: "rgb(var(--fg) / 0.6)", textAlign: "center" }}>
+                          📅 ورد الغد: <b style={{ color: "var(--text)" }}>{wirdLabel(tomorrow)}</b> · {wirdAmountLabel(tomorrow)}
+                        </div>
+                      );
+                    })()}
                     {!locked && (
                       <div style={{ display: "flex", gap: 6, marginTop: 8, alignItems: "center" }}>
                         <span
@@ -4443,6 +4574,107 @@ export default function AdminPage() {
       </nav>
     </div>
   );
+}
+
+// ── الورد المقترح: تحويل سجل الشيت ونصوص العرض ─────────────────────────────
+type WirdHistoryRecord = {
+  date: string;
+  hudur?: string;
+  hifzFrom?: string;
+  hifzTo?: string;
+  hifzScore?: string;
+  muraFrom?: string;
+  muraTo?: string;
+  muraScore?: string;
+};
+
+const WIRD_CACHE_KEY = "sailor-race:wird-history-v1:";
+
+function surahPointToWird(point: SurahPoint): WirdPoint | null {
+  return point.surahIndex === null ? null : { surahIndex: point.surahIndex, ayah: point.ayah ?? null };
+}
+
+// سمّع فعلاً = حاضر، والدرجة رقم أكبر من صفر (ليس «لم يسمع» ولا «لا يوجد»).
+function recitedScore(score: unknown): boolean {
+  const n = Number(score);
+  return Number.isFinite(n) && n > 0;
+}
+
+function toWirdStudents(raw: Record<string, WirdHistoryRecord[]>): Record<string, WirdDay[]> {
+  const out: Record<string, WirdDay[]> = {};
+  Object.entries(raw).forEach(([name, records]) => {
+    out[normalizeStudentName(name)] = (records || []).map((r) => {
+      const present = String(r.hudur || "").trim() !== "غائب";
+      const noHifz = String(r.hifzFrom || "").trim() === "لا يوجد";
+      return {
+        date: String(r.date || ""),
+        hifzTo: noHifz ? null : surahPointToWird(parseSurahPoint(r.hifzTo)),
+        hifzOk: present && !noHifz && recitedScore(r.hifzScore),
+        muraFrom: surahPointToWird(parseSurahPoint(r.muraFrom)),
+        muraTo: surahPointToWird(parseSurahPoint(r.muraTo)),
+        muraOk: present && recitedScore(r.muraScore),
+      };
+    });
+  });
+  return out;
+}
+
+function readCachedWird(teamId: string): Record<string, WirdDay[]> {
+  if (!teamId) return {};
+  try {
+    return JSON.parse(localStorage.getItem(WIRD_CACHE_KEY + teamId) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function writeCachedWird(teamId: string, students: Record<string, WirdDay[]>) {
+  try {
+    localStorage.setItem(WIRD_CACHE_KEY + teamId, JSON.stringify(students));
+  } catch {
+    // التخزين المحلي اختياري
+  }
+}
+
+// «الانفطار 1–13» أو «الملك – القلم» أو «النبأ 1 – عبس 10».
+function wirdLabel(w: WirdSuggestion): string {
+  const fromName = SURAHS[w.from.surahIndex]?.name ?? "";
+  const toName = SURAHS[w.to.surahIndex]?.name ?? "";
+  if (w.from.ayah === null && w.to.ayah === null) {
+    return w.from.surahIndex === w.to.surahIndex ? fromName : `${fromName} – ${toName}`;
+  }
+  if (w.from.surahIndex === w.to.surahIndex) return `${fromName} ${w.from.ayah ?? 1}–${w.to.ayah ?? ""}`;
+  return `${fromName} ${w.from.ayah ?? 1} – ${toName} ${w.to.ayah ?? ""}`;
+}
+
+function wirdAmountLabel(w: WirdSuggestion): string {
+  const n = w.amount;
+  if (w.unit === "lines") {
+    if (n === 1) return "سطر جديد";
+    if (n === 2) return "سطران جديدان";
+    return n <= 10 ? `${n} أسطر جديدة` : `${n} سطراً جديداً`;
+  }
+  if (n === 1) return "وجه";
+  if (n === 2) return "وجهان";
+  return Number.isInteger(n) && n <= 10 ? `${n} أوجه` : `${n} وجه`;
+}
+
+// ── بونص الحضور الكامل ────────────────────────────────────────────────────
+// القيمة الفعلية يضيفها السيرفر (FULL_ATTENDANCE_BONUS في server.ts)؛ هذه للعرض فقط.
+const FULL_ATTENDANCE_BONUS = 100;
+const FULL_ATTENDANCE_KEY = "sailor-race:full-attendance-v1";
+
+// يرجع true أول مرة فقط لكل حلقة في اليوم على هذا الجهاز، حتى لا تتكرر رسالة التهنئة.
+function markFullAttendanceCelebrated(teamId: string, date: string): boolean {
+  const key = `${teamId}|${date}`;
+  try {
+    const seen: string[] = JSON.parse(localStorage.getItem(FULL_ATTENDANCE_KEY) || "[]");
+    if (seen.includes(key)) return false;
+    localStorage.setItem(FULL_ATTENDANCE_KEY, JSON.stringify([...seen.slice(-30), key]));
+  } catch {
+    // التخزين المحلي اختياري
+  }
+  return true;
 }
 
 // ── الثيم والمكوّنات الصغيرة للتصميم الجديد ─────────────────────────────

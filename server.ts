@@ -20,6 +20,8 @@ interface Team {
   doublePointsDate: string;
   visitedIslands: number[];
   createdAt: string;
+  // آخر يوم دراسي (YYYY-MM-DD بتوقيت الرياض) أخذت فيه الحلقة بونص الحضور الكامل.
+  fullAttendanceDate?: string;
 
   // بيانات الفصل الديناميكي القادمة من Google Apps Script — خمسة فصول ونسخة واحدة.
   sheetId?: number;
@@ -89,6 +91,9 @@ const DEFAULT_CONSTANTS = {
 
 // هذه هويات النظام القديم فقط لغرض تنظيف game.json القديم عند التشغيل.
 const LEGACY_TEAM_IDS = new Set(["blue", "red", "green", "purple"]);
+
+// نقاط تُضاف لسفينة الحلقة إذا حضر كل طلابها في اليوم.
+const FULL_ATTENDANCE_BONUS = 100;
 
 function normalizeRaceSettings(raw: any): RaceSettings {
   const numeric = Number(raw?.shipMoveStepMs);
@@ -168,6 +173,7 @@ function normalizeSavedTeam(raw: any): Team | null {
       ? raw.visitedIslands.map(Number).filter(Number.isFinite)
       : [0],
     createdAt: String(raw?.createdAt || new Date().toISOString()),
+    ...(raw?.fullAttendanceDate ? { fullAttendanceDate: String(raw.fullAttendanceDate) } : {}),
   };
 }
 
@@ -476,6 +482,35 @@ async function handleMessage(ws: any, msg: string) {
         slot: result.team.slot ?? 0,
       });
 
+      broadcastFullState();
+      break;
+    }
+
+    // بونص الحضور الكامل: يُرسل من صفحة التسجيل عندما يُسجَّل كل طلاب الحلقة في اليوم.
+    // السيرفر يضمن أنه يُضاف مرة واحدة فقط لكل حلقة في اليوم مهما تعددت الأجهزة.
+    case "fullAttendanceBonus": {
+      const teamId = String(data.teamId || "");
+      const date = String(data.date || "");
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+      const existing = getTeam(state, teamId);
+      if (!existing || existing.fullAttendanceDate === date) return;
+
+      const result = applyAddPoints(state, teamId, FULL_ATTENDANCE_BONUS);
+      if (!result) return;
+      result.team.fullAttendanceDate = date;
+
+      addEvent(state, `🎉 حضور كامل لـ "${result.team.name}" (+${result.actual})`);
+      broadcast({
+        type: "announcement",
+        id: uuidv4(),
+        studentName: "🎉 حضور كامل",
+        points: result.actual,
+        teamColor: result.team.color,
+        teamName: result.team.name,
+        teamId: result.team.id,
+        version: 1,
+        slot: result.team.slot ?? 0,
+      });
       broadcastFullState();
       break;
     }

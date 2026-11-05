@@ -1,6 +1,7 @@
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import DisplayPage from "./pages/DisplayPage.js";
 import AdminPage from "./pages/AdminPage.js";
+import { ParentReportPage, ReportsDashboardPage } from "./pages/ReportsPage.js";
 
 // HashRouter: الروابط تصير /#/display و /#/admin
 // ضروري على GitHub Pages — بدون سيرفر يعيد توجيه الطلبات،
@@ -11,6 +12,8 @@ export default function App() {
       <Routes>
         <Route path="/display" element={<DisplayPage />} />
         <Route path="/admin" element={<AdminPage />} />
+        <Route path="/reports" element={<ReportsDashboardPage />} />
+        <Route path="/report" element={<ParentReportPage />} />
         <Route path="*" element={<Navigate to="/display" replace />} />
       </Routes>
     </HashRouter>

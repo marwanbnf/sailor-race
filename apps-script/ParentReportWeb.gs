@@ -21,7 +21,7 @@ function showParentReportWeb_(e) {
   const p = (e && e.parameter) || {};
   const studentName = String(p.studentName || PWR_DEFAULT_STUDENT).trim();
   const teamId = pwrNormalizeTeamId_(p.teamId || PWR_DEFAULT_TEAM_ID);
-  const weekNumber = Math.max(1, Math.min(6, Number(p.week || p.weekNumber || PWR_DEFAULT_WEEK)));
+  const weekNumber = Math.max(1, Math.min((typeof COURSE_WEEKS_COUNT !== 'undefined') ? COURSE_WEEKS_COUNT : 16, Number(p.week || p.weekNumber || PWR_DEFAULT_WEEK)));
   const teacherName = String(p.teacherName || PWR_DEFAULT_TEACHER).trim();
 
   const report = pwrBuildParentReportData_(studentName, teamId, weekNumber, teacherName);
@@ -546,5 +546,5 @@ function pwrDayName_(d) {
 }
 
 function pwrOrdinal_(n) {
-  return ({1:'الأول',2:'الثاني',3:'الثالث',4:'الرابع',5:'الخامس',6:'السادس'})[Number(n)] || String(n);
+  return ({1:'الأول',2:'الثاني',3:'الثالث',4:'الرابع',5:'الخامس',6:'السادس',7:'السابع',8:'الثامن',9:'التاسع',10:'العاشر',11:'الحادي عشر',12:'الثاني عشر',13:'الثالث عشر',14:'الرابع عشر',15:'الخامس عشر',16:'السادس عشر'})[Number(n)] || String(n);
 }

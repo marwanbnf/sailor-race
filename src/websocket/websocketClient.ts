@@ -217,6 +217,11 @@ export function addPointsToTeam(
   });
 }
 
+// يطلب بونص الحضور الكامل؛ السيرفر يتجاهل الطلب إذا أُضيف البونص لهذا اليوم مسبقاً.
+export function claimFullAttendanceBonus(teamId: string, date: string) {
+  send({ type: "fullAttendanceBonus", teamId, date });
+}
+
 export function moveTeamManual(teamId: string, steps: number) {
   send({ type: "moveTeamManual", teamId, steps });
 }

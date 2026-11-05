@@ -42,7 +42,9 @@ function showParentPeriodReportWeb_(e) {
 
 /** رابط سريع لتجربة تقرير الفترة الأولى على الطالب الافتراضي. */
 function getParentPeriodReportTestUrl() {
-  const base = String(ScriptApp.getService().getUrl() || '').trim().replace(/\/dev(?:\?.*)?$/, '/exec');
+  const base = (typeof prdGetPublicWebAppUrl_ === 'function')
+    ? prdGetPublicWebAppUrl_()
+    : String(ScriptApp.getService().getUrl() || '').trim().replace(/\/dev(?:\?.*)?$/, '/exec');
   if (!base) throw new Error('انشر المشروع أولاً كتطبيق ويب، ثم شغّل الدالة مرة أخرى.');
 
   const url = base + '?' + [
