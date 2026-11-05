@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import riyadaMarkUrl from "../assets/riyada/mark.png";
 import { createPortal } from "react-dom";
 import * as wsClient from "../websocket/websocketClient";
 import { suggestHifz, suggestMurajaa, type WirdDay, type WirdPoint, type WirdSuggestion } from "../utils/wird.js";
@@ -2391,12 +2392,18 @@ export default function AdminPage() {
       <div style={S.topBar}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
           <img
-            src={`${import.meta.env.BASE_URL}mawadda-mark.png`}
-            alt="مجمع المودة القرآني"
-            style={{ width: 44, height: 44, objectFit: "contain", flex: "none" }}
+            src={riyadaMarkUrl}
+            alt="فريق ريادة التطوعي"
+            style={{
+              width: 46,
+              height: 46,
+              objectFit: "contain",
+              flex: "none",
+              filter: "drop-shadow(0 0 1px rgba(255,255,255,0.95)) drop-shadow(0 0 4px rgba(255,255,255,0.55))",
+            }}
           />
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 19, fontWeight: 900, lineHeight: 1.2 }}>ربيع القلوب</div>
+            <div style={{ fontSize: 19, fontWeight: 900, lineHeight: 1.2 }}>فريق ريادة التطوعي</div>
             <div style={{ fontSize: 12, color: "rgb(var(--fg) / 0.55)", fontWeight: 600 }}>
               {tab === "board" ? "اللوحة" : "تسجيل اليوم"} · {todayLabel()}
             </div>
