@@ -37,11 +37,8 @@
       const tl = gsap.timeline({ paused: true });
       // base drops in from a blur (the app's logo entrance), then the flag catches the wind, then the star
       tl.fromTo("#e-base", { opacity: 0, y: -36, scale: 0.86, filter: "blur(10px)" }, { opacity: 1, y: 0, scale: 1, filter: "blur(0px)", duration: 0.9, ease: "expo.out" }, 0.1);
-      tl.fromTo("#e-flag", { opacity: 0, scaleX: 0.2 }, { opacity: 1, scaleX: 1, duration: 0.6, ease: "back.out(1.6)" }, 0.55);
-      tl.fromTo("#e-star", { opacity: 0, scale: 0.2, rotation: -90 }, { opacity: 1, scale: 1, rotation: 0, duration: 0.7, ease: "back.out(2)" }, 0.85);
-      // flag waves from its pole on the app's 1.8 s cycle (finite repeats)
-      tl.fromTo("#e-flag", { skewY: 0 }, { keyframes: { skewY: [0, -7, 4, 0], scaleX: [1, 0.94, 1.02, 1] }, duration: 1.8, ease: "sine.inOut", repeat: 1 }, 1.15);
-      tl.fromTo("#e-star", { filter: "brightness(1)" }, { keyframes: { filter: ["brightness(1)", "brightness(1.5)", "brightness(1)"] }, duration: 1.6, ease: "sine.inOut", repeat: 1 }, 1.55);
+      tl.fromTo("#e-flag", { opacity: 0, scaleX: 0.2 }, { opacity: 1, scaleX: 1, duration: 0.6, ease: "expo.out" }, 0.55);
+      tl.fromTo("#e-star", { opacity: 0, scale: 0.2, rotation: -90 }, { opacity: 1, scale: 1, rotation: 0, duration: 0.7, ease: "expo.out" }, 0.85);
       tl.fromTo("#e-name", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.45, ease: "power2.out" }, 1.05);
       tl.fromTo("#e-cta", { opacity: 0, color: "#8fb9c6" }, { opacity: 1, color: "#f2d28b", duration: 0.4, ease: "power2.out" }, 1.55);
       window.__timelines["endcard"] = tl;

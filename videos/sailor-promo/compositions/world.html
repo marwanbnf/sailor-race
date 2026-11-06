@@ -456,24 +456,13 @@
       };
       const mod = (a, n) => ((a % n) + n) % n;
 
-      const animateBoat = (o, t, m, ph) => {
-        const T = 4.4 - 2.8 * m;
-        const u = ((t + ph) / T) * Math.PI * 2;
-        return { y: -3 * Math.sin(u) - 1 * Math.sin(2 * u + 1), r: 2.2 * Math.sin(u + 0.6) };
-      };
+      // Ships ride steady: no bob or roll, so the film reads calm and clean.
+      const animateBoat = () => ({ y: 0, r: 0 });
       const setBoatDetails = (o, t, m, ph) => {
         o.wake.setAttribute("opacity", m.toFixed(3));
         const off = (mod(t / 0.7, 1) * 28).toFixed(2);
         o.wls.forEach((w) => w.setAttribute("stroke-dashoffset", (-off).toString()));
-        o.sprays.forEach((c, n) => {
-          const p = mod((t + n * 0.3) / 0.9, 1);
-          c.setAttribute("transform", `translate(${(-6 * p).toFixed(2)} ${(-10 * p).toFixed(2)})`);
-          c.setAttribute("opacity", ((1 - p) * 0.9).toFixed(3));
-        });
-        const sp = Math.sin(((t + ph) / 3.2) * Math.PI * 2) * 0.5 + 0.5;
-        o.sail.setAttribute("transform", `translate(${(-0.035 * 106 * sp * 0.85).toFixed(2)} 0) scale(${(1 + 0.035 * sp).toFixed(4)} 1)`);
-        const pp = Math.sin(((t + ph) / 0.9) * Math.PI * 2) * 0.5 + 0.5;
-        o.pennant.setAttribute("transform", `translate(${(72 * 0.1 * pp).toFixed(2)} 0) scale(${(1 - 0.1 * pp).toFixed(3)} 1)`);
+        o.sprays.forEach((c) => c.setAttribute("opacity", "0"));
       };
 
       const CHIP_T = [3.45, 4.15, 4.85, 5.55, 6.25];
@@ -539,8 +528,7 @@
             if (li > 0.01 && Math.abs(idxAt(s.s, tt) - li) < 1e-6) cr += 1 / 6;
           }
           o.crown.style.opacity = cr.toFixed(3);
-          const cb = Math.sin((t / 2.2) * Math.PI * 2);
-          o.crown.style.transform = `translate(0px, ${(4 - 3 - 3 * cb).toFixed(2)}px) rotate(${(4 * cb).toFixed(2)}deg)`;
+          o.crown.style.transform = "translate(0px, 1px)";
         });
         // hide the fleet's ship 3 under the hero until the handoff lands
         shipEls[2].el.style.opacity = t < HAND_B - 0.02 ? 0 : 1;
@@ -552,11 +540,10 @@
         els.lf.setAttribute("stroke-dashoffset", (-mod(t / 1.2, 1) * 36.8).toFixed(2));
         buoyEls.forEach((bu) => {
           const lit = clamp01((lead - bu.bi + 0.02) * 5);
-          const pulse = 0.85 + 0.15 * Math.sin((t / 1.6) * Math.PI * 2);
-          bu.lamp.style.opacity = (lit * pulse).toFixed(3);
+          bu.lamp.style.opacity = lit.toFixed(3);
           // a ship sitting on the buoy hides its value, as on the board
           let occ = 0;
-          SHIPS.forEach((s) => { if (movingAmt(s, t) < 0.5) occ = Math.max(occ, clamp01(1 - Math.abs(idxAt(s, t) - bu.bi) / 0.35)); });
+          SHIPS.forEach((s) => { if (movingAmt(s, t) < 0.5) occ = Math.max(occ, clamp01(1 - Math.abs(idxAt(s, t) - bu.bi) / 0.5)); });
           bu.val.style.opacity = (lit * (1 - occ)).toFixed(3);
         });
 
@@ -577,7 +564,7 @@
         const x = hx0 + (target.x - hx0) * hk, y = hy0 + (target.y - hy0) * hk, k = 1 + (target.k - 1) * hk;
         hero.ship.style.transform = `translate(${x.toFixed(2)}px, ${y.toFixed(2)}px) scale(${k.toFixed(4)})`;
         const hb = animateBoat(hero, t, 1 - hk, 2.1);
-        hero.bob.style.transform = `translateY(${(hb.y * 2.5).toFixed(2)}px) rotate(${hb.r.toFixed(2)}deg)`;
+        hero.bob.style.transform = "none";
         setBoatDetails(hero, t, 1 - hk, 2.1);
         hero.pts.textContent = heroPtsAt(t).toLocaleString("en-US");
         const pop = Math.max(...[4.55, 5.25, 5.95, 6.65, 7.35, 10.25].map((tt) => (t >= tt && t < tt + 0.35 ? Math.sin(((t - tt) / 0.35) * Math.PI) : 0)));
