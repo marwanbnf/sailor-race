@@ -1,0 +1,153 @@
+<template>
+  <style>
+    @font-face { font-family: "Baloo Bhaijaan 2"; font-weight: 800; src: url("assets/fonts/baloo-bhaijaan-2-arabic-800-normal.woff2") format("woff2"); unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+    @font-face { font-family: "Baloo Bhaijaan 2"; font-weight: 800; src: url("assets/fonts/baloo-bhaijaan-2-latin-800-normal.woff2") format("woff2"); unicode-range: U+0000-00FF; }
+    @font-face { font-family: "Tajawal"; font-weight: 900; src: url("assets/fonts/tajawal-arabic-900-normal.woff2") format("woff2"); unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+    @font-face { font-family: "Tajawal"; font-weight: 900; src: url("assets/fonts/tajawal-latin-900-normal.woff2") format("woff2"); unicode-range: U+0000-00FF; }
+    #root { position: absolute; inset: 0; direction: rtl; pointer-events: none; }
+    .ln {
+      position: absolute; left: 0; right: 0; text-align: center; color: #fff8e8;
+      font: 800 76px/1.15 "Baloo Bhaijaan 2", "Tajawal", sans-serif;
+      text-shadow: 0 4px 0 rgba(6, 42, 59, 0.45), 0 12px 34px rgba(3, 30, 55, 0.6);
+    }
+    .ln .w { display: inline-block; }
+    .ln em { font-style: normal; color: #ffd25c; text-shadow: 2px 0 0 #062a3b, -2px 0 0 #062a3b, 0 2px 0 #062a3b, 0 -2px 0 #062a3b, 0 5px 0 rgba(6, 42, 59, 0.6), 0 12px 34px rgba(3, 30, 55, 0.6); }
+    .ln .n { font-family: "Tajawal", sans-serif; font-weight: 900; }
+    .top { top: 64px; }
+    .pill {
+      width: fit-content; margin: 0 auto; padding: 0.12em 0.85em 0.22em; border-radius: 999px;
+      font-size: 58px; background: rgba(6, 42, 59, 0.88); text-shadow: none;
+      box-shadow: 0 0 0 3px rgba(242, 210, 139, 0.55), 0 18px 40px rgba(2, 20, 32, 0.5);
+    }
+    .pill.low { top: auto; bottom: 64px; }
+    .hook { left: auto; right: 150px; text-align: right; top: 250px; font-size: 104px; line-height: 1.2; }
+    .side { left: auto; right: 150px; text-align: right; top: 120px; font-size: 70px; }
+    .big { top: 380px; font-size: 168px; }
+    .claim { top: 380px; font-size: 112px; }
+    #t-name { top: 300px; font-size: 150px; }
+
+    /* Arrival banner, from display.css .rb-arrival */
+    #t-arrival {
+      position: absolute; top: 44px; left: 960px; display: flex; align-items: center; gap: 0.6em;
+      padding: 0.35em 1.1em 0.45em; border-radius: 999px; background: #062a3b; color: #fff;
+      font: 800 46px/1.15 "Baloo Bhaijaan 2", "Tajawal", sans-serif; white-space: nowrap;
+      box-shadow: 0 0 0 4px #EF4444, 0 0 0 8px rgba(6, 42, 59, 0.6), 0 24px 50px rgba(2, 20, 32, 0.55);
+    }
+    #t-arrival em { font-style: normal; color: #ffd25c; }
+    #t-arrival svg { width: 44px; height: 44px; display: block; }
+
+    /* Move Ships button, from display.css .rb-move-btn */
+    #t-move {
+      position: absolute; bottom: 32px; left: 960px; display: flex; align-items: center; gap: 12px;
+      padding: 0.55em 1.5em 0.65em; border-radius: 999px; color: #062a3b;
+      font: 800 42px/1.15 "Baloo Bhaijaan 2", "Tajawal", sans-serif; white-space: nowrap;
+      background: linear-gradient(180deg, #ffe08a, #ffb627);
+    }
+    #t-move svg { width: 36px; height: 36px; display: block; }
+    #t-cursor { position: absolute; left: 0; top: 0; width: 78px; height: 78px; }
+    #t-cursor svg { display: block; width: 100%; height: 100%; }
+  </style>
+
+  <div id="root" data-composition-id="titles" data-width="1920" data-height="1080" data-layout-allow-overflow data-layout-allow-overlap>
+    <div id="t-hook" class="ln hook clip" data-start="0.25" data-duration="2.95">
+      <span class="w">ماذا</span> <span class="w">لو</span> <span class="w">كان</span> <span class="w">حفظك</span><br />
+      <span class="w">يحرّك</span> <span class="w"><em>سفينة؟</em></span>
+    </div>
+    <div id="t-daily" class="ln side clip" data-start="3.4" data-duration="3.95">كل طالب يجمع نقاطه <span class="w">كل يوم</span></div>
+    <div id="t-class" class="ln side clip" data-start="7.35" data-duration="1.6">ونقاط الفصل كلها لسفينة واحدة</div>
+    <div id="t-bonus" class="ln side clip" data-start="8.95" data-duration="1.7">وحضور الفصل كاملًا له مكافأة</div>
+    <div id="t-step" class="ln pill low clip" data-start="10.8" data-duration="2.6">كل <span class="n"><em>500</em></span> نقطة… عوّامة إلى الأمام</div>
+    <div id="t-name" class="ln clip" data-start="13.65" data-duration="1.6" data-var-text="name">سباق السفن</div>
+    <div id="t-islands" class="ln top pill clip" data-start="15.35" data-duration="1.9">أربع جزر في طريق واحد</div>
+    <div id="t-each" class="ln top pill clip" data-start="17.35" data-duration="2.25">كل جزيرة على بُعد <span class="n">2,000</span> نقطة</div>
+    <div id="t-win" class="ln top pill clip" data-start="19.7" data-duration="1.5">والفوز عند <span class="n"><em>6,000</em></span></div>
+    <div id="t-week" class="ln top pill clip" data-start="21.25" data-duration="1.55">مرة كل أسبوع… لحظة الكشف</div>
+    <div id="t-team" class="ln top pill clip" data-start="31.2" data-duration="1.8">الفصل كله يجدّف معًا</div>
+    <div id="t-seen" class="ln top pill clip" data-start="33.2" data-duration="1.8">وجهد كل يوم تراه يتحرك</div>
+    <div id="t-parent" class="ln top pill clip" data-start="35.2" data-duration="1.9">وتقرير أسبوعي لكل ولي أمر</div>
+    <div id="t-claim" class="ln claim clip" data-start="37.35" data-duration="2.4">كل جهد يقرّبك<br />من <em>جزيرة الفوز</em></div>
+
+    <div id="t-arrival-c" class="clip" data-start="26.0" data-duration="3.6">
+      <div id="t-arrival">
+        <svg viewBox="0 0 28 28">
+          <path d="M4 22 L24 22 Q22 26 18 26 L9 26 Q5 26 4 22 Z" fill="#8a5a2b" stroke="#3d240c" stroke-width="1.2" />
+          <path d="M14 2 L14 22" stroke="#3d240c" stroke-width="1.6" stroke-linecap="round" />
+          <path d="M14 3 Q24 10 22 20 L14 20 Z" fill="#EF4444" stroke="rgba(0,0,0,0.35)" stroke-width="1" />
+          <path d="M13 6 Q6 12 6 20 L13 20 Z" fill="#EF4444" opacity="0.7" stroke="rgba(0,0,0,0.3)" stroke-width="1" />
+          <text x="18.2" y="16" text-anchor="middle" font-size="8" font-weight="900" fill="#fff" font-family="Tajawal, sans-serif">2</text>
+        </svg>
+        <span>فصل 2 وصل <em>جزيرة التحدي</em></span>
+      </div>
+    </div>
+
+    <div id="t-move-c" class="clip" data-start="21.6" data-duration="9.4">
+      <div id="t-move">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="5" r="2.2" /><path d="M12 7.2V21M8 11h8M4 14c0 4 3.6 7 8 7s8-3 8-7" />
+        </svg>
+        <span style="display: grid"><span id="t-move-a" style="grid-area: 1 / 1">تحريك السفن</span><span id="t-move-b" style="grid-area: 1 / 1; opacity: 0">السفن تبحر…</span></span>
+      </div>
+    </div>
+    <div id="t-cursor-c" class="clip" data-start="21.85" data-duration="1.55">
+      <div id="t-cursor">
+        <svg viewBox="0 0 24 24"><path d="M4 2 L4 19 L8.6 14.8 L11.6 21.6 L14.6 20.3 L11.7 13.6 L18 13.4 Z" fill="#fff8e8" stroke="#062a3b" stroke-width="1.6" stroke-linejoin="round" /></svg>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const q = (s) => document.querySelector(s);
+      const inBlurWords = (sel, t0) => {
+        q(sel).querySelectorAll(".w").forEach((w, i) => {
+          tl.fromTo(w, { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power2.out" }, t0 + i * 0.09);
+        });
+      };
+      const inLine = (sel, t0) => tl.fromTo(sel, { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.22, ease: "power2.out" }, t0);
+      const inGrey = (sel, t0) => tl.fromTo(sel, { opacity: 0, color: "#8fb9c6" }, { opacity: 1, color: "#fff8e8", duration: 0.35, ease: "power2.out" }, t0);
+      const inScale = (sel, t0) => tl.fromTo(sel, { opacity: 0, scale: 1.12, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.55, ease: "expo.out" }, t0);
+      const out = (sel, t1) => tl.to(sel, { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power3.in" }, t1 - 0.22);
+
+      inBlurWords("#t-hook", 0.25); out("#t-hook", 3.2);
+      inLine("#t-daily", 3.4); out("#t-daily", 7.35);
+      inGrey("#t-class", 7.35); out("#t-class", 8.95);
+      inLine("#t-bonus", 8.95); out("#t-bonus", 10.65);
+      inScale("#t-step", 10.8); out("#t-step", 13.4);
+      tl.fromTo("#t-name", { opacity: 0, scale: 0.86, filter: "blur(12px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.7, ease: "expo.out" }, 13.65);
+      out("#t-name", 15.25);
+      inLine("#t-islands", 15.35); out("#t-islands", 17.25);
+      inGrey("#t-each", 17.35); out("#t-each", 19.6);
+      inScale("#t-win", 19.7); out("#t-win", 21.2);
+      inLine("#t-week", 21.25); out("#t-week", 22.8);
+      inBlurWords("#t-team", 31.2); out("#t-team", 33.0);
+      inGrey("#t-seen", 33.2); out("#t-seen", 35.0);
+      inLine("#t-parent", 35.2); out("#t-parent", 37.1);
+      inScale("#t-claim", 37.35); out("#t-claim", 39.75);
+
+      // arrival banner: drops 40 px from a blur in 700 ms, leaves upward in 380 ms
+      tl.fromTo("#t-arrival", { xPercent: -50, y: -40, scale: 0.9, opacity: 0, filter: "blur(8px)" }, { xPercent: -50, y: 0, scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.7, ease: "expo.out" }, 26.0);
+      tl.to("#t-arrival", { y: -24, scale: 0.96, opacity: 0, duration: 0.38, ease: "power2.in" }, 29.2);
+
+      // Move Ships: rises in, pulses, is pressed, sails, then leaves when no move is pending
+      tl.fromTo("#t-move", { xPercent: -50, y: 40, opacity: 0 }, { xPercent: -50, y: 0, opacity: 1, duration: 0.6, ease: "expo.out" }, 21.6);
+      const shadow = (r) => `0 6px 14px rgba(150, 95, 10, 0.55), 0 16px 34px rgba(3, 30, 55, 0.5), 0 0 0 ${r}px rgba(255, 210, 92, ${(0.55 * (1 - r / 16)).toFixed(3)})`;
+      tl.set("#t-move", { boxShadow: shadow(0) }, 21.6);
+      [21.75, 22.1].forEach((t0) => tl.fromTo("#t-move", { boxShadow: shadow(0) }, { boxShadow: shadow(16), duration: 0.5, ease: "sine.out" }, t0));
+      tl.set("#t-move", { boxShadow: shadow(0) }, 22.5);
+      tl.to("#t-move", { y: 4, duration: 0.08, ease: "power2.out" }, 22.6);
+      tl.to("#t-move", { y: 0, filter: "saturate(0.4) brightness(0.85)", duration: 0.2, ease: "power2.out" }, 22.7);
+      tl.fromTo("#t-move-a", { opacity: 1 }, { opacity: 0, duration: 0.15 }, 22.7);
+      tl.fromTo("#t-move-b", { opacity: 0 }, { opacity: 1, duration: 0.15 }, 22.7);
+      tl.to("#t-move", { y: 40, opacity: 0, duration: 0.35, ease: "power3.in" }, 30.6);
+
+      // cursor: enters from the lower right, presses, leaves
+      tl.fromTo("#t-cursor", { x: 1640, y: 1120 }, { x: 985, y: 1000, duration: 0.65, ease: "power3.out" }, 21.85);
+      tl.to("#t-cursor", { scale: 0.86, duration: 0.07, ease: "power2.out", transformOrigin: "10% 5%" }, 22.58);
+      tl.to("#t-cursor", { scale: 1, duration: 0.12, ease: "power2.out" }, 22.66);
+      tl.to("#t-cursor", { x: 1500, y: 1140, duration: 0.5, ease: "power3.in" }, 22.85);
+
+      window.__timelines["titles"] = tl;
+    })();
+  </script>
+</template>

@@ -1,0 +1,50 @@
+<template>
+  <style>
+    @font-face { font-family: "Baloo Bhaijaan 2"; font-weight: 800; src: url("assets/fonts/baloo-bhaijaan-2-arabic-800-normal.woff2") format("woff2"); unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+    #root { position: absolute; inset: 0; direction: rtl; }
+    #e-logo { position: absolute; left: 960px; top: 390px; width: 470px; height: 515.3px; margin-left: -235px; margin-top: -258px; }
+    .e-art {
+      position: absolute; inset: 0;
+      filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.95)) drop-shadow(0 0 8px rgba(255, 255, 255, 0.6)) drop-shadow(0 14px 26px rgba(3, 30, 55, 0.45));
+    }
+    .e-layer { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    #e-flag { transform-origin: 79.6% 9.2%; }
+    #e-star { transform-origin: 50% 50%; }
+    #e-name {
+      position: absolute; left: 0; right: 0; top: 690px; text-align: center; color: #fff8e8;
+      font: 800 92px/1.15 "Baloo Bhaijaan 2", sans-serif;
+      text-shadow: 0 4px 0 rgba(6, 42, 59, 0.45), 0 12px 34px rgba(3, 30, 55, 0.6);
+    }
+    #e-cta {
+      position: absolute; left: 0; right: 0; top: 830px; text-align: center; color: #f2d28b;
+      font: 800 46px/1.2 "Baloo Bhaijaan 2", sans-serif;
+      text-shadow: 0 3px 0 rgba(6, 42, 59, 0.45), 0 10px 26px rgba(3, 30, 55, 0.6);
+    }
+  </style>
+  <div id="root" data-composition-id="endcard" data-width="1920" data-height="1080" data-layout-allow-overlap>
+    <div id="e-logo">
+      <div class="e-art">
+        <img id="e-base" class="e-layer" src="assets/img/base.png" alt="فريق ريادة التطوعي" />
+        <img id="e-flag" class="e-layer" src="assets/img/flag.png" alt="" />
+        <img id="e-star" class="e-layer" src="assets/img/star.png" alt="" />
+      </div>
+    </div>
+    <div id="e-name" data-var-text="name">سباق السفن</div>
+    <div id="e-cta" data-var-text="cta">جهّز فصلك… السباق بدأ</div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      // base drops in from a blur (the app's logo entrance), then the flag catches the wind, then the star
+      tl.fromTo("#e-base", { opacity: 0, y: -36, scale: 0.86, filter: "blur(10px)" }, { opacity: 1, y: 0, scale: 1, filter: "blur(0px)", duration: 0.9, ease: "expo.out" }, 0.1);
+      tl.fromTo("#e-flag", { opacity: 0, scaleX: 0.2 }, { opacity: 1, scaleX: 1, duration: 0.6, ease: "back.out(1.6)" }, 0.55);
+      tl.fromTo("#e-star", { opacity: 0, scale: 0.2, rotation: -90 }, { opacity: 1, scale: 1, rotation: 0, duration: 0.7, ease: "back.out(2)" }, 0.85);
+      // flag waves from its pole on the app's 1.8 s cycle (finite repeats)
+      tl.fromTo("#e-flag", { skewY: 0 }, { keyframes: { skewY: [0, -7, 4, 0], scaleX: [1, 0.94, 1.02, 1] }, duration: 1.8, ease: "sine.inOut", repeat: 1 }, 1.15);
+      tl.fromTo("#e-star", { filter: "brightness(1)" }, { keyframes: { filter: ["brightness(1)", "brightness(1.5)", "brightness(1)"] }, duration: 1.6, ease: "sine.inOut", repeat: 1 }, 1.55);
+      tl.fromTo("#e-name", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.45, ease: "power2.out" }, 1.05);
+      tl.fromTo("#e-cta", { opacity: 0, color: "#8fb9c6" }, { opacity: 1, color: "#f2d28b", duration: 0.4, ease: "power2.out" }, 1.55);
+      window.__timelines["endcard"] = tl;
+    })();
+  </script>
+</template>

@@ -1,0 +1,620 @@
+<template>
+  <style>
+    @font-face { font-family: "Baloo Bhaijaan 2"; font-weight: 800; src: url("assets/fonts/baloo-bhaijaan-2-arabic-800-normal.woff2") format("woff2"); unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+    @font-face { font-family: "Baloo Bhaijaan 2"; font-weight: 800; src: url("assets/fonts/baloo-bhaijaan-2-latin-800-normal.woff2") format("woff2"); unicode-range: U+0000-00FF; }
+    @font-face { font-family: "Tajawal"; font-weight: 900; src: url("assets/fonts/tajawal-arabic-900-normal.woff2") format("woff2"); unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+    @font-face { font-family: "Tajawal"; font-weight: 900; src: url("assets/fonts/tajawal-latin-900-normal.woff2") format("woff2"); unicode-range: U+0000-00FF; }
+
+    #root {
+      position: absolute; inset: 0; overflow: hidden;
+      --ink: #062a3b; --gold: #ffd25c; --gold-hot: #ffb627; --sand: #f2d28b;
+      background: #062a3b;
+    }
+    #w-sea {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(120% 90% at 16% 6%, rgba(255, 252, 214, 0.32) 0%, transparent 42%),
+        linear-gradient(162deg, #46cfd9 0%, #1a9cc2 30%, #0b6e88 64%, #07485e 100%);
+    }
+    .w-glints { position: absolute; top: -480px; left: -720px; right: -720px; bottom: -480px; background-repeat: repeat; }
+    .w-glints.near { background-image: url("assets/img/glint-near.svg"); background-size: 360px 240px; opacity: 0.55; }
+    .w-glints.far { background-image: url("assets/img/glint-far.svg"); background-size: 220px 150px; opacity: 0.35; }
+    #w-hero-sea { position: absolute; inset: 0; }
+    #w-vignette {
+      position: absolute; inset: 0; z-index: 3;
+      background: radial-gradient(130% 110% at 50% 45%, transparent 55%, rgba(3, 30, 58, 0.42) 100%);
+    }
+    #w-cam { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; z-index: 4; }
+    #w-cam-sea { position: absolute; inset: 0; }
+    #w-board { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; z-index: 2; }
+    #w-route { position: absolute; left: 0; top: 0; z-index: 3; overflow: visible; }
+    #w-buoys { position: absolute; inset: 0; z-index: 4; }
+    .w-lamp {
+      position: absolute; width: 18.5px; height: 18.5px; border-radius: 50%;
+      background: radial-gradient(circle at 40% 35%, #fff3b0, #ffd25c 55%, #e8a21c);
+      box-shadow: 0 0 10px 4px rgba(255, 210, 92, 0.75), 0 0 26px 8px rgba(255, 182, 39, 0.35);
+      opacity: 0;
+    }
+    .w-bval {
+      position: absolute; display: flex; align-items: center; justify-content: center;
+      height: 39.2px; border-radius: 999px; background: var(--gold); color: var(--ink);
+      font: 900 28px/1 "Tajawal", sans-serif; font-variant-numeric: tabular-nums; opacity: 0;
+    }
+    #w-ships { position: absolute; inset: 0; z-index: 6; }
+    #w-tags { position: absolute; inset: 0; z-index: 8; }
+    .w-ship { position: absolute; left: 0; top: 0; }
+    .w-heading { position: absolute; left: -57.857px; top: -70.971px; width: 108px; height: 92.571px; transform-origin: 57.857px 70.971px; }
+    .w-scale { position: absolute; inset: 0; transform-origin: 53.6% 76.7%; }
+    .w-bob { position: absolute; inset: 0; transform-origin: 50% 80%; }
+    .w-bob svg, .w-hero-bob svg { display: block; overflow: visible; }
+    .w-tag {
+      position: absolute; left: 0; top: 9.72px; transform: translate(-50%, -6px);
+      display: flex; align-items: center; gap: 0.35em; padding: 0.1em 0.6em 0.16em; border-radius: 999px;
+      color: #fff; font: 800 21px/1.15 "Baloo Bhaijaan 2", "Tajawal", sans-serif; white-space: nowrap; direction: rtl;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.32), 0 10px 20px rgba(3, 30, 55, 0.4); text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+    }
+    .w-tag b, .w-htag b {
+      font-family: "Tajawal", sans-serif; font-weight: 900; font-variant-numeric: tabular-nums;
+      padding: 0 0.4em; border-radius: 999px; background: rgba(6, 42, 59, 0.55); color: var(--gold); font-size: 0.86em;
+    }
+    .w-crown {
+      position: absolute; left: 0; bottom: 69px; width: 43px; height: 34.4px; margin-left: -21.5px;
+      filter: drop-shadow(0 4px 6px rgba(3, 30, 55, 0.45)) drop-shadow(0 0 10px rgba(255, 210, 92, 0.75)); opacity: 0;
+    }
+    .w-crown svg { display: block; width: 100%; height: 100%; }
+    .w-tagwrap { position: absolute; left: 0; top: 0; }
+    #w-confetti { position: absolute; inset: 0; z-index: 9; }
+    #w-confetti i { position: absolute; left: 0; top: 0; display: block; border-radius: 2px; opacity: 0; }
+
+    /* Hero: one dhow close up, before the board appears */
+    #w-hero { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; z-index: 5; }
+    #w-hero-ship { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+    .w-hero-heading { position: absolute; left: -332.14px; top: -407.43px; width: 620px; height: 531.43px; }
+    .w-hero-bob { position: absolute; inset: 0; transform-origin: 50% 80%; }
+    .w-htag {
+      position: absolute; left: 0; top: 52px; transform: translate(-50%, 0);
+      display: flex; align-items: center; gap: 0.35em; padding: 0.1em 0.6em 0.18em; border-radius: 999px;
+      color: #fff; background: #22C55E; font: 800 62px/1.15 "Baloo Bhaijaan 2", "Tajawal", sans-serif; white-space: nowrap; direction: rtl;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.32), 0 18px 40px rgba(3, 30, 55, 0.45); text-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
+    }
+    .w-htag b { display: inline-block; min-width: 2.6em; text-align: center; }
+    #w-chips { position: absolute; inset: 0; z-index: 6; }
+    .w-chip {
+      position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 14px; direction: rtl;
+      padding: 10px 26px 14px; border-radius: 999px; white-space: nowrap;
+      background: linear-gradient(180deg, #fff3cf, #f2d28b); color: #062a3b;
+      font: 800 44px/1.1 "Baloo Bhaijaan 2", "Tajawal", sans-serif;
+      box-shadow: 0 3px 6px rgba(120, 80, 20, 0.45), 0 12px 22px rgba(3, 30, 55, 0.38); opacity: 0;
+    }
+    .w-chip b {
+      font: 900 40px/1 "Tajawal", sans-serif; font-variant-numeric: tabular-nums; direction: ltr;
+      padding: 4px 16px 6px; border-radius: 999px; background: #062a3b; color: #ffd25c;
+    }
+    .w-chip.bonus { background: linear-gradient(180deg, #ffe08a, #ffb627); font-size: 50px; }
+    .w-token {
+      position: absolute; left: 0; top: 0; padding: 2px 12px 4px; border-radius: 999px; direction: ltr;
+      background: #062a3b; color: #ffd25c; font: 900 30px/1.1 "Tajawal", sans-serif; opacity: 0;
+      box-shadow: 0 6px 14px rgba(3, 30, 55, 0.4);
+    }
+  </style>
+
+  <div id="root" data-composition-id="world" data-width="1920" data-height="1080" data-layout-allow-overflow data-layout-allow-overlap>
+    <div id="w-sea"></div>
+    <div id="w-hero-sea">
+      <div id="w-hglf" class="w-glints far"></div>
+      <div id="w-hgln" class="w-glints near"></div>
+    </div>
+    <div id="w-vignette"></div>
+
+    <div id="w-cam">
+      <div id="w-cam-sea">
+        <div id="w-cglf" class="w-glints far"></div>
+        <div id="w-cgln" class="w-glints near"></div>
+      </div>
+      <img id="w-board" src="assets/img/board-layer.png" alt="" />
+      <svg id="w-route" width="1920" height="1080" viewBox="0 0 1920 1080">
+        <defs>
+          <filter id="w-route-glow" x="-10%" y="-10%" width="120%" height="120%">
+            <feGaussianBlur stdDeviation="4.9" result="b" />
+            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+        </defs>
+        <path id="w-lead-glow" d="" fill="none" stroke="rgba(255,210,92,0.55)" stroke-width="19.6" stroke-linecap="round" filter="url(#w-route-glow)" />
+        <path id="w-lead-core" d="" fill="none" stroke="#ffe08a" stroke-width="11" stroke-linecap="round" />
+        <path id="w-lead-flow" d="" fill="none" stroke="#c98a12" stroke-width="11" stroke-dasharray="3.7 8.6" />
+      </svg>
+      <div id="w-buoys"></div>
+      <div id="w-ships">
+        <div id="w-ship-1" class="w-ship"></div>
+        <div id="w-ship-2" class="w-ship"></div>
+        <div id="w-ship-3" class="w-ship"></div>
+        <div id="w-ship-4" class="w-ship"></div>
+        <div id="w-ship-5" class="w-ship"></div>
+      </div>
+      <div id="w-tags">
+        <div id="w-tagw-1" class="w-tagwrap"></div>
+        <div id="w-tagw-2" class="w-tagwrap"></div>
+        <div id="w-tagw-3" class="w-tagwrap"></div>
+        <div id="w-tagw-4" class="w-tagwrap"></div>
+        <div id="w-tagw-5" class="w-tagwrap"></div>
+      </div>
+      <div id="w-confetti"></div>
+    </div>
+
+    <div id="w-hero">
+      <div id="w-hero-ship">
+        <div class="w-hero-heading"><div id="w-hero-bob" class="w-hero-bob"></div></div>
+        <div class="w-htag">فصل 3<b id="w-hero-pts">0</b></div>
+      </div>
+      <div id="w-chips">
+        <div id="w-chip-1" class="w-chip">الحضور<b>+10</b></div>
+        <div id="w-chip-2" class="w-chip">الحفظ<b>+30</b></div>
+        <div id="w-chip-3" class="w-chip">المراجعة<b>+30</b></div>
+        <div id="w-chip-4" class="w-chip">الاستماع<b>+20</b></div>
+        <div id="w-chip-5" class="w-chip">إحضار الحقيبة<b>+10</b></div>
+        <div id="w-chip-6" class="w-chip bonus">حضور الفصل كاملًا<b>+100</b></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const W = 1920, H = 1080, DUR = 43.5;
+      const COLORS = ["#3B82F6", "#EF4444", "#22C55E", "#8B5CF6", "#F97316"];
+      const SHIP_W = 108, K = 1.227;
+
+      // ── Board geometry, ported from src/pages/DisplayPage.tsx ──
+      const SQ = 4, TOTAL = 13;
+      const ISL = [{ x: 10, y: 18 }, { x: 95, y: 39 }, { x: 5, y: 71 }, { x: 94, y: 82 }];
+      const SEG = [
+        { cp1: { x: 52, y: 2 }, cp2: { x: 58, y: 18 } },
+        { cp1: { x: 80, y: 46 }, cp2: { x: 20, y: 52 } },
+        { cp1: { x: 42, y: 72 }, cp2: { x: 52, y: 78 } },
+      ];
+      const bez = (t, a, b, c, d) => {
+        const m = 1 - t;
+        return {
+          x: m * m * m * a.x + 3 * m * m * t * b.x + 3 * m * t * t * c.x + t * t * t * d.x,
+          y: m * m * m * a.y + 3 * m * m * t * b.y + 3 * m * t * t * c.y + t * t * t * d.y,
+        };
+      };
+      const exactPos = (i) => {
+        const c = Math.max(0, Math.min(i, TOTAL - 1));
+        const s = Math.min(Math.floor(c / SQ), 2);
+        return bez((c - s * SQ) / SQ, ISL[s], SEG[s].cp1, SEG[s].cp2, ISL[s + 1]);
+      };
+      const PX = 0.07, PY = 0.085;
+      const bp = (p) => ({ x: W * PX + (p.x / 100) * (W - 2 * W * PX), y: H * PY + (p.y / 100) * (H - 2 * H * PY) });
+      const tangent = (i) => {
+        const c = Math.max(0, Math.min(i, TOTAL - 1));
+        const s = Math.min(Math.floor(c / SQ), 2);
+        const t = (c - s * SQ) / SQ, m = 1 - t;
+        const p0 = ISL[s], p1 = SEG[s].cp1, p2 = SEG[s].cp2, p3 = ISL[s + 1];
+        const dx = 3 * m * m * (p1.x - p0.x) + 6 * m * t * (p2.x - p1.x) + 3 * t * t * (p3.x - p2.x);
+        const dy = 3 * m * m * (p1.y - p0.y) + 6 * m * t * (p2.y - p1.y) + 3 * t * t * (p3.y - p2.y);
+        const vx = dx * (W * (1 - 2 * PX)) / 100, vy = dy * (H * (1 - 2 * PY)) / 100;
+        const l = Math.hypot(vx, vy) || 1;
+        return { x: vx / l, y: vy / l };
+      };
+      const routeD = (upTo) => {
+        const end = Math.max(0, Math.min(upTo, TOTAL - 1));
+        if (end <= 0.001) return "";
+        const steps = Math.max(2, Math.ceil(end * 14));
+        let d = "";
+        for (let i = 0; i <= steps; i++) {
+          const p = bp(exactPos((end * i) / steps));
+          d += (i === 0 ? "M" : "L") + " " + p.x.toFixed(1) + " " + p.y.toFixed(1) + " ";
+        }
+        return d;
+      };
+
+      // ── The dhow, ported from src/pages/display/Dhow.tsx ──
+      const shade = (hex, amt) => {
+        const v = parseInt(hex.slice(1), 16);
+        const mix = (c) => Math.round(c + ((amt < 0 ? 0 : 255) - c) * Math.abs(amt));
+        const r = mix((v >> 16) & 255), g = mix((v >> 8) & 255), b = mix(v & 255);
+        return "#" + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
+      };
+      const dhow = (color, label, width, uid) => {
+        const light = shade(color, 0.38), deep = shade(color, -0.32), h = (width * 120) / 140;
+        return `<svg width="${width}" height="${h}" viewBox="0 0 140 120">
+<defs><linearGradient id="sail-${uid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${light}"/><stop offset="0.55" stop-color="${color}"/><stop offset="1" stop-color="${deep}"/></linearGradient>
+<linearGradient id="hull-${uid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b77b3e"/><stop offset="0.5" stop-color="#8a5527"/><stop offset="1" stop-color="#4f2d10"/></linearGradient></defs>
+<g class="wake" opacity="0"><path d="M 26 94 L -70 70 L -70 118 Z" fill="rgba(244,255,253,0.18)"/>
+<path class="wl" d="M 22 92 Q -14 86 -70 70" stroke="rgba(244,255,253,0.95)" stroke-width="9" stroke-linecap="round" fill="none" stroke-dasharray="18 10"/>
+<path class="wl" d="M 22 96 Q -14 104 -70 118" stroke="rgba(244,255,253,0.95)" stroke-width="9" stroke-linecap="round" fill="none" stroke-dasharray="18 10"/>
+<path d="M 30 94 Q -6 94 -44 95" stroke="rgba(244,255,253,0.55)" stroke-width="18" stroke-linecap="round" fill="none"/>
+<circle class="spray" cx="134" cy="84" r="5.5" fill="#fff"/><circle class="spray" cx="140" cy="90" r="4.5" fill="#fff"/><circle class="spray" cx="128" cy="80" r="4" fill="#fff"/></g>
+<ellipse cx="74" cy="100" rx="62" ry="7" fill="rgba(3,30,55,0.32)"/><ellipse cx="74" cy="94" rx="58" ry="4.5" fill="rgba(244,255,253,0.55)"/>
+<path d="M 76 70 L 72 9" stroke="#3d240c" stroke-width="3.4" stroke-linecap="round"/>
+<path class="pennant" d="M 72 8 L 50 4 L 56 10 L 50 16 Z" fill="${light}" stroke="rgba(0,0,0,0.35)" stroke-width="1"/>
+<g class="sail"><path d="M 128 44 L 24 3 Q 26 34 40 62 Q 88 62 128 44 Z" fill="url(#sail-${uid})" stroke="rgba(0,0,0,0.38)" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M 52 14 Q 54 38 62 61" stroke="rgba(255,255,255,0.28)" stroke-width="1.4" fill="none"/><path d="M 80 25 Q 82 44 86 59" stroke="rgba(255,255,255,0.24)" stroke-width="1.4" fill="none"/>
+<path d="M 104 34 Q 106 44 108 53" stroke="rgba(255,255,255,0.2)" stroke-width="1.4" fill="none"/><path d="M 30 10 Q 34 34 44 56 Q 40 32 30 10 Z" fill="rgba(255,255,255,0.35)"/>
+<g class="lbl" transform="translate(70 40) scale(1 1)"><text x="0" y="9" text-anchor="middle" font-size="27" font-weight="900" font-family="Tajawal, sans-serif" fill="#fff" stroke="rgba(0,0,0,0.45)" stroke-width="3" paint-order="stroke">${label}</text></g></g>
+<path d="M 130 45 L 22 2" stroke="#4f2d10" stroke-width="3.2" stroke-linecap="round"/>
+<path d="M 8 56 Q 12 66 20 70 L 118 68 Q 130 64 139 52 Q 134 80 114 94 Q 76 100 40 96 Q 18 92 8 56 Z" fill="url(#hull-${uid})" stroke="#2e1906" stroke-width="2" stroke-linejoin="round"/>
+<path d="M 14 68 Q 18 72 22 73 L 120 71 Q 128 68 134 62 L 132 70 Q 124 77 118 78 L 26 80 Q 18 78 14 68 Z" fill="${color}" stroke="rgba(0,0,0,0.3)" stroke-width="1"/>
+<path d="M 26 86 Q 70 90 122 80" stroke="rgba(255,226,180,0.35)" stroke-width="1.4" fill="none"/>
+<path d="M 14 66 L 13 56 L 40 57 L 42 69 Z" fill="#c99358" stroke="#2e1906" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M 15 56 L 15 50 M 24 56.4 L 24 50.6 M 33 56.7 L 33 51 M 14 50 L 40 51" stroke="#2e1906" stroke-width="1.5" stroke-linecap="round"/>
+<path d="M 136 54 L 140 48" stroke="#2e1906" stroke-width="2.2" stroke-linecap="round"/></svg>`;
+      };
+      const CROWN = `<svg viewBox="0 0 50 40"><defs><linearGradient id="w-crown-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset="0.45" stop-color="#ffd25c"/><stop offset="1" stop-color="#d18a10"/></linearGradient></defs>
+<path d="M5 34 L3 12 L15 22 L25 5 L35 22 L47 12 L45 34 Z" fill="url(#w-crown-g)" stroke="#7a4a05" stroke-width="2.2" stroke-linejoin="round"/>
+<rect x="5" y="31" width="40" height="6" rx="2" fill="#e8a21c" stroke="#7a4a05" stroke-width="2.2"/><circle cx="25" cy="5" r="3.2" fill="#ff5d4f" stroke="#7a4a05" stroke-width="1.6"/>
+<circle cx="3" cy="12" r="2.6" fill="#46cfd9" stroke="#7a4a05" stroke-width="1.4"/><circle cx="47" cy="12" r="2.6" fill="#46cfd9" stroke="#7a4a05" stroke-width="1.4"/><circle cx="25" cy="25" r="3" fill="#ff5d4f"/></svg>`;
+
+      // ── The story's data (illustrative points) ──
+      // Each ship: keyframes of route index (index × 500 = points). Moves are ease-in-out-cubic, as in the app.
+      const T_PULL = 12.0;
+      const SHIPS = [
+        { slot: 1, moves: [[22.9, 24.3, 0, 3]] },
+        { slot: 2, moves: [[24.4, 26.0, 0, 4]] },
+        { slot: 3, moves: [[T_PULL, 13.4, 0, 1], [26.3, 28.0, 1, 5.2]] },
+        { slot: 4, moves: [[28.2, 29.2, 0, 2]] },
+        { slot: 5, moves: [[29.3, 30.6, 0, 3.5]] },
+      ];
+      const ARRIVAL_T = 26.0;
+      const io = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+      const clamp01 = (x) => Math.max(0, Math.min(1, x));
+      const idxAt = (s, t) => {
+        let v = s.moves[0][2];
+        for (const [a, b, from, to] of s.moves) {
+          if (t >= b) v = to;
+          else if (t > a) { v = from + (to - from) * io((t - a) / (b - a)); break; }
+          else break;
+        }
+        return v;
+      };
+      const movingAmt = (s, t) => {
+        let m = 0;
+        for (const [a, b] of s.moves) m = Math.max(m, clamp01((t - a + 0.15) / 0.45) * clamp01((b + 0.45 - t) / 0.55));
+        return m;
+      };
+      // points on the tag: the new total shows as soon as the move starts
+      const ptsAt = (s, t) => {
+        let v = s.moves[0][2];
+        for (const [a, , , to] of s.moves) if (t >= a) v = to;
+        return Math.round(v * 500);
+      };
+
+      // Raw layout: route points plus the app's echelon formation for ships closer than 1.25 hull lengths.
+      const rawLayout = (t) => {
+        const base = SHIPS.map((s) => {
+          const i = idxAt(s, t);
+          const p = bp(exactPos(i));
+          return { s, i, x: p.x, y: p.y, rx: p.x, ry: p.y, tan: tangent(i) };
+        });
+        const by = [...base].sort((a, b) => a.i - b.i || a.s.slot - b.s.slot);
+        const groups = [];
+        by.forEach((s) => {
+          const g = groups[groups.length - 1], prev = g && g[g.length - 1];
+          if (prev && Math.hypot(s.x - prev.x, s.y - prev.y) < SHIP_W * 1.25) g.push(s);
+          else groups.push([s]);
+        });
+        groups.forEach((g) => {
+          if (g.length < 2) return;
+          const spacing = SHIP_W * (g.length > 3 ? 0.38 : 0.42);
+          g.forEach((s, j) => {
+            let nx = -s.tan.y, ny = s.tan.x;
+            if (ny < 0) { nx = -nx; ny = -ny; }
+            const step = j - (g.length - 1) / 2;
+            const across = step * spacing, along = step * SHIP_W * (g.length > 3 ? 0.86 : 0.96);
+            s.x += nx * across + s.tan.x * along;
+            s.y += ny * across + s.tan.y * along;
+          });
+        });
+        const minX = SHIP_W * 0.62, maxX = W - SHIP_W * 0.62, minY = SHIP_W * 0.72, maxY = H - SHIP_W * 0.42;
+        groups.forEach((g) => {
+          let dx = 0, dy = 0;
+          g.forEach((s) => {
+            if (s.x + dx < minX) dx = minX - s.x;
+            if (s.x + dx > maxX) dx = maxX - s.x;
+            if (s.y + dy < minY) dy = minY - s.y;
+            if (s.y + dy > maxY) dy = maxY - s.y;
+          });
+          g.forEach((s) => { s.x += dx; s.y += dy; });
+        });
+        return base;
+      };
+      // Formation offsets ease in over ~0.65 s like the app's settle transition (averaged, so any frame renders alone).
+      const layout = (t) => {
+        const now = rawLayout(t);
+        const N = 10, win = 0.65;
+        const off = now.map(() => ({ x: 0, y: 0 }));
+        for (let j = 0; j < N; j++) {
+          const L = rawLayout(Math.max(0, t - (win * j) / (N - 1)));
+          L.forEach((s, k) => { off[k].x += (s.x - s.rx) / N; off[k].y += (s.y - s.ry) / N; });
+        }
+        return now.map((s, k) => {
+          const flip = s.tan.x >= 0 ? 1 : -1;
+          const raw = flip === 1 ? Math.atan2(s.tan.y, s.tan.x) : Math.atan2(-s.tan.y, -s.tan.x);
+          return { ...s, x: s.rx + off[k].x, y: s.ry + off[k].y, flip, rot: Math.max(-20, Math.min(20, (raw * 180) / Math.PI)) };
+        });
+      };
+      const leaderIdx = (t) => Math.max(...SHIPS.map((s) => idxAt(s, t)));
+
+      // ── Build the ships, tags, crowns, buoy overlays ──
+      const shipEls = SHIPS.map((s) => {
+        const el = document.getElementById("w-ship-" + s.slot);
+        el.innerHTML = `<div class="w-heading"><div class="w-scale"><div class="w-bob">${dhow(COLORS[s.slot - 1], s.slot, SHIP_W, "s" + s.slot)}</div></div></div>`;
+        const tw = document.getElementById("w-tagw-" + s.slot);
+        tw.innerHTML = `<div class="w-crown">${CROWN.replace(/w-crown-g/g, "w-crown-g" + s.slot)}</div><div class="w-tag" style="background:${COLORS[s.slot - 1]}">فصل ${s.slot}<b>0</b></div>`;
+        return {
+          s, el, tw,
+          heading: el.querySelector(".w-heading"), scale: el.querySelector(".w-scale"), bob: el.querySelector(".w-bob"),
+          wake: el.querySelector(".wake"), wls: el.querySelectorAll(".wl"), sprays: el.querySelectorAll(".spray"),
+          sail: el.querySelector(".sail"), pennant: el.querySelector(".pennant"), lbl: el.querySelector(".lbl"),
+          crown: tw.querySelector(".w-crown"), pts: tw.querySelector("b"),
+        };
+      });
+      const LAMPS = [[712.1, 107.2], [1018.8, 134.5], [1310.1, 224], [1387.8, 400.3], [946.6, 456.1], [505.4, 532], [593.4, 654], [907.4, 679.1], [1236.8, 709.2]];
+      const VALS = [[686.7, 219.6, 77.5, "500"], [983.3, 246.9, 97.8, "1,000"], [1275, 336.4, 97.1, "1,500"], [1351.6, 512.7, 99.3, "2,500"], [909.7, 568.5, 100.6, "3,000"], [468.9, 644.4, 99.9, "3,500"], [556.3, 766.4, 101.1, "4,500"], [870.1, 791.5, 101.4, "5,000"], [1199.9, 821.6, 100.7, "5,500"]];
+      const BUOY_IDX = [1, 2, 3, 5, 6, 7, 9, 10, 11];
+      const buoys = document.getElementById("w-buoys");
+      const buoyEls = BUOY_IDX.map((bi, j) => {
+        const lamp = document.createElement("div");
+        lamp.className = "w-lamp";
+        lamp.style.left = LAMPS[j][0] + "px"; lamp.style.top = LAMPS[j][1] + "px";
+        const val = document.createElement("div");
+        val.className = "w-bval";
+        val.style.left = VALS[j][0] + "px"; val.style.top = VALS[j][1] + "px"; val.style.width = VALS[j][2] + "px";
+        val.textContent = VALS[j][3];
+        buoys.appendChild(lamp); buoys.appendChild(val);
+        return { bi, lamp, val };
+      });
+
+      // Confetti burst at جزيرة التحدي (seeded, so every frame renders the same).
+      let seed = 7;
+      const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+      const isle = bp(ISL[1]);
+      const CONF_COLORS = ["#ffd25c", "#ffb627", "#ff5d4f", "#EF4444", "#46cfd9", "#fff8e8", "#22C55E"];
+      const confetti = document.getElementById("w-confetti");
+      const bits = Array.from({ length: 56 }, (_, n) => {
+        const i = document.createElement("i");
+        const w = 8 + rnd() * 8, h = 5 + rnd() * 6;
+        i.style.width = w + "px"; i.style.height = h + "px"; i.style.background = CONF_COLORS[n % CONF_COLORS.length];
+        confetti.appendChild(i);
+        const ang = -Math.PI / 2 + (rnd() - 0.5) * Math.PI * 1.5;
+        const dist = 140 + rnd() * 240;
+        return { el: i, dx: Math.cos(ang) * dist - 60, dy: Math.sin(ang) * dist, rot: (rnd() - 0.5) * 900, dur: 1.3 + rnd() * 0.9, delay: rnd() * 0.25 };
+      });
+
+      // Hero dhow (slot 3, the class we follow)
+      const HERO_W = 620, HERO_X = 640, HERO_Y = 640;
+      document.getElementById("w-hero-bob").innerHTML = dhow(COLORS[2], 3, HERO_W, "hero");
+      const hero = {
+        root: document.getElementById("w-hero"), ship: document.getElementById("w-hero-ship"), bob: document.getElementById("w-hero-bob"),
+        pts: document.getElementById("w-hero-pts"),
+      };
+      hero.wake = hero.bob.querySelector(".wake"); hero.wls = hero.bob.querySelectorAll(".wl"); hero.sprays = hero.bob.querySelectorAll(".spray");
+      hero.sail = hero.bob.querySelector(".sail"); hero.pennant = hero.bob.querySelector(".pennant");
+
+      // ── Camera: board point (cx, cy) at the frame centre, at scale s ──
+      const PE = (n) => gsap.parseEase(n);
+      const START3 = layout(11.4)[2]; // where ship 3 sits in the fleet when the board appears
+      const CAM = [
+        { t: 0, s: 2.4, x: START3.x + 150, y: START3.y + 120 },
+        { t: T_PULL - 0.05, s: 2.4, x: START3.x + 150, y: START3.y + 120 },
+        { t: 13.6, s: 1, x: 960, y: 540, e: "power2.inOut" },
+        { t: 14.9, s: 1, x: 960, y: 540 },
+        { t: 16.7, s: 1.42, x: 1500, y: 420, e: "power2.inOut" },
+        { t: 18.7, s: 1.42, x: 520, y: 660, e: "power2.inOut" },
+        { t: 20.4, s: 1.42, x: 1440, y: 800, e: "power2.inOut" },
+        { t: 21.5, s: 1, x: 960, y: 540, e: "power2.inOut" },
+        { t: 22.7, s: 1, x: 960, y: 540 },
+        { t: 23.4, s: 1.22, x: 0, y: 0, e: "power2.inOut", follow: true },
+        { t: 30.6, s: 1.22, x: 0, y: 0, follow: true },
+        { t: 31.6, s: 1.38, x: 1450, y: 470, e: "power2.inOut" },
+        { t: 36.4, s: 1.5, x: 1380, y: 500, e: "sine.inOut" },
+        { t: 38.0, s: 1.75, x: 1560, y: 840, e: "power2.inOut" },
+        { t: 43.5, s: 1.8, x: 1580, y: 850, e: "sine.out" },
+      ];
+      // While the fleet sails, the camera leans toward the ship that is moving.
+      const followPt = (t) => {
+        const N = 8;
+        let x = 0, y = 0;
+        for (let j = 0; j < N; j++) {
+          const tt = t - (0.7 * j) / (N - 1);
+          let best = null, bm = 0;
+          SHIPS.forEach((s) => { const m = movingAmt(s, tt); if (m > bm) { bm = m; best = s; } });
+          const p = best ? bp(exactPos(idxAt(best, tt))) : { x: 1100, y: 420 };
+          x += (0.5 * p.x + 0.5 * 1100) / N; y += (0.5 * p.y + 0.5 * 420) / N;
+        }
+        return { x, y };
+      };
+      const camAt = (t) => {
+        let a = CAM[0], b = CAM[0];
+        for (let i = 0; i < CAM.length - 1; i++) {
+          if (t >= CAM[i].t) { a = CAM[i]; b = CAM[i + 1]; }
+        }
+        const pa = a.follow ? { s: a.s, ...followPt(t) } : a;
+        const pb = b.follow ? { s: b.s, ...followPt(t) } : b;
+        const u = b.t > a.t ? clamp01((t - a.t) / (b.t - a.t)) : 1;
+        const e = b.e ? PE(b.e)(u) : u;
+        const s = pa.s + (pb.s - pa.s) * e;
+        let cx = pa.x + (pb.x - pa.x) * e, cy = pa.y + (pb.y - pa.y) * e;
+        // keep the board covering the frame
+        const half = { x: 960 / s, y: 540 / s };
+        cx = Math.max(half.x, Math.min(W - half.x, cx));
+        cy = Math.max(half.y, Math.min(H - half.y, cy));
+        return { s, tx: 960 - s * cx, ty: 540 - s * cy };
+      };
+
+      // ── Hero handoff: the close-up dhow shrinks into its place in the fleet ──
+      const HAND_A = 10.9, HAND_B = 11.75;
+      const cam0 = camAt(11.5);
+      const target = { x: cam0.tx + cam0.s * START3.x, y: cam0.ty + cam0.s * START3.y, k: (SHIP_W * cam0.s) / HERO_W };
+      const heroPtsAt = (t) => {
+        const steps = [[4.55, 10], [5.25, 40], [5.95, 70], [6.65, 90], [7.35, 100]];
+        let v = 0;
+        steps.forEach(([tt, p]) => { if (t >= tt) v = p; });
+        if (t >= 7.8) v = Math.round(100 + 300 * PE("power2.inOut")(clamp01((t - 7.8) / 1.05)));
+        if (t >= 10.25) v = 500;
+        return Math.round(v / 10) * 10;
+      };
+      const mod = (a, n) => ((a % n) + n) % n;
+
+      const animateBoat = (o, t, m, ph) => {
+        const T = 4.4 - 2.8 * m;
+        const u = ((t + ph) / T) * Math.PI * 2;
+        return { y: -3 * Math.sin(u) - 1 * Math.sin(2 * u + 1), r: 2.2 * Math.sin(u + 0.6) };
+      };
+      const setBoatDetails = (o, t, m, ph) => {
+        o.wake.setAttribute("opacity", m.toFixed(3));
+        const off = (mod(t / 0.7, 1) * 28).toFixed(2);
+        o.wls.forEach((w) => w.setAttribute("stroke-dashoffset", (-off).toString()));
+        o.sprays.forEach((c, n) => {
+          const p = mod((t + n * 0.3) / 0.9, 1);
+          c.setAttribute("transform", `translate(${(-6 * p).toFixed(2)} ${(-10 * p).toFixed(2)})`);
+          c.setAttribute("opacity", ((1 - p) * 0.9).toFixed(3));
+        });
+        const sp = Math.sin(((t + ph) / 3.2) * Math.PI * 2) * 0.5 + 0.5;
+        o.sail.setAttribute("transform", `translate(${(-0.035 * 106 * sp * 0.85).toFixed(2)} 0) scale(${(1 + 0.035 * sp).toFixed(4)} 1)`);
+        const pp = Math.sin(((t + ph) / 0.9) * Math.PI * 2) * 0.5 + 0.5;
+        o.pennant.setAttribute("transform", `translate(${(72 * 0.1 * pp).toFixed(2)} 0) scale(${(1 - 0.1 * pp).toFixed(3)} 1)`);
+      };
+
+      const CHIP_T = [3.45, 4.15, 4.85, 5.55, 6.25];
+      const chips = [1, 2, 3, 4, 5, 6].map((n) => document.getElementById("w-chip-" + n));
+      // tokens: the rest of the class's entries streaming in
+      const tokens = [];
+      const TOKV = ["+10", "+30", "+20", "+30", "+10", "+30", "+20", "+10", "+30", "+30", "+20", "+10", "+30", "+20"];
+      const chipsHost = document.getElementById("w-chips");
+      TOKV.forEach((v, n) => {
+        const el = document.createElement("div");
+        el.className = "w-token"; el.textContent = v; chipsHost.appendChild(el);
+        tokens.push({ el, t0: 7.35 + n * 0.08, sy: 120 + rnd() * 800, sx: 1980 + rnd() * 160, arc: -80 - rnd() * 160 });
+      });
+      const PILL = { x: HERO_X, y: HERO_Y + 90 }; // where the points pill sits on screen
+
+      const els = {
+        cam: document.getElementById("w-cam"), heroSea: document.getElementById("w-hero-sea"),
+        hglf: document.getElementById("w-hglf"), hgln: document.getElementById("w-hgln"),
+        cglf: document.getElementById("w-cglf"), cgln: document.getElementById("w-cgln"),
+        lg: document.getElementById("w-lead-glow"), lc: document.getElementById("w-lead-core"), lf: document.getElementById("w-lead-flow"),
+      };
+
+      function render(t) {
+        // sea drift: the hero sails, so the water streams left; afterwards the app's slow drift
+        const sail = Math.min(t, 11.6);
+        const hx = -150 * sail + (t > 36 ? -40 * (t - 36) : 0), hy = 8 * sail + (t > 36 ? 12 * (t - 36) : 0);
+        els.hgln.style.transform = `translate(${mod(hx, 360).toFixed(1)}px, ${mod(hy, 240).toFixed(1)}px)`;
+        els.hglf.style.transform = `translate(${mod(hx * 0.6, 220).toFixed(1)}px, ${mod(hy * 0.6, 150).toFixed(1)}px)`;
+        els.cgln.style.transform = `translate(${mod((360 / 38) * t, 360).toFixed(1)}px, ${mod((240 / 38) * t, 240).toFixed(1)}px)`;
+        els.cglf.style.transform = `translate(${mod((-220 / 64) * t, 220).toFixed(1)}px, ${mod((150 / 64) * t, 150).toFixed(1)}px)`;
+
+        // camera
+        const c = camAt(t);
+        els.cam.style.transform = `translate(${c.tx.toFixed(2)}px, ${c.ty.toFixed(2)}px) scale(${c.s.toFixed(4)})`;
+        const camIn = clamp01((t - 10.95) / 0.6);
+        const endFade = 1 - clamp01((t - 36.95) / 0.6);
+        els.cam.style.opacity = (camIn * endFade).toFixed(3);
+        els.heroSea.style.opacity = Math.max(1 - clamp01((t - 11.0) / 0.7), clamp01((t - 36.95) / 0.6)).toFixed(3);
+
+        // ships
+        const L = layout(t);
+        const lead = leaderIdx(t);
+        L.forEach((s, k) => {
+          const o = shipEls[k];
+          const m = movingAmt(s.s, t);
+          const ph = s.s.slot * 0.7;
+          const b = animateBoat(o, t, m, ph);
+          o.el.style.transform = `translate(${s.x.toFixed(2)}px, ${s.y.toFixed(2)}px)`;
+          o.el.style.zIndex = m > 0.05 ? 90 : 20 + Math.round(s.i) + s.s.slot;
+          o.heading.style.transform = `rotate(${s.rot.toFixed(2)}deg) scaleX(${s.flip})`;
+          o.lbl.setAttribute("transform", `translate(70 40) scale(${s.flip} 1)`);
+          o.scale.style.transform = `scale(${(1 + 0.14 * m).toFixed(4)})`;
+          o.bob.style.transform = `translateY(${b.y.toFixed(2)}px) rotate(${b.r.toFixed(2)}deg)`;
+          setBoatDetails(o, t, m, ph);
+          o.tw.style.transform = `translate(${s.x.toFixed(2)}px, ${s.y.toFixed(2)}px)`;
+          o.tw.style.zIndex = m > 0.05 ? 96 : 95;
+          o.pts.textContent = ptsAt(s.s, t).toLocaleString("en-US");
+          // crown: the leader, faded in and out over ~0.4 s
+          let cr = 0;
+          for (let j = 0; j < 6; j++) {
+            const tt = Math.max(0, t - j * 0.08);
+            const li = leaderIdx(tt);
+            if (li > 0.01 && Math.abs(idxAt(s.s, tt) - li) < 1e-6) cr += 1 / 6;
+          }
+          o.crown.style.opacity = cr.toFixed(3);
+          const cb = Math.sin((t / 2.2) * Math.PI * 2);
+          o.crown.style.transform = `translate(0px, ${(4 - 3 - 3 * cb).toFixed(2)}px) rotate(${(4 * cb).toFixed(2)}deg)`;
+        });
+        // hide the fleet's ship 3 under the hero until the handoff lands
+        shipEls[2].el.style.opacity = t < HAND_B - 0.02 ? 0 : 1;
+        shipEls[2].tw.style.opacity = clamp01((t - (HAND_B - 0.1)) / 0.2).toFixed(3);
+
+        // leader's gold route and lit buoys
+        const d = routeD(lead);
+        els.lg.setAttribute("d", d); els.lc.setAttribute("d", d); els.lf.setAttribute("d", d);
+        els.lf.setAttribute("stroke-dashoffset", (-mod(t / 1.2, 1) * 36.8).toFixed(2));
+        buoyEls.forEach((bu) => {
+          const lit = clamp01((lead - bu.bi + 0.02) * 5);
+          const pulse = 0.85 + 0.15 * Math.sin((t / 1.6) * Math.PI * 2);
+          bu.lamp.style.opacity = (lit * pulse).toFixed(3);
+          // a ship sitting on the buoy hides its value, as on the board
+          let occ = 0;
+          SHIPS.forEach((s) => { if (movingAmt(s, t) < 0.5) occ = Math.max(occ, clamp01(1 - Math.abs(idxAt(s, t) - bu.bi) / 0.35)); });
+          bu.val.style.opacity = (lit * (1 - occ)).toFixed(3);
+        });
+
+        // confetti on the arrival at جزيرة التحدي
+        bits.forEach((q) => {
+          const u = (t - ARRIVAL_T - q.delay) / q.dur;
+          if (u <= 0 || u >= 1) { q.el.style.opacity = 0; return; }
+          const e = 1 - Math.pow(1 - u, 2.4);
+          q.el.style.opacity = (u < 0.7 ? 1 : 1 - (u - 0.7) / 0.3).toFixed(3);
+          q.el.style.transform = `translate(${(isle.x + q.dx * e).toFixed(1)}px, ${(isle.y - 30 + q.dy * e + 160 * u * u).toFixed(1)}px) rotate(${(q.rot * e).toFixed(1)}deg) scale(${(0.6 + 0.4 * e).toFixed(3)})`;
+        });
+
+        // hero
+        hero.root.style.opacity = t < HAND_B ? 1 : 0;
+        const hk = PE("power3.inOut")(clamp01((t - HAND_A) / (HAND_B - HAND_A)));
+        const enter = PE("expo.out")(clamp01(t / 1.4));
+        const hx0 = HERO_X - 120 * (1 - enter), hy0 = HERO_Y;
+        const x = hx0 + (target.x - hx0) * hk, y = hy0 + (target.y - hy0) * hk, k = 1 + (target.k - 1) * hk;
+        hero.ship.style.transform = `translate(${x.toFixed(2)}px, ${y.toFixed(2)}px) scale(${k.toFixed(4)})`;
+        const hb = animateBoat(hero, t, 1 - hk, 2.1);
+        hero.bob.style.transform = `translateY(${(hb.y * 2.5).toFixed(2)}px) rotate(${hb.r.toFixed(2)}deg)`;
+        setBoatDetails(hero, t, 1 - hk, 2.1);
+        hero.pts.textContent = heroPtsAt(t).toLocaleString("en-US");
+        const pop = Math.max(...[4.55, 5.25, 5.95, 6.65, 7.35, 10.25].map((tt) => (t >= tt && t < tt + 0.35 ? Math.sin(((t - tt) / 0.35) * Math.PI) : 0)));
+        hero.pts.style.transform = `scale(${(1 + 0.28 * pop).toFixed(3)})`;
+
+        // chips: each enters on the right, arcs into the points pill and is absorbed
+        chips.forEach((el, n) => {
+          const t0 = n < 5 ? CHIP_T[n] : 8.9;
+          const hold = n < 5 ? 0.5 : 0.75;
+          const sx = 1500 - (n % 2) * 40, sy = n < 5 ? 250 + n * 18 : 300;
+          const a = clamp01((t - t0) / 0.3);
+          const f = clamp01((t - t0 - 0.3 - hold) / 0.3);
+          if (t < t0 || f >= 1) { el.style.opacity = 0; return; }
+          const fe = PE("power3.in")(f);
+          const ae = PE("expo.out")(a);
+          const px = sx + 80 * (1 - ae) + (PILL.x - sx) * fe;
+          const py = sy + (PILL.y - sy) * fe - Math.sin(fe * Math.PI) * 120;
+          el.style.opacity = (ae * (1 - Math.max(0, (f - 0.75) / 0.25))).toFixed(3);
+          el.style.transform = `translate(-50%, -50%) translate(${px.toFixed(1)}px, ${py.toFixed(1)}px) scale(${(1 - 0.55 * fe).toFixed(3)})`;
+          el.style.filter = `blur(${((1 - ae) * 6).toFixed(2)}px)`;
+        });
+        tokens.forEach((q) => {
+          const u = clamp01((t - q.t0) / 0.55);
+          if (t < q.t0 || u >= 1) { q.el.style.opacity = 0; return; }
+          const e = PE("power2.in")(u);
+          const px = q.sx + (PILL.x - q.sx) * e, py = q.sy + (PILL.y - q.sy) * e + Math.sin(e * Math.PI) * q.arc;
+          q.el.style.opacity = (u < 0.85 ? 1 : (1 - u) / 0.15).toFixed(3);
+          q.el.style.transform = `translate(-50%, -50%) translate(${px.toFixed(1)}px, ${py.toFixed(1)}px) scale(${(1 - 0.4 * e).toFixed(3)})`;
+        });
+        document.getElementById("w-chips").style.opacity = t < HAND_A ? 1 : 0;
+      }
+
+      const tl = gsap.timeline({ paused: true });
+      const clock = { t: 0 };
+      tl.to(clock, { t: DUR, duration: DUR, ease: "none", onUpdate: () => render(clock.t) }, 0);
+      render(0);
+      window.__timelines["world"] = tl;
+    })();
+  </script>
+</template>
