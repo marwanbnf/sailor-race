@@ -159,7 +159,16 @@
 
   <script>
     (function () {
-      const W = 1920, H = 1080, DUR = 43.5;
+      const W = 1920, H = 1080, DUR = 52.75;
+      const RETIME = [[0, 0], [3.4, 3.4], [7.35, 11.0], [10.65, 16.8], [13.6, 20.2], [15.3, 21.9], [21.1, 27.0], [22.6, 30.1], [31.0, 38.5], [37.0, 45.8], [39.65, 48.9], [43.5, 52.75]];
+      // film time (with the voiceover) -> the original scene time the animation was authored in
+      const oldT = (t) => {
+        for (let i = 0; i < RETIME.length - 1; i++) {
+          const [a, b] = RETIME[i], [c, d] = RETIME[i + 1];
+          if (t <= d) return a + ((t - b) * (c - a)) / (d - b);
+        }
+        return RETIME[RETIME.length - 1][0];
+      };
       const COLORS = ["#3B82F6", "#EF4444", "#22C55E", "#8B5CF6", "#F97316"];
       const SHIP_W = 108, K = 1.227;
 
@@ -599,7 +608,7 @@
 
       const tl = gsap.timeline({ paused: true });
       const clock = { t: 0 };
-      tl.to(clock, { t: DUR, duration: DUR, ease: "none", onUpdate: () => render(clock.t) }, 0);
+      tl.to(clock, { t: DUR, duration: DUR, ease: "none", onUpdate: () => render(oldT(clock.t)) }, 0);
       render(0);
       window.__timelines["world"] = tl;
     })();
