@@ -49,6 +49,9 @@ body{font-family:"Baloo Bhaijaan 2",sans-serif;color:var(--ink);}
 .ribbon span{display:block;background:var(--orange);color:#fff;font-weight:800;font-size:46px;line-height:1;padding:16px 64px 22px;clip-path:polygon(0 0,100% 0,96% 50%,100% 100%,0 100%,4% 50%);white-space:nowrap;}
 
 /* مشاهد الحلقات */
+.tc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-bottom:330px;}
+.tc-name{font-size:210px;font-weight:800;line-height:1.25;color:var(--c);-webkit-text-stroke:16px #fff;paint-order:stroke fill;white-space:nowrap;}
+.tc-ship{width:230px;margin-top:6px;} .tc-ship .ship{width:100%;display:block;}
 .head{position:absolute;top:44px;left:0;right:0;text-align:center;font-size:92px;font-weight:800;line-height:1.25;-webkit-text-stroke:14px #fff;paint-order:stroke fill;}
 .card{position:absolute;left:310px;top:205px;width:1300px;height:820px;background:#fff;border-radius:56px;box-shadow:0 26px 0 rgba(18,53,91,.12),0 30px 80px rgba(18,53,91,.25);border:10px solid var(--c);display:flex;flex-direction:column;align-items:center;padding-top:36px;}
 .buoy{position:relative;width:190px;height:190px;}
@@ -105,10 +108,10 @@ body{font-family:"Baloo Bhaijaan 2",sans-serif;color:var(--ink);}
 </style>
 </head>
 <body>
-<div id="root" data-composition-id="main" data-start="0" data-duration="57" data-width="1920" data-height="1080" data-motion-blur="on">
+<div id="root" data-composition-id="main" data-start="0" data-duration="61.8" data-width="1920" data-height="1080" data-motion-blur="on">
 
   <!-- العالم الثابت: سماء وشمس وغيوم وبحر وسفن -->
-  <div id="world" class="clip" data-start="0" data-duration="57" data-track-index="0" data-layout-ignore>
+  <div id="world" class="clip" data-start="0" data-duration="61.8" data-track-index="0" data-layout-ignore>
     <div id="sun"></div>
     <svg id="cl1" class="cloud" style="left:420px;top:70px;width:286px" viewBox="0 0 260 110" aria-hidden="true">
   <g fill="#fff"><ellipse cx="80" cy="72" rx="62" ry="34"/><ellipse cx="135" cy="52" rx="58" ry="46"/><ellipse cx="190" cy="74" rx="56" ry="30"/><rect x="40" y="70" width="190" height="36" rx="18"/></g>
@@ -179,35 +182,9 @@ body{font-family:"Baloo Bhaijaan 2",sans-serif;color:var(--ink);}
     </div>
   </section>
 
-  <section id="s-h1" class="clip scene" data-start="6.4" data-duration="7.2" data-track-index="2">
+  <section id="s-h1" class="clip scene" data-start="6.4" data-duration="8.4" data-track-index="2">
     <div class="stage" id="st-h1">
-      <h2 class="head" id="hd-h1">أوائلُ <span style="color:#3b82f6">الحلقة الأولى</span></h2>
-      <div id="h1b" class="card " style="--c:#3b82f6" data-p="0.78">
-      <div class="buoy">
-  <svg viewBox="0 0 200 200" aria-hidden="true">
-    <circle cx="100" cy="100" r="78" fill="none" stroke="#fff" stroke-width="40"/>
-    <circle cx="100" cy="100" r="78" fill="none" stroke="#ff8a1f" stroke-width="40" stroke-dasharray="61.26 61.26" transform="rotate(-22 100 100)"/>
-    <circle cx="100" cy="100" r="98" fill="none" stroke="#12355b" stroke-opacity=".18" stroke-width="3"/>
-    <circle cx="100" cy="100" r="58" fill="#fff"/>
-  </svg>
-  <span>٢</span>
-</div>
-      <div class="ribbon"><span>المركز الثاني</span></div>
-      <div class="name">عبدالصمد باخشب</div>
-      <div class="badge"><svg class="ship mini" viewBox="0 0 200 180" aria-hidden="true">
-  <path d="M104 6 L104 128" stroke="#5b3716" stroke-width="6" stroke-linecap="round"/>
-  <path d="M104 10 L128 18 L104 26 Z" fill="#fff"/>
-  <path d="M108 28 Q160 70 176 122 L108 122 Z" fill="#fff"/>
-  <path d="M100 40 Q70 80 44 120 L100 120 Z" fill="#fffaf0"/>
-  <path d="M14 128 L188 128 Q178 160 150 166 L48 166 Q22 160 14 128 Z" fill="#8a5527"/>
-  <path d="M16 128 L186 128 L183 139 L19 139 Z" fill="#fff"/>
-  <path d="M40 152 L162 152" stroke="#6b3f18" stroke-width="4" stroke-linecap="round" opacity=".6"/>
-</svg><span>الحلقة الأولى</span></div>
-      <div class="journey">
-        <div class="rope"></div><div class="rope-done"></div>
-        <img class="isl isl-start" src="assets/img/island-start.png" alt="">
-        <img class="isl isl-win" src="assets/img/island-win.png" alt="">
-        <div class="boat"><svg class="ship " viewBox="0 0 200 180" aria-hidden="true">
+      <div class="tc" id="tc-h1" style="--c:#3b82f6"><div class="tc-name">الحلقة الأولى</div><div class="tc-ship"><svg class="ship " viewBox="0 0 200 180" aria-hidden="true">
   <path d="M104 6 L104 128" stroke="#5b3716" stroke-width="6" stroke-linecap="round"/>
   <path d="M104 10 L128 18 L104 26 Z" fill="#3b82f6"/>
   <path d="M108 28 Q160 70 176 122 L108 122 Z" fill="#3b82f6"/>
@@ -215,9 +192,8 @@ body{font-family:"Baloo Bhaijaan 2",sans-serif;color:var(--ink);}
   <path d="M14 128 L188 128 Q178 160 150 166 L48 166 Q22 160 14 128 Z" fill="#8a5527"/>
   <path d="M16 128 L186 128 L183 139 L19 139 Z" fill="#3b82f6"/>
   <path d="M40 152 L162 152" stroke="#6b3f18" stroke-width="4" stroke-linecap="round" opacity=".6"/>
-</svg></div>
-      </div>
-    </div>
+</svg></div></div>
+      <h2 class="head" id="hd-h1">أوائلُ <span style="color:#3b82f6">الحلقة الأولى</span></h2>
       <div id="h1a" class="card is-first" style="--c:#3b82f6" data-p="1">
       <div class="buoy">
   <svg viewBox="0 0 200 200" aria-hidden="true">
@@ -254,12 +230,7 @@ body{font-family:"Baloo Bhaijaan 2",sans-serif;color:var(--ink);}
 </svg></div>
       </div>
     </div>
-    </div>
-  </section>
-  <section id="s-h2" class="clip scene" data-start="13.600000000000001" data-duration="7.2" data-track-index="2">
-    <div class="stage" id="st-h2">
-      <h2 class="head" id="hd-h2">أوائلُ <span style="color:#ef4444">الحلقة الثانية</span></h2>
-      <div id="h2b" class="card " style="--c:#ef4444" data-p="0.78">
+      <div id="h1b" class="card " style="--c:#3b82f6" data-p="0.78">
       <div class="buoy">
   <svg viewBox="0 0 200 200" aria-hidden="true">
     <circle cx="100" cy="100" r="78" fill="none" stroke="#fff" stroke-width="40"/>
@@ -270,7 +241,7 @@ body{font-family:"Baloo Bhaijaan 2",sans-serif;color:var(--ink);}
   <span>٢</span>
 </div>
       <div class="ribbon"><span>المركز الثاني</span></div>
-      <div class="name">فارس إياد</div>
+      <div class="name">عبدالصمد باخشب</div>
       <div class="badge"><svg class="ship mini" viewBox="0 0 200 180" aria-hidden="true">
   <path d="M104 6 L104 128" stroke="#5b3716" stroke-width="6" stroke-linecap="round"/>
   <path d="M104 10 L128 18 L104 26 Z" fill="#fff"/>
@@ -279,12 +250,27 @@ body{font-family:"Baloo Bhaijaan 2",sans-serif;color:var(--ink);}
   <path d="M14 128 L188 128 Q178 160 150 166 L48 166 Q22 160 14 128 Z" fill="#8a5527"/>
   <path d="M16 128 L186 128 L183 139 L19 139 Z" fill="#fff"/>
   <path d="M40 152 L162 152" stroke="#6b3f18" stroke-width="4" stroke-linecap="round" opacity=".6"/>
-</svg><span>الحلقة الثانية</span></div>
+</svg><span>الحلقة الأولى</span></div>
       <div class="journey">
         <div class="rope"></div><div class="rope-done"></div>
         <img class="isl isl-start" src="assets/img/island-start.png" alt="">
         <img class="isl isl-win" src="assets/img/island-win.png" alt="">
         <div class="boat"><svg class="ship " viewBox="0 0 200 180" aria-hidden="true">
+  <path d="M104 6 L104 128" stroke="#5b3716" stroke-width="6" stroke-linecap="round"/>
+  <path d="M104 10 L128 18 L104 26 Z" fill="#3b82f6"/>
+  <path d="M108 28 Q160 70 176 122 L108 122 Z" fill="#3b82f6"/>
+  <path d="M100 40 Q70 80 44 120 L100 120 Z" fill="#fffaf0"/>
+  <path d="M14 128 L188 128 Q178 160 150 166 L48 166 Q22 160 14 128 Z" fill="#8a5527"/>
+  <path d="M16 128 L186 128 L183 139 L19 139 Z" fill="#3b82f6"/>
+  <path d="M40 152 L162 152" stroke="#6b3f18" stroke-width="4" stroke-linecap="round" opacity=".6"/>
+</svg></div>
+      </div>
+    </div>
+    </div>
+  </section>
+  <section id="s-h2" class="clip scene" data-start="14.8" data-duration="8.4" data-track-index="2">
+    <div class="stage" id="st-h2">
+      <div class="tc" id="tc-h2" style="--c:#ef4444"><div class="tc-name">الحلقة الثانية</div><div class="tc-ship"><svg class="ship " viewBox="0 0 200 180" aria-hidden="true">
   <path d="M104 6 L104 128" stroke="#5b3716" stroke-width="6" stroke-linecap="round"/>
   <path d="M104 10 L128 18 L104 26 Z" fill="#ef4444"/>
   <path d="M108 28 Q160 70 176 122 L108 122 Z" fill="#ef4444"/>
@@ -292,9 +278,8 @@ body{font-family:"Baloo Bhaijaan 2",sans-serif;color:var(--ink);}
   <path d="M14 128 L188 128 Q178 160 150 166 L48 166 Q22 160 14 128 Z" fill="#8a5527"/>
   <path d="M16 128 L186 128 L183 139 L19 139 Z" fill="#ef4444"/>
   <path d="M40 152 L162 152" stroke="#6b3f18" stroke-width="4" stroke-linecap="round" opacity=".6"/>
-</svg></div>
-      </div>
-    </div>
+</svg></div></div>
+      <h2 class="head" id="hd-h2">أوائلُ <span style="color:#ef4444">الحلقة الثانية</span></h2>
       <div id="h2a" class="card is-first" style="--c:#ef4444" data-p="1">
       <div class="buoy">
   <svg viewBox="0 0 200 200" aria-hidden="true">
@@ -331,12 +316,7 @@ body{font-family:"Baloo Bhaijaan 2",sans-serif;color:var(--ink);}
 </svg></div>
       </div>
     </div>
-    </div>
-  </section>
-  <section id="s-h3" class="clip scene" data-start="20.8" data-duration="7.2" data-track-index="2">
-    <div class="stage" id="st-h3">
-      <h2 class="head" id="hd-h3">أوائلُ <span style="color:#22b45a">الحلقة الثالثة</span></h2>
-      <div id="h3b" class="card " style="--c:#22b45a" data-p="0.78">
+      <div id="h2b" class="card " style="--c:#ef4444" data-p="0.78">
       <div class="buoy">
   <svg viewBox="0 0 200 200" aria-hidden="true">
     <circle cx="100" cy="100" r="78" fill="none" stroke="#fff" stroke-width="40"/>
@@ -347,7 +327,7 @@ body{font-family:"Baloo Bhaijaan 2",sans-serif;color:var(--ink);}
   <span>٢</span>
 </div>
       <div class="ribbon"><span>المركز الثاني</span></div>
-      <div class="name">جسار السيف</div>
+      <div class="name">فارس إياد</div>
       <div class="badge"><svg class="ship mini" viewBox="0 0 200 180" aria-hidden="true">
   <path d="M104 6 L104 128" stroke="#5b3716" stroke-width="6" stroke-linecap="round"/>
   <path d="M104 10 L128 18 L104 26 Z" fill="#fff"/>
@@ -356,12 +336,27 @@ body{font-family:"Baloo Bhaijaan 2",sans-serif;color:var(--ink);}
   <path d="M14 128 L188 128 Q178 160 150 166 L48 166 Q22 160 14 128 Z" fill="#8a5527"/>
   <path d="M16 128 L186 128 L183 139 L19 139 Z" fill="#fff"/>
   <path d="M40 152 L162 152" stroke="#6b3f18" stroke-width="4" stroke-linecap="round" opacity=".6"/>
-</svg><span>الحلقة الثالثة</span></div>
+</svg><span>الحلقة الثانية</span></div>
       <div class="journey">
         <div class="rope"></div><div class="rope-done"></div>
         <img class="isl isl-start" src="assets/img/island-start.png" alt="">
         <img class="isl isl-win" src="assets/img/island-win.png" alt="">
         <div class="boat"><svg class="ship " viewBox="0 0 200 180" aria-hidden="true">
+  <path d="M104 6 L104 128" stroke="#5b3716" stroke-width="6" stroke-linecap="round"/>
+  <path d="M104 10 L128 18 L104 26 Z" fill="#ef4444"/>
+  <path d="M108 28 Q160 70 176 122 L108 122 Z" fill="#ef4444"/>
+  <path d="M100 40 Q70 80 44 120 L100 120 Z" fill="#fffaf0"/>
+  <path d="M14 128 L188 128 Q178 160 150 166 L48 166 Q22 160 14 128 Z" fill="#8a5527"/>
+  <path d="M16 128 L186 128 L183 139 L19 139 Z" fill="#ef4444"/>
+  <path d="M40 152 L162 152" stroke="#6b3f18" stroke-width="4" stroke-linecap="round" opacity=".6"/>
+</svg></div>
+      </div>
+    </div>
+    </div>
+  </section>
+  <section id="s-h3" class="clip scene" data-start="23.200000000000003" data-duration="8.4" data-track-index="2">
+    <div class="stage" id="st-h3">
+      <div class="tc" id="tc-h3" style="--c:#22b45a"><div class="tc-name">الحلقة الثالثة</div><div class="tc-ship"><svg class="ship " viewBox="0 0 200 180" aria-hidden="true">
   <path d="M104 6 L104 128" stroke="#5b3716" stroke-width="6" stroke-linecap="round"/>
   <path d="M104 10 L128 18 L104 26 Z" fill="#22b45a"/>
   <path d="M108 28 Q160 70 176 122 L108 122 Z" fill="#22b45a"/>
@@ -369,9 +364,8 @@ body{font-family:"Baloo Bhaijaan 2",sans-serif;color:var(--ink);}
   <path d="M14 128 L188 128 Q178 160 150 166 L48 166 Q22 160 14 128 Z" fill="#8a5527"/>
   <path d="M16 128 L186 128 L183 139 L19 139 Z" fill="#22b45a"/>
   <path d="M40 152 L162 152" stroke="#6b3f18" stroke-width="4" stroke-linecap="round" opacity=".6"/>
-</svg></div>
-      </div>
-    </div>
+</svg></div></div>
+      <h2 class="head" id="hd-h3">أوائلُ <span style="color:#22b45a">الحلقة الثالثة</span></h2>
       <div id="h3a" class="card is-first" style="--c:#22b45a" data-p="1">
       <div class="buoy">
   <svg viewBox="0 0 200 200" aria-hidden="true">
@@ -408,12 +402,7 @@ body{font-family:"Baloo Bhaijaan 2",sans-serif;color:var(--ink);}
 </svg></div>
       </div>
     </div>
-    </div>
-  </section>
-  <section id="s-h4" class="clip scene" data-start="28" data-duration="7.2" data-track-index="2">
-    <div class="stage" id="st-h4">
-      <h2 class="head" id="hd-h4">أوائلُ <span style="color:#a259f7">الحلقة الرابعة</span></h2>
-      <div id="h4b" class="card " style="--c:#a259f7" data-p="0.78">
+      <div id="h3b" class="card " style="--c:#22b45a" data-p="0.78">
       <div class="buoy">
   <svg viewBox="0 0 200 200" aria-hidden="true">
     <circle cx="100" cy="100" r="78" fill="none" stroke="#fff" stroke-width="40"/>
@@ -424,7 +413,7 @@ body{font-family:"Baloo Bhaijaan 2",sans-serif;color:var(--ink);}
   <span>٢</span>
 </div>
       <div class="ribbon"><span>المركز الثاني</span></div>
-      <div class="name">عامر عبدالرحمن سيدي</div>
+      <div class="name">جسار السيف</div>
       <div class="badge"><svg class="ship mini" viewBox="0 0 200 180" aria-hidden="true">
   <path d="M104 6 L104 128" stroke="#5b3716" stroke-width="6" stroke-linecap="round"/>
   <path d="M104 10 L128 18 L104 26 Z" fill="#fff"/>
@@ -433,12 +422,27 @@ body{font-family:"Baloo Bhaijaan 2",sans-serif;color:var(--ink);}
   <path d="M14 128 L188 128 Q178 160 150 166 L48 166 Q22 160 14 128 Z" fill="#8a5527"/>
   <path d="M16 128 L186 128 L183 139 L19 139 Z" fill="#fff"/>
   <path d="M40 152 L162 152" stroke="#6b3f18" stroke-width="4" stroke-linecap="round" opacity=".6"/>
-</svg><span>الحلقة الرابعة</span></div>
+</svg><span>الحلقة الثالثة</span></div>
       <div class="journey">
         <div class="rope"></div><div class="rope-done"></div>
         <img class="isl isl-start" src="assets/img/island-start.png" alt="">
         <img class="isl isl-win" src="assets/img/island-win.png" alt="">
         <div class="boat"><svg class="ship " viewBox="0 0 200 180" aria-hidden="true">
+  <path d="M104 6 L104 128" stroke="#5b3716" stroke-width="6" stroke-linecap="round"/>
+  <path d="M104 10 L128 18 L104 26 Z" fill="#22b45a"/>
+  <path d="M108 28 Q160 70 176 122 L108 122 Z" fill="#22b45a"/>
+  <path d="M100 40 Q70 80 44 120 L100 120 Z" fill="#fffaf0"/>
+  <path d="M14 128 L188 128 Q178 160 150 166 L48 166 Q22 160 14 128 Z" fill="#8a5527"/>
+  <path d="M16 128 L186 128 L183 139 L19 139 Z" fill="#22b45a"/>
+  <path d="M40 152 L162 152" stroke="#6b3f18" stroke-width="4" stroke-linecap="round" opacity=".6"/>
+</svg></div>
+      </div>
+    </div>
+    </div>
+  </section>
+  <section id="s-h4" class="clip scene" data-start="31.6" data-duration="8.4" data-track-index="2">
+    <div class="stage" id="st-h4">
+      <div class="tc" id="tc-h4" style="--c:#a259f7"><div class="tc-name">الحلقة الرابعة</div><div class="tc-ship"><svg class="ship " viewBox="0 0 200 180" aria-hidden="true">
   <path d="M104 6 L104 128" stroke="#5b3716" stroke-width="6" stroke-linecap="round"/>
   <path d="M104 10 L128 18 L104 26 Z" fill="#a259f7"/>
   <path d="M108 28 Q160 70 176 122 L108 122 Z" fill="#a259f7"/>
@@ -446,9 +450,8 @@ body{font-family:"Baloo Bhaijaan 2",sans-serif;color:var(--ink);}
   <path d="M14 128 L188 128 Q178 160 150 166 L48 166 Q22 160 14 128 Z" fill="#8a5527"/>
   <path d="M16 128 L186 128 L183 139 L19 139 Z" fill="#a259f7"/>
   <path d="M40 152 L162 152" stroke="#6b3f18" stroke-width="4" stroke-linecap="round" opacity=".6"/>
-</svg></div>
-      </div>
-    </div>
+</svg></div></div>
+      <h2 class="head" id="hd-h4">أوائلُ <span style="color:#a259f7">الحلقة الرابعة</span></h2>
       <div id="h4a" class="card is-first" style="--c:#a259f7" data-p="1">
       <div class="buoy">
   <svg viewBox="0 0 200 200" aria-hidden="true">
@@ -485,10 +488,46 @@ body{font-family:"Baloo Bhaijaan 2",sans-serif;color:var(--ink);}
 </svg></div>
       </div>
     </div>
+      <div id="h4b" class="card " style="--c:#a259f7" data-p="0.78">
+      <div class="buoy">
+  <svg viewBox="0 0 200 200" aria-hidden="true">
+    <circle cx="100" cy="100" r="78" fill="none" stroke="#fff" stroke-width="40"/>
+    <circle cx="100" cy="100" r="78" fill="none" stroke="#ff8a1f" stroke-width="40" stroke-dasharray="61.26 61.26" transform="rotate(-22 100 100)"/>
+    <circle cx="100" cy="100" r="98" fill="none" stroke="#12355b" stroke-opacity=".18" stroke-width="3"/>
+    <circle cx="100" cy="100" r="58" fill="#fff"/>
+  </svg>
+  <span>٢</span>
+</div>
+      <div class="ribbon"><span>المركز الثاني</span></div>
+      <div class="name">عامر عبدالرحمن سيدي</div>
+      <div class="badge"><svg class="ship mini" viewBox="0 0 200 180" aria-hidden="true">
+  <path d="M104 6 L104 128" stroke="#5b3716" stroke-width="6" stroke-linecap="round"/>
+  <path d="M104 10 L128 18 L104 26 Z" fill="#fff"/>
+  <path d="M108 28 Q160 70 176 122 L108 122 Z" fill="#fff"/>
+  <path d="M100 40 Q70 80 44 120 L100 120 Z" fill="#fffaf0"/>
+  <path d="M14 128 L188 128 Q178 160 150 166 L48 166 Q22 160 14 128 Z" fill="#8a5527"/>
+  <path d="M16 128 L186 128 L183 139 L19 139 Z" fill="#fff"/>
+  <path d="M40 152 L162 152" stroke="#6b3f18" stroke-width="4" stroke-linecap="round" opacity=".6"/>
+</svg><span>الحلقة الرابعة</span></div>
+      <div class="journey">
+        <div class="rope"></div><div class="rope-done"></div>
+        <img class="isl isl-start" src="assets/img/island-start.png" alt="">
+        <img class="isl isl-win" src="assets/img/island-win.png" alt="">
+        <div class="boat"><svg class="ship " viewBox="0 0 200 180" aria-hidden="true">
+  <path d="M104 6 L104 128" stroke="#5b3716" stroke-width="6" stroke-linecap="round"/>
+  <path d="M104 10 L128 18 L104 26 Z" fill="#a259f7"/>
+  <path d="M108 28 Q160 70 176 122 L108 122 Z" fill="#a259f7"/>
+  <path d="M100 40 Q70 80 44 120 L100 120 Z" fill="#fffaf0"/>
+  <path d="M14 128 L188 128 Q178 160 150 166 L48 166 Q22 160 14 128 Z" fill="#8a5527"/>
+  <path d="M16 128 L186 128 L183 139 L19 139 Z" fill="#a259f7"/>
+  <path d="M40 152 L162 152" stroke="#6b3f18" stroke-width="4" stroke-linecap="round" opacity=".6"/>
+</svg></div>
+      </div>
+    </div>
     </div>
   </section>
   <!-- الحلقة المتميزة -->
-  <section id="s-star" class="clip scene" data-start="35.2" data-duration="8.4" data-track-index="2">
+  <section id="s-star" class="clip scene" data-start="40" data-duration="8.4" data-track-index="2">
     <div class="stage" id="st-star">
       <div id="sv-glow"></div>
       <img id="sv-isl" src="assets/img/island-win.png" alt="">
@@ -514,7 +553,7 @@ body{font-family:"Baloo Bhaijaan 2",sans-serif;color:var(--ink);}
   </section>
 
   <!-- القائمة الختامية -->
-  <section id="s-list" class="clip scene" data-start="43.6" data-duration="7.6" data-track-index="2">
+  <section id="s-list" class="clip scene" data-start="48.4" data-duration="7.6" data-track-index="2">
     <div class="stage" id="st-list">
       <h2 id="ls-title">أوائل الحلقات</h2>
       <div id="ls-grid">
@@ -580,7 +619,7 @@ body{font-family:"Baloo Bhaijaan 2",sans-serif;color:var(--ink);}
   </section>
 
   <!-- الخاتمة -->
-  <section id="s-outro" class="clip scene" data-start="51.2" data-duration="5.8" data-track-index="2">
+  <section id="s-outro" class="clip scene" data-start="56" data-duration="5.8" data-track-index="2">
     <div class="stage" id="st-outro">
       <img id="ou-isl-a" class="isl-big" style="left:1520px;top:600px" src="assets/img/island-start.png" alt="">
       <img id="ou-isl-b" class="isl-big" style="left:150px;top:590px" src="assets/img/island-win.png" alt="">
@@ -591,14 +630,14 @@ body{font-family:"Baloo Bhaijaan 2",sans-serif;color:var(--ink);}
   </section>
 
   <!-- النجمة: تبدأ رحلتها في الافتتاحية وتُتمّها في الخاتمة -->
-  <div id="star-layer" class="clip" data-start="0" data-duration="57" data-track-index="3" data-layout-ignore>
+  <div id="star-layer" class="clip" data-start="0" data-duration="61.8" data-track-index="3" data-layout-ignore>
     <div id="jstar"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 4 L62 36 L96 38 L69 59 L79 93 L50 73 L21 93 L31 59 L4 38 L38 36 Z" fill="#ffd34d" stroke="#ff8a1f" stroke-width="5" stroke-linejoin="round"/></svg></div>
   </div>
 </div>
 
 <script>
 (function(){
-  const T = {"intro":[0,6.4],"h1":[6.4,7.2],"h2":[13.600000000000001,7.2],"h3":[20.8,7.2],"h4":[28,7.2],"star":[35.2,8.4],"list":[43.6,7.6],"outro":[51.2,5.8]}, TOTAL = 57, EXIT = 0.32, ENTER = 0.42;
+  const T = {"intro":[0,6.4],"h1":[6.4,8.4],"h2":[14.8,8.4],"h3":[23.200000000000003,8.4],"h4":[31.6,8.4],"star":[40,8.4],"list":[48.4,7.6],"outro":[56,5.8]}, TOTAL = 61.8, EXIT = 0.32, ENTER = 0.42;
   const tl = gsap.timeline({ paused: true });
   const blurIn = (sel, at, d = 0.3) => tl.fromTo(sel, { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: d, ease: "power2.out" }, at);
   const popIn  = (sel, at) => tl.fromTo(sel, { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.42, ease: "power3.out" }, at);
@@ -647,23 +686,29 @@ body{font-family:"Baloo Bhaijaan 2",sans-serif;color:var(--ink);}
   // ---- مشاهد الحلقات ----
   [1,2,3,4].forEach((n) => {
     const s = T["h" + n][0], d = T["h" + n][1];
-    enter("#hd-h" + n, s);
+    // ١) اسم الحلقة وحده ثانيتين
+    blurIn("#tc-h" + n + " .tc-name", s, 0.4);
+    tl.fromTo("#tc-h" + n + " .tc-ship", { x: 700, opacity: 0 }, { x: 0, opacity: 1, duration: 1.1, ease: "power3.out" }, s + 0.2);
+    exit("#tc-h" + n, s + 2.0 - EXIT);
+    // ٢) الأول، ثم بعد ٣ ثوانٍ الثاني
+    const A = s + 2.0, B = A + 3.0;
+    enter("#hd-h" + n, A);
     const run = (id, at, p) => {
       const c = "#" + id;
       enter(c, at);
-      popIn(c + " .buoy", at + 0.25);
-      tl.fromTo(c + " .ribbon", { opacity: 0, scaleX: 0.3 }, { opacity: 1, scaleX: 1, duration: 0.35, ease: "power3.out" }, at + 0.55);
-      blurIn(c + " .name", at + 0.9, 0.3);
-      popIn(c + " .badge", at + 1.35);
-      blurIn(c + " .journey", at + 1.7, 0.3);
+      popIn(c + " .buoy", at + 0.15);
+      tl.fromTo(c + " .ribbon", { opacity: 0, scaleX: 0.3 }, { opacity: 1, scaleX: 1, duration: 0.3, ease: "power3.out" }, at + 0.4);
+      blurIn(c + " .name", at + 0.6, 0.3);
+      popIn(c + " .badge", at + 0.95);
+      blurIn(c + " .journey", at + 1.2, 0.25);
       const L = 650; // مسافة الإبحار
-      tl.fromTo(c + " .boat", { x: 0 }, { x: -L * p, duration: 1.2, ease: "power2.inOut" }, at + 1.95);
-      tl.fromTo(c + " .rope-done", { width: 0 }, { width: 760 * p, duration: 1.2, ease: "power2.inOut" }, at + 1.95);
-      if (p >= 1) tl.fromTo(c + " .isl-win", { filter: "drop-shadow(0 0 0px rgba(255,200,60,0))" }, { filter: "drop-shadow(0 0 26px rgba(255,200,60,1))", duration: 0.3, ease: "power2.out" }, at + 3.1);
+      tl.fromTo(c + " .boat", { x: 0 }, { x: -L * p, duration: 1.0, ease: "power2.inOut" }, at + 1.35);
+      tl.fromTo(c + " .rope-done", { width: 0 }, { width: 760 * p, duration: 1.0, ease: "power2.inOut" }, at + 1.35);
+      if (p >= 1) tl.fromTo(c + " .isl-win", { filter: "drop-shadow(0 0 0px rgba(255,200,60,0))" }, { filter: "drop-shadow(0 0 26px rgba(255,200,60,1))", duration: 0.3, ease: "power2.out" }, at + 2.3);
     };
-    run("h" + n + "b", s, 0.78);
-    exit("#h" + n + "b", s + 3.55);
-    run("h" + n + "a", s + 3.55 + EXIT, 1);
+    run("h" + n + "a", A, 1);
+    exit("#h" + n + "a", B - EXIT);
+    run("h" + n + "b", B, 0.78);
     exit("#st-h" + n, s + d - EXIT);
   });
 

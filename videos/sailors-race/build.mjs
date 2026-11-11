@@ -8,7 +8,7 @@ const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
 // ---------- الخط الزمني (ثوانٍ) ----------
 const T = { intro: [0, 6.4] };
 let t = 6.4;
-const HQ = 7.2;
+const HQ = 8.4; // ٢ ث لاسم الحلقة، ثم الأول، وبعد ٣ ث الثاني
 data.halaqat.forEach((h) => { T["h" + h.n] = [t, HQ]; t += HQ; });
 T.star = [t, 8.4]; t += 8.4;
 T.list = [t, 7.6]; t += 7.6;
@@ -85,9 +85,10 @@ const halaqaScene = (h) => {
   return `
   <section id="s-h${h.n}" class="clip scene" data-start="${s}" data-duration="${d}" data-track-index="2">
     <div class="stage" id="st-h${h.n}">
+      <div class="tc" id="tc-h${h.n}" style="--c:${COLORS[h.n]}"><div class="tc-name">${esc(h.label)}</div><div class="tc-ship">${ship(COLORS[h.n])}</div></div>
       <h2 class="head" id="hd-h${h.n}">أوائلُ <span style="color:${COLORS[h.n]}">${esc(h.label)}</span></h2>
-      ${card(h, 2)}
       ${card(h, 1)}
+      ${card(h, 2)}
     </div>
   </section>`;
 };
@@ -159,6 +160,9 @@ body{font-family:"Baloo Bhaijaan 2",sans-serif;color:var(--ink);}
 .ribbon span{display:block;background:var(--orange);color:#fff;font-weight:800;font-size:46px;line-height:1;padding:16px 64px 22px;clip-path:polygon(0 0,100% 0,96% 50%,100% 100%,0 100%,4% 50%);white-space:nowrap;}
 
 /* مشاهد الحلقات */
+.tc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-bottom:330px;}
+.tc-name{font-size:210px;font-weight:800;line-height:1.25;color:var(--c);-webkit-text-stroke:16px #fff;paint-order:stroke fill;white-space:nowrap;}
+.tc-ship{width:230px;margin-top:6px;} .tc-ship .ship{width:100%;display:block;}
 .head{position:absolute;top:44px;left:0;right:0;text-align:center;font-size:92px;font-weight:800;line-height:1.25;-webkit-text-stroke:14px #fff;paint-order:stroke fill;}
 .card{position:absolute;left:310px;top:205px;width:1300px;height:820px;background:#fff;border-radius:56px;box-shadow:0 26px 0 rgba(18,53,91,.12),0 30px 80px rgba(18,53,91,.25);border:10px solid var(--c);display:flex;flex-direction:column;align-items:center;padding-top:36px;}
 .buoy{position:relative;width:190px;height:190px;}
@@ -340,23 +344,29 @@ ${data.halaqat.map(halaqaScene).join("")}
   // ---- مشاهد الحلقات ----
   ${JSON.stringify(data.halaqat.map((h) => h.n))}.forEach((n) => {
     const s = T["h" + n][0], d = T["h" + n][1];
-    enter("#hd-h" + n, s);
+    // ١) اسم الحلقة وحده ثانيتين
+    blurIn("#tc-h" + n + " .tc-name", s, 0.4);
+    tl.fromTo("#tc-h" + n + " .tc-ship", { x: 700, opacity: 0 }, { x: 0, opacity: 1, duration: 1.1, ease: "power3.out" }, s + 0.2);
+    exit("#tc-h" + n, s + 2.0 - EXIT);
+    // ٢) الأول، ثم بعد ٣ ثوانٍ الثاني
+    const A = s + 2.0, B = A + 3.0;
+    enter("#hd-h" + n, A);
     const run = (id, at, p) => {
       const c = "#" + id;
       enter(c, at);
-      popIn(c + " .buoy", at + 0.25);
-      tl.fromTo(c + " .ribbon", { opacity: 0, scaleX: 0.3 }, { opacity: 1, scaleX: 1, duration: 0.35, ease: "power3.out" }, at + 0.55);
-      blurIn(c + " .name", at + 0.9, 0.3);
-      popIn(c + " .badge", at + 1.35);
-      blurIn(c + " .journey", at + 1.7, 0.3);
+      popIn(c + " .buoy", at + 0.15);
+      tl.fromTo(c + " .ribbon", { opacity: 0, scaleX: 0.3 }, { opacity: 1, scaleX: 1, duration: 0.3, ease: "power3.out" }, at + 0.4);
+      blurIn(c + " .name", at + 0.6, 0.3);
+      popIn(c + " .badge", at + 0.95);
+      blurIn(c + " .journey", at + 1.2, 0.25);
       const L = 650; // مسافة الإبحار
-      tl.fromTo(c + " .boat", { x: 0 }, { x: -L * p, duration: 1.2, ease: "power2.inOut" }, at + 1.95);
-      tl.fromTo(c + " .rope-done", { width: 0 }, { width: 760 * p, duration: 1.2, ease: "power2.inOut" }, at + 1.95);
-      if (p >= 1) tl.fromTo(c + " .isl-win", { filter: "drop-shadow(0 0 0px rgba(255,200,60,0))" }, { filter: "drop-shadow(0 0 26px rgba(255,200,60,1))", duration: 0.3, ease: "power2.out" }, at + 3.1);
+      tl.fromTo(c + " .boat", { x: 0 }, { x: -L * p, duration: 1.0, ease: "power2.inOut" }, at + 1.35);
+      tl.fromTo(c + " .rope-done", { width: 0 }, { width: 760 * p, duration: 1.0, ease: "power2.inOut" }, at + 1.35);
+      if (p >= 1) tl.fromTo(c + " .isl-win", { filter: "drop-shadow(0 0 0px rgba(255,200,60,0))" }, { filter: "drop-shadow(0 0 26px rgba(255,200,60,1))", duration: 0.3, ease: "power2.out" }, at + 2.3);
     };
-    run("h" + n + "b", s, 0.78);
-    exit("#h" + n + "b", s + 3.55);
-    run("h" + n + "a", s + 3.55 + EXIT, 1);
+    run("h" + n + "a", A, 1);
+    exit("#h" + n + "a", B - EXIT);
+    run("h" + n + "b", B, 0.78);
     exit("#st-h" + n, s + d - EXIT);
   });
 
