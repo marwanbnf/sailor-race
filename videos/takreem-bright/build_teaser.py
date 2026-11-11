@@ -74,7 +74,7 @@ page = f'''<!doctype html>
   .ship {{ position: absolute; left: 50%; top: 815px; width: 560px; height: 316px; margin-left: -280px; overflow: visible;
     filter: drop-shadow(0 0 2px rgba(255,220,150,0.8)) drop-shadow(0 0 14px rgba(255,190,90,0.35)); }}
   header {{ position: relative; text-align: center; padding-top: 34px; }}
-  .logo {{ display: inline-block; }}
+  .logo {{ display: inline-block; background: #fff8e8; border-radius: 28px; padding: 12px 22px 8px; box-shadow: 0 0 0 3px rgba(255,210,92,0.6), 0 10px 24px rgba(0,0,0,0.45); }}
   .logo img {{ width: 130px; display: block; }}
   .kicker {{ margin-top: 14px; font-size: 44px; line-height: 1.3; color: #f2d28b; letter-spacing: 0.02em; }}
   .title {{ font-size: 150px; line-height: 1.15; color: #ffd25c; -webkit-text-stroke: 12px #2a1600; paint-order: stroke fill;
@@ -98,7 +98,7 @@ page = f'''<!doctype html>
     <div style="top:120px">{WAVE("#04152b", 22, False)}</div>
   </div>
   <header>
-    <div class="logo"><img src="assets/img/riyada-light.png" alt="فريق ريادة التطوعي" /></div>
+    <div class="logo"><img src="assets/img/riyada-full.png" alt="فريق ريادة التطوعي" /></div>
     <div class="kicker">{KICKER}</div>
     <div class="title">{TITLE}</div>
     <div class="q">{QUESTION_1}</div>
