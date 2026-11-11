@@ -78,8 +78,8 @@ page = f'''<!doctype html>
   .cloud {{ position: absolute; }}
   .cloud svg {{ width: 100%; display: block; filter: drop-shadow(0 6px 0 rgba(2,41,91,.08)); }}
   header {{ position: relative; text-align: center; padding-top: 26px; }}
-  .logo {{ display: inline-block; background: #fff; border-radius: 34px; padding: 14px 26px 10px; box-shadow: 0 10px 0 rgba(2,41,91,.15); }}
-  .logo img {{ width: 112px; display: block; }}
+  .logo {{ display: inline-block; padding: 6px 0 0; filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 2px #fff) drop-shadow(0 0 6px rgba(255,255,255,.85)) drop-shadow(0 8px 12px rgba(2,41,91,.25)); }}
+  .logo img {{ width: 140px; display: block; }}
   .title {{ font-size: 92px; line-height: 1.05; margin-top: 4px; -webkit-text-stroke: 12px #fff; paint-order: stroke fill; text-shadow: 0 8px 0 rgba(2,41,91,.16); }}
   .ribbon {{ position: relative; display: inline-block; margin-top: 6px; padding: 8px 60px 8px; line-height: 1.3; background: #f89a00; color: #fff; font-size: 46px; box-shadow: 0 6px 0 rgba(150,80,0,.35); }}
   .ribbon::before, .ribbon::after {{ content: ""; position: absolute; top: 12px; width: 44px; height: 100%; background: #c87400; z-index: -1; }}
