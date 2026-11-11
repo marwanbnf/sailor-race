@@ -81,27 +81,29 @@ page = f'''<!doctype html>
   .logo {{ display: inline-block; background: #fff; border-radius: 34px; padding: 14px 26px 10px; box-shadow: 0 10px 0 rgba(2,41,91,.15); }}
   .logo img {{ width: 112px; display: block; }}
   .title {{ font-size: 92px; line-height: 1.05; margin-top: 4px; -webkit-text-stroke: 12px #fff; paint-order: stroke fill; text-shadow: 0 8px 0 rgba(2,41,91,.16); }}
-  .ribbon {{ position: relative; display: inline-block; margin-top: 6px; padding: 4px 60px 12px; background: #f89a00; color: #fff; font-size: 46px; box-shadow: 0 6px 0 rgba(150,80,0,.35); }}
+  .ribbon {{ position: relative; display: inline-block; margin-top: 6px; padding: 8px 60px 8px; line-height: 1.3; background: #f89a00; color: #fff; font-size: 46px; box-shadow: 0 6px 0 rgba(150,80,0,.35); }}
   .ribbon::before, .ribbon::after {{ content: ""; position: absolute; top: 12px; width: 44px; height: 100%; background: #c87400; z-index: -1; }}
   .ribbon::before {{ right: -32px; clip-path: polygon(0 0,100% 0,70% 50%,100% 100%,0 100%); }}
   .ribbon::after {{ left: -32px; clip-path: polygon(0 0,100% 0,100% 100%,0 100%,30% 50%); }}
-  .sub {{ font-size: 40px; margin-top: 12px; }}
+  .sub {{ font-size: 40px; line-height: 1.3; margin-top: 10px; }}
   .grid {{ position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 8px 40px 0; }}
   .hcard {{ background: #fff; border: 8px solid var(--team); border-radius: 30px; padding: 10px 18px 16px; box-shadow: 0 10px 0 rgba(2,41,91,.15); }}
-  .hhead {{ display: flex; align-items: center; justify-content: center; gap: 10px; background: var(--team); color: #fff; border-radius: 999px; padding: 0 22px 6px; font-size: 40px; margin: 0 auto 10px; width: fit-content; }}
+  .hhead {{ display: flex; align-items: center; justify-content: center; gap: 12px; background: var(--team); color: #fff; border-radius: 999px; padding: 6px 26px 6px; font-size: 40px; line-height: 1.3; margin: 0 auto 10px; width: fit-content; }}
+  .hhead span {{ display: block; padding-bottom: 4px; }}
   .hhead .dhow {{ width: 58px; height: 50px; }}
   ul {{ list-style: none; }}
-  li {{ display: flex; align-items: center; gap: 12px; padding: 4px 2px; font-size: 36px; line-height: 1.2; }}
+  li {{ display: flex; align-items: center; gap: 14px; padding: 6px 2px; font-size: 36px; line-height: 1.35; }}
   li + li {{ border-top: 3px dashed #e3edf5; }}
-  .medal {{ flex: none; width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; font: 900 34px/1 "Tajawal"; padding-top: 6px; color: #02295b; }}
+  .medal {{ flex: none; width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; font: 900 32px/1 "Tajawal"; padding-top: 2px; color: #02295b; }}
   .medal.r1 {{ background: radial-gradient(circle at 40% 35%, #fff3b0, #fcad0a); box-shadow: inset 0 0 0 4px #d18a10; }}
   .medal.r2 {{ background: radial-gradient(circle at 40% 35%, #ffffff, #c9d6e2); box-shadow: inset 0 0 0 4px #9aaebf; }}
   .nm {{ white-space: nowrap; }}
   .best {{ position: relative; text-align: center; z-index: 3; margin-top: 18px; }}
   .best .crown {{ width: 96px; height: 77px; margin: 0 auto -16px; position: relative; z-index: 2; }}
-  .best .box {{ display: inline-flex; align-items: center; gap: 22px; background: #fff; border: 10px solid #fcad0a; border-radius: 40px; padding: 8px 40px 14px; box-shadow: 0 10px 0 rgba(2,41,91,.18); }}
-  .best .k {{ background: #f89a00; color: #fff; border-radius: 999px; padding: 2px 26px 8px; font-size: 38px; }}
-  .best .n {{ font-size: 68px; line-height: 1.1; }}
+  .best .box {{ display: inline-flex; align-items: center; gap: 34px; background: #fff; border: 10px solid #fcad0a; border-radius: 40px; padding: 22px 52px 22px 44px; box-shadow: 0 10px 0 rgba(2,41,91,.18); }}
+  .best .txt {{ display: flex; flex-direction: column; align-items: center; gap: 6px; }}
+  .best .k {{ background: #f89a00; color: #fff; border-radius: 999px; padding: 4px 30px 6px; font-size: 36px; line-height: 1.3; }}
+  .best .n {{ font-size: 70px; line-height: 1.45; }}
   .best .dhow {{ width: 110px; height: 94px; }}
   .sea {{ position: absolute; left: 0; right: 0; bottom: 0; height: 160px; }}
   .sea div {{ position: absolute; left: 0; right: 0; }}
@@ -127,7 +129,7 @@ page = f'''<!doctype html>
   </div>
   <div class="best">
     <div class="crown">{CROWN}</div>
-    <div class="box">{SAIL(bc, best_i + 1)}<div><div class="k">الحلقة المتميزة</div><div class="n">{esc(best["h"])}</div></div></div>
+    <div class="box">{SAIL(bc, best_i + 1)}<div class="txt"><div class="k">الحلقة المتميزة</div><div class="n">{esc(best["h"])}</div></div></div>
   </div>
 </body></html>'''
 (ROOT / "poster.html").write_text(page)
