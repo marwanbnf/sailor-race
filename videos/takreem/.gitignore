@@ -2,3 +2,6 @@
 .media/
 renders/
 .impeccable/
+data.json
+compositions/show.html
+index.html
