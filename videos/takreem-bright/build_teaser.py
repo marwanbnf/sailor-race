@@ -10,7 +10,8 @@ ROOT = Path(__file__).parent
 
 KICKER = "سباق البحارة"
 TITLE = "تكريم اليوم"
-QUESTION = "من سيُتوَّج اليوم؟"
+QUESTION_1 = "من فارسا الحلقة؟"
+QUESTION_2 = "ومن الحلقة المتميزة؟"
 FOOT = "الكشف… اليوم"
 
 SHIP = '''<svg viewBox="-80 -10 230 130" class="ship"><g transform="translate(140 0) scale(-1 1)">
@@ -73,12 +74,13 @@ page = f'''<!doctype html>
   .ship {{ position: absolute; left: 50%; top: 815px; width: 560px; height: 316px; margin-left: -280px; overflow: visible;
     filter: drop-shadow(0 0 2px rgba(255,220,150,0.8)) drop-shadow(0 0 14px rgba(255,190,90,0.35)); }}
   header {{ position: relative; text-align: center; padding-top: 34px; }}
-  .logo {{ display: inline-block; filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 2px #fff) drop-shadow(0 0 8px rgba(255,255,255,.8)); }}
+  .logo {{ display: inline-block; }}
   .logo img {{ width: 130px; display: block; }}
   .kicker {{ margin-top: 14px; font-size: 44px; line-height: 1.3; color: #f2d28b; letter-spacing: 0.02em; }}
   .title {{ font-size: 150px; line-height: 1.15; color: #ffd25c; -webkit-text-stroke: 12px #2a1600; paint-order: stroke fill;
     text-shadow: 0 0 40px rgba(255,190,80,0.45), 0 10px 0 rgba(0,0,0,0.35); }}
-  .q {{ margin-top: 6px; font-size: 72px; line-height: 1.35; color: #fff8e8; text-shadow: 0 6px 18px rgba(0,0,0,0.6); }}
+  .q2 {{ margin-top: 0 !important; color: #ffd25c !important; }}
+  .q {{ margin-top: 6px; font-size: 66px; line-height: 1.35; color: #fff8e8; text-shadow: 0 6px 18px rgba(0,0,0,0.6); }}
   .foot {{ position: absolute; left: 0; right: 0; bottom: 48px; text-align: center; z-index: 3; }}
   .foot span {{ display: inline-block; padding: 8px 46px 14px; border-radius: 999px; background: rgba(1,8,20,0.72); color: #ffd25c; font-size: 52px; line-height: 1.3;
     box-shadow: 0 0 0 3px rgba(255,210,92,0.55); }}
@@ -96,10 +98,11 @@ page = f'''<!doctype html>
     <div style="top:120px">{WAVE("#04152b", 22, False)}</div>
   </div>
   <header>
-    <div class="logo"><img src="assets/img/riyada-full.png" alt="فريق ريادة التطوعي" /></div>
+    <div class="logo"><img src="assets/img/riyada-light.png" alt="فريق ريادة التطوعي" /></div>
     <div class="kicker">{KICKER}</div>
     <div class="title">{TITLE}</div>
-    <div class="q">{QUESTION}</div>
+    <div class="q">{QUESTION_1}</div>
+    <div class="q q2">{QUESTION_2}</div>
   </header>
   <div class="foot"><span>{FOOT}</span></div>
 </div></body></html>'''
