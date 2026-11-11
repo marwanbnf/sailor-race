@@ -186,7 +186,7 @@
     (function () {
       const TL = /*TIMELINE*/;
       const DUR = TL.dur;
-      const COLORS = ["#029B97", "#F89A00", "#6A31AA", "#1D5FB8", "#02295B"];
+      const COLORS = ["#3B82F6", "#EF4444", "#22C55E", "#8B5CF6", "#F97316"];
       const clamp01 = (x) => Math.max(0, Math.min(1, x));
       const mod = (a, n) => ((a % n) + n) % n;
       const E = (n) => gsap.parseEase(n);

@@ -10,8 +10,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).parent
 DATA = json.loads((ROOT / "data.json").read_text())
-# Riyada logo palette: teal, orange, purple, navy-blue
-COLORS = ["#029B97", "#F89A00", "#6A31AA", "#1D5FB8", "#02295B"]
+# the race board's class colours: blue, red, green, violet
+COLORS = ["#3B82F6", "#EF4444", "#22C55E", "#8B5CF6", "#F97316"]
 RANK = {1: "الأول", 2: "الثاني", 3: "الثالث"}
 AR = str.maketrans("0123456789", "٠١٢٣٤٥٦٧٨٩")
 NUMS = {1: "الأولى", 2: "الثانية", 3: "الثالثة", 4: "الرابعة"}

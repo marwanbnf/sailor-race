@@ -11,7 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).parent
 DATA = json.loads((ROOT / "data.json").read_text())
-COLORS = ["#029B97", "#F89A00", "#6A31AA", "#1D5FB8", "#02295B"]
+COLORS = ["#3B82F6", "#EF4444", "#22C55E", "#8B5CF6", "#F97316"]
 AR = str.maketrans("0123456789", "٠١٢٣٤٥٦٧٨٩")
 esc = html.escape
 best_i = max(range(len(DATA)), key=lambda i: DATA[i]["avg"])
