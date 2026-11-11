@@ -27,7 +27,7 @@
     .ship { position: absolute; left: 0; top: 0; z-index: 8; }
     .ship .hd { position: absolute; transform-origin: 0 0; }
     .ship svg { display: block; overflow: visible; }
-    #ship-best { z-index: 9; }
+    #ship-best-dark { z-index: 9; } #ship-best { z-index: 10; }
     #confetti { position: absolute; inset: 0; z-index: 12; }
     #confetti i { position: absolute; left: 0; top: 0; display: block; border-radius: 2px; opacity: 0; }
 
@@ -98,6 +98,7 @@
     </div>
     <div id="night"></div>
     <div id="dawn"></div>
+    <div id="ship-best-dark" class="ship"></div>
     <div id="ship-best" class="ship"></div>
     <div id="confetti"></div>
     <div id="flash"></div>
@@ -113,7 +114,6 @@
     <div id="t-reveal" class="clip" data-start="{{REVEAL_S}}" data-duration="{{REVEAL_D}}">
       <div class="k"><span id="t-reveal-k" class="goldtext">الحلقة المتميزة</span></div>
       <div id="t-reveal-n" class="bn">{{BEST_NAME}}</div>
-      <div id="t-reveal-p" class="pts">متوسط <b>{{BEST_AVG}}</b> نقطة لكل طالب</div>
     </div>
     <div id="t-logo" class="clip" data-start="{{LOGO_S}}" data-duration="{{LOGO_D}}">
       <div id="logo"><img id="logo-base" src="assets/img/base.png" alt="فريق ريادة التطوعي" /><img id="logo-flag" src="assets/img/flag.png" alt="" /><img id="logo-star" src="assets/img/star.png" alt="" /></div>
@@ -151,7 +151,7 @@
 <path d="M 128 44 L 24 3 Q 26 34 40 62 Q 88 62 128 44 Z" fill="url(#sail-${uid})" stroke="rgba(0,0,0,0.38)" stroke-width="1.6" stroke-linejoin="round"/>
 <path d="M 52 14 Q 54 38 62 61" stroke="rgba(255,255,255,0.28)" stroke-width="1.4" fill="none"/><path d="M 80 25 Q 82 44 86 59" stroke="rgba(255,255,255,0.24)" stroke-width="1.4" fill="none"/>
 <path d="M 104 34 Q 106 44 108 53" stroke="rgba(255,255,255,0.2)" stroke-width="1.4" fill="none"/><path d="M 30 10 Q 34 34 44 56 Q 40 32 30 10 Z" fill="rgba(255,255,255,0.35)"/>
-<g transform="translate(70 40) scale(-1 1)"><text x="0" y="9" text-anchor="middle" font-size="27" font-weight="900" font-family="Tajawal, sans-serif" fill="#fff" stroke="rgba(0,0,0,0.45)" stroke-width="3" paint-order="stroke">${label}</text></g>
+<g class="lbl" transform="translate(70 40) scale(-1 1)"><text x="0" y="9" text-anchor="middle" font-size="27" font-weight="900" font-family="Tajawal, sans-serif" fill="#fff" stroke="rgba(0,0,0,0.45)" stroke-width="3" paint-order="stroke">${label}</text></g>
 <path d="M 130 45 L 22 2" stroke="#4f2d10" stroke-width="3.2" stroke-linecap="round"/>
 <path d="M 8 56 Q 12 66 20 70 L 118 68 Q 130 64 139 52 Q 134 80 114 94 Q 76 100 40 96 Q 18 92 8 56 Z" fill="url(#hull-${uid})" stroke="#2e1906" stroke-width="2" stroke-linejoin="round"/>
 <path d="M 14 68 Q 18 72 22 73 L 120 71 Q 128 68 134 62 L 132 70 Q 124 77 118 78 L 26 80 Q 18 78 14 68 Z" fill="${color}" stroke="rgba(0,0,0,0.3)" stroke-width="1"/>
@@ -171,7 +171,7 @@
         const el = document.getElementById(id);
         const k = w / 140;
         el.innerHTML = `<div class="hd" style="left:${-75 * k}px; top:${-92 * k}px; transform: scale(${k})"><div style="transform: scaleX(-1); transform-origin: 70px 0">${dhow(color, label, id)}</div></div>`;
-        return { el, wake: el.querySelector(".wake"), wls: el.querySelectorAll(".wl"), svg: el.querySelector("svg") };
+        return { el, wake: el.querySelector(".wake"), wls: el.querySelectorAll(".wl"), svg: el.querySelector("svg"), lbl: el.querySelector(".lbl") };
       };
       const setShip = (s, x, y, moving, t, opacity) => {
         s.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
@@ -184,6 +184,8 @@
       const intro = [1, 2, 3, 4].map((n) => makeShip("ship-i" + n, COLORS[n - 1], n, 210));
       const big = TL.blocks.map((b) => ({ b, s: makeShip("ship-" + b.slot, b.color, b.slot, 620) }));
       const best = makeShip("ship-best", TL.best.color, TL.best.slot, 640);
+      const dark = makeShip("ship-best-dark", "#000000", "", 640);
+      dark.svg.style.filter = "brightness(0)";
 
       // Confetti for the reveal (seeded).
       let seed = 11;
@@ -237,10 +239,14 @@
         const bu = clamp01((t - F.shipIn[0]) / (F.shipIn[1] - F.shipIn[0]));
         const bx = 2300 - (2300 - 960) * E("power2.out")(bu);
         const shown = t >= F.shipIn[0] && t < F.end + 0.2;
-        setShip(best, bx, 960, bu < 1 ? 1 - bu * 0.7 : 0.15, t, shown ? (1 - endLift).toFixed(3) : 0);
-        // a silhouette with a faint rim until the light reaches it, full colour on the reveal
-        const br = rv ? 1 : 0.04 + 0.22 * L;
-        best.svg.style.filter = rv ? "none" : `brightness(${br.toFixed(3)}) drop-shadow(0 0 1.5px rgba(255, 236, 190, ${(0.25 + 0.5 * L).toFixed(3)}))`;
+        // a black ship with no number; as the dawn rises its colour fades in, and the number only appears on the reveal
+        const vis = shown ? 1 - endLift : 0;
+        const col = rv ? 1 : 0.85 * E("power2.in")(L);
+        setShip(dark, bx, 960, bu < 1 ? 1 - bu * 0.7 : 0.15, t, (vis * (rv ? 0 : 1)).toFixed(3));
+        setShip(best, bx, 960, bu < 1 ? 1 - bu * 0.7 : 0.15, t, (vis * col).toFixed(3));
+        best.svg.style.filter = rv ? "none" : `brightness(${(0.55 + 0.45 * L).toFixed(3)})`;
+        best.lbl.style.opacity = rv ? 1 : 0;
+        dark.svg.style.filter = `brightness(0) drop-shadow(0 0 1.5px rgba(255, 236, 190, ${(0.2 + 0.5 * L).toFixed(3)}))`;
 
         bits.forEach((q) => {
           const u = (t - F.reveal - q.delay) / q.dur;
@@ -276,7 +282,6 @@
           const c = "#card-" + b.slot + "-" + k;
           tl.fromTo(c + " .rank", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.6)" }, s + 0.05);
           tl.fromTo(c + " .nm", { opacity: 0, filter: "blur(10px)", y: 24 }, { opacity: 1, filter: "blur(0px)", y: 0, duration: 0.55, ease: "expo.out", stagger: 0.22 }, s + 0.3);
-          tl.fromTo(c + " .pts", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "expo.out" }, s + 0.75);
           blurOut(c, e, 0.28);
         });
       });
@@ -286,7 +291,6 @@
       blurOut("#t-ftitle", F.title[1], 0.5);
       tl.fromTo("#t-reveal .k", { opacity: 0, y: -20 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out" }, F.reveal + 0.15);
       tl.fromTo("#t-reveal-n", { opacity: 0, scale: 1.25, filter: "blur(16px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.7, ease: "expo.out" }, F.reveal + 0.05);
-      tl.fromTo("#t-reveal-p", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out" }, F.reveal + 0.9);
       sweep("#t-reveal-k", F.reveal + 0.8, 1.6);
       blurOut("#t-reveal", F.end, 0.5);
 

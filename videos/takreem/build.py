@@ -26,17 +26,16 @@ blocks = []
 t = 12.6
 for i, h in enumerate(DATA):
     groups = []
+    # one screen per student; students tied at a rank each get a longer screen
+    ranks = [w[2] for w in h["win"]]
     for name, pts, rank in h["win"]:
-        if groups and groups[-1]["rank"] == rank:
-            groups[-1]["names"].append(name)
-        else:
-            groups.append({"rank": rank, "pts": pts, "names": [name]})
+        groups.append({"rank": rank, "names": [name], "tied": ranks.count(rank) > 1})
     b = {"i": i, "h": h["h"], "avg": h["avg"], "color": COLORS[i % 5], "slot": i + 1, "t0": t}
     b["head"] = (t + 1.0, t + 1.0 + HEAD + 0.4)
     c = b["head"][1]
     b["cards"] = []
     for g in groups:
-        d = CARD_ONE if len(g["names"]) == 1 else CARD_GROUP
+        d = CARD_GROUP if g["tied"] else CARD_ONE
         b["cards"].append({**g, "s": c, "e": c + d})
         c += d
     b["out"] = c
@@ -81,7 +80,6 @@ for b in blocks:
             f'''<div id="card-{b["slot"]}-{k}" class="clip card{" many" if many else ""}" data-start="{c["s"]:.2f}" data-duration="{c["e"] - c["s"]:.2f}">
       <div class="rank r{c["rank"]}">{RANK.get(c["rank"], "")}</div>
       <div class="names">{names}</div>
-      <div class="pts"><b>{fmt(c["pts"])}</b> نقطة</div>
     </div>'''
         )
 
