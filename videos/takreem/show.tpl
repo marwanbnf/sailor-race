@@ -1,0 +1,304 @@
+<template>
+  <style>
+    @font-face { font-family: "Baloo Bhaijaan 2"; font-weight: 800; src: url("assets/fonts/baloo-bhaijaan-2-arabic-800-normal.woff2") format("woff2"); unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+    @font-face { font-family: "Baloo Bhaijaan 2"; font-weight: 800; src: url("assets/fonts/baloo-bhaijaan-2-latin-800-normal.woff2") format("woff2"); unicode-range: U+0000-00FF; }
+    @font-face { font-family: "Tajawal"; font-weight: 900; src: url("assets/fonts/tajawal-arabic-900-normal.woff2") format("woff2"); unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+    @font-face { font-family: "Tajawal"; font-weight: 900; src: url("assets/fonts/tajawal-latin-900-normal.woff2") format("woff2"); unicode-range: U+0000-00FF; }
+
+    #root { position: absolute; inset: 0; overflow: hidden; direction: rtl; background: #062a3b; --gold: #ffd25c; --ink: #062a3b; --sand: #f2d28b; }
+    #sea {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(120% 90% at 16% 6%, rgba(255, 252, 214, 0.32) 0%, transparent 42%),
+        linear-gradient(162deg, #46cfd9 0%, #1a9cc2 30%, #0b6e88 64%, #07485e 100%);
+    }
+    .glints { position: absolute; top: -480px; left: -720px; right: -720px; bottom: -480px; background-repeat: repeat; }
+    .glints.near { background-image: url("assets/img/glint-near.svg"); background-size: 360px 240px; opacity: 0.55; }
+    .glints.far { background-image: url("assets/img/glint-far.svg"); background-size: 220px 150px; opacity: 0.35; }
+    #vignette { position: absolute; inset: 0; background: radial-gradient(130% 110% at 50% 45%, transparent 55%, rgba(3, 30, 58, 0.42) 100%); }
+
+    #night { position: absolute; inset: 0; background: #01080d; opacity: 0; z-index: 6; }
+    #dawn {
+      position: absolute; left: 960px; top: 760px; width: 2400px; height: 1500px; margin-left: -1200px; margin-top: -750px; z-index: 7; opacity: 0;
+      background: radial-gradient(closest-side, rgba(255, 236, 170, 0.95), rgba(255, 196, 92, 0.6) 30%, rgba(255, 150, 60, 0.18) 60%, transparent 100%);
+    }
+    #flash { position: absolute; inset: 0; background: #fff8e8; opacity: 0; z-index: 30; }
+
+    .ship { position: absolute; left: 0; top: 0; z-index: 8; }
+    .ship .hd { position: absolute; transform-origin: 0 0; }
+    .ship svg { display: block; overflow: visible; }
+    #ship-best { z-index: 9; }
+    #confetti { position: absolute; inset: 0; z-index: 12; }
+    #confetti i { position: absolute; left: 0; top: 0; display: block; border-radius: 2px; opacity: 0; }
+
+    .ttl {
+      position: absolute; left: 0; right: 0; text-align: center; z-index: 10; color: #fff8e8;
+      font: 800 150px/1.15 "Baloo Bhaijaan 2", "Tajawal", sans-serif;
+      text-shadow: 0 5px 0 rgba(6, 42, 59, 0.45), 0 14px 40px rgba(3, 30, 55, 0.6);
+    }
+    .goldtext {
+      color: #ffd25c;
+      background: linear-gradient(100deg, #ffb627 0%, #ffd25c 35%, #fff6cf 50%, #ffd25c 65%, #ffb627 100%);
+      background-size: 300% 100%; background-position: 100% 0;
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+      text-shadow: none; filter: drop-shadow(0 5px 0 rgba(6, 42, 59, 0.5)) drop-shadow(0 14px 30px rgba(3, 30, 55, 0.55));
+    }
+    #t-title { top: 300px; }
+    #t-title .sub { display: block; font-size: 52px; color: var(--sand); margin-top: 6px; }
+    #t-today { top: 380px; font-size: 180px; }
+    #t-fursan { top: 360px; }
+    #t-fursan .crown { width: 190px; height: 152px; margin: 0 auto 6px; }
+    #t-fursan .crown svg { width: 100%; height: 100%; display: block; }
+
+    .head, .card { position: absolute; left: 960px; right: 90px; top: 0; bottom: 0; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+    .kicker { font: 800 52px/1.2 "Baloo Bhaijaan 2", sans-serif; color: var(--sand); text-shadow: 0 3px 0 rgba(6, 42, 59, 0.45), 0 10px 26px rgba(3, 30, 55, 0.55); }
+    .hname {
+      font: 800 168px/1.1 "Baloo Bhaijaan 2", sans-serif; color: #fff8e8; padding-bottom: 18px;
+      text-shadow: 0 5px 0 rgba(6, 42, 59, 0.45), 0 14px 40px rgba(3, 30, 55, 0.6);
+      background: linear-gradient(var(--team), var(--team)) no-repeat 50% 100% / 60% 12px; border-radius: 6px;
+    }
+    .rank {
+      display: inline-flex; align-items: center; gap: 14px; padding: 8px 34px 14px; border-radius: 999px;
+      font: 800 50px/1.15 "Baloo Bhaijaan 2", sans-serif; color: var(--ink);
+      box-shadow: 0 6px 14px rgba(120, 80, 20, 0.45), 0 16px 34px rgba(3, 30, 55, 0.45);
+    }
+    .rank.r1 { background: linear-gradient(180deg, #ffe08a, #ffb627); }
+    .rank.r2 { background: linear-gradient(180deg, #fff3cf, #f2d28b); }
+    .names { margin: 34px 0 30px; }
+    .nm { font: 800 124px/1.2 "Baloo Bhaijaan 2", sans-serif; color: #fff8e8; text-shadow: 0 5px 0 rgba(6, 42, 59, 0.45), 0 14px 40px rgba(3, 30, 55, 0.6); white-space: nowrap; }
+    .card.many .nm { font-size: 84px; line-height: 1.22; }
+    .card.many .names { margin: 22px 0 22px; }
+    .pts {
+      display: inline-flex; align-items: baseline; gap: 12px; padding: 6px 30px 12px; border-radius: 999px; background: rgba(6, 42, 59, 0.82);
+      font: 800 44px/1.1 "Baloo Bhaijaan 2", sans-serif; color: var(--sand); box-shadow: 0 0 0 3px rgba(242, 210, 139, 0.45);
+    }
+    .pts b { font: 900 54px/1 "Tajawal", sans-serif; color: var(--gold); font-variant-numeric: tabular-nums; }
+
+    #t-ftitle { top: 90px; font-size: 110px; color: #e9d9b0; text-shadow: 0 0 0 transparent; }
+    #t-reveal { position: absolute; left: 0; right: 0; top: 40px; z-index: 11; text-align: center; }
+    #t-reveal .k { font: 800 64px/1.2 "Baloo Bhaijaan 2", sans-serif; }
+    #t-reveal .bn { font: 800 200px/1.08 "Baloo Bhaijaan 2", sans-serif; color: #fff8e8; text-shadow: 0 6px 0 rgba(6, 42, 59, 0.5), 0 16px 44px rgba(3, 30, 55, 0.65); }
+    #t-reveal .pts { margin-top: 10px; }
+
+    #t-logo { position: absolute; inset: 0; z-index: 20; }
+    #logo { position: absolute; left: 960px; top: 400px; width: 440px; height: 482.4px; margin-left: -220px; margin-top: -250px; filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.95)) drop-shadow(0 0 8px rgba(255, 255, 255, 0.6)) drop-shadow(0 14px 26px rgba(3, 30, 55, 0.45)); }
+    #logo img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    #logo-flag { transform-origin: 79.6% 9.2%; }
+    #t-logo .bless { position: absolute; left: 0; right: 0; top: 760px; text-align: center; font: 800 84px/1.2 "Baloo Bhaijaan 2", sans-serif; color: #fff8e8; text-shadow: 0 4px 0 rgba(6, 42, 59, 0.45), 0 12px 34px rgba(3, 30, 55, 0.6); }
+  </style>
+
+  <div id="root" data-composition-id="show" data-width="1920" data-height="1080" data-layout-allow-overflow data-layout-allow-overlap>
+    <div id="sea"><div id="glf" class="glints far"></div><div id="gln" class="glints near"></div></div>
+    <div id="vignette"></div>
+    <div id="intro-ships">
+      <div id="ship-i1" class="ship"></div><div id="ship-i2" class="ship"></div><div id="ship-i3" class="ship"></div><div id="ship-i4" class="ship"></div>
+    </div>
+    <div id="block-ships">
+      <!--SHIPS-->
+    </div>
+    <div id="night"></div>
+    <div id="dawn"></div>
+    <div id="ship-best" class="ship"></div>
+    <div id="confetti"></div>
+    <div id="flash"></div>
+
+    <div id="t-title" class="clip ttl" data-start="{{TITLE_S}}" data-duration="{{TITLE_D}}"><span class="tw">سباق السفن</span><span class="sub">فريق ريادة التطوعي</span></div>
+    <div id="t-today" class="clip ttl" data-start="{{TODAY_S}}" data-duration="{{TODAY_D}}"><span id="t-today-g" class="goldtext">تكريم اليوم</span></div>
+    <div id="t-fursan" class="clip ttl" data-start="{{FURSAN_S}}" data-duration="{{FURSAN_D}}">
+      <div id="fursan-crown" class="crown"></div>
+      <span id="t-fursan-g" class="goldtext">فارسا الحلقة</span>
+    </div>
+    <!--TEXTS-->
+    <div id="t-ftitle" class="clip ttl" data-start="{{FTITLE_S}}" data-duration="{{FTITLE_D}}">والحلقة المتميزة…</div>
+    <div id="t-reveal" class="clip" data-start="{{REVEAL_S}}" data-duration="{{REVEAL_D}}">
+      <div class="k"><span id="t-reveal-k" class="goldtext">الحلقة المتميزة</span></div>
+      <div id="t-reveal-n" class="bn">{{BEST_NAME}}</div>
+      <div id="t-reveal-p" class="pts">متوسط <b>{{BEST_AVG}}</b> نقطة لكل طالب</div>
+    </div>
+    <div id="t-logo" class="clip" data-start="{{LOGO_S}}" data-duration="{{LOGO_D}}">
+      <div id="logo"><img id="logo-base" src="assets/img/base.png" alt="فريق ريادة التطوعي" /><img id="logo-flag" src="assets/img/flag.png" alt="" /><img id="logo-star" src="assets/img/star.png" alt="" /></div>
+      <div id="t-bless" class="bless">بارك الله في جهودكم</div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const TL = /*TIMELINE*/;
+      const DUR = TL.dur;
+      const COLORS = ["#3B82F6", "#EF4444", "#22C55E", "#8B5CF6", "#F97316"];
+      const clamp01 = (x) => Math.max(0, Math.min(1, x));
+      const mod = (a, n) => ((a % n) + n) % n;
+      const E = (n) => gsap.parseEase(n);
+
+      // The dhow from the race board (src/pages/display/Dhow.tsx), drawn bow-right in 140×120.
+      const shade = (hex, amt) => {
+        const v = parseInt(hex.slice(1), 16);
+        const mix = (c) => Math.round(c + ((amt < 0 ? 0 : 255) - c) * Math.abs(amt));
+        return "#" + ((1 << 24) | (mix((v >> 16) & 255) << 16) | (mix((v >> 8) & 255) << 8) | mix(v & 255)).toString(16).slice(1);
+      };
+      const dhow = (color, label, uid) => {
+        const light = shade(color, 0.38), deep = shade(color, -0.32);
+        return `<svg width="140" height="120" viewBox="0 0 140 120">
+<defs><linearGradient id="sail-${uid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${light}"/><stop offset="0.55" stop-color="${color}"/><stop offset="1" stop-color="${deep}"/></linearGradient>
+<linearGradient id="hull-${uid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b77b3e"/><stop offset="0.5" stop-color="#8a5527"/><stop offset="1" stop-color="#4f2d10"/></linearGradient></defs>
+<g class="wake" opacity="0"><path d="M 26 94 L -70 70 L -70 118 Z" fill="rgba(244,255,253,0.18)"/>
+<path class="wl" d="M 22 92 Q -14 86 -70 70" stroke="rgba(244,255,253,0.95)" stroke-width="9" stroke-linecap="round" fill="none" stroke-dasharray="18 10"/>
+<path class="wl" d="M 22 96 Q -14 104 -70 118" stroke="rgba(244,255,253,0.95)" stroke-width="9" stroke-linecap="round" fill="none" stroke-dasharray="18 10"/>
+<path d="M 30 94 Q -6 94 -44 95" stroke="rgba(244,255,253,0.55)" stroke-width="18" stroke-linecap="round" fill="none"/></g>
+<ellipse cx="74" cy="100" rx="62" ry="7" fill="rgba(3,30,55,0.32)"/><ellipse cx="74" cy="94" rx="58" ry="4.5" fill="rgba(244,255,253,0.55)"/>
+<path d="M 76 70 L 72 9" stroke="#3d240c" stroke-width="3.4" stroke-linecap="round"/>
+<path d="M 72 8 L 50 4 L 56 10 L 50 16 Z" fill="${light}" stroke="rgba(0,0,0,0.35)" stroke-width="1"/>
+<path d="M 128 44 L 24 3 Q 26 34 40 62 Q 88 62 128 44 Z" fill="url(#sail-${uid})" stroke="rgba(0,0,0,0.38)" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M 52 14 Q 54 38 62 61" stroke="rgba(255,255,255,0.28)" stroke-width="1.4" fill="none"/><path d="M 80 25 Q 82 44 86 59" stroke="rgba(255,255,255,0.24)" stroke-width="1.4" fill="none"/>
+<path d="M 104 34 Q 106 44 108 53" stroke="rgba(255,255,255,0.2)" stroke-width="1.4" fill="none"/><path d="M 30 10 Q 34 34 44 56 Q 40 32 30 10 Z" fill="rgba(255,255,255,0.35)"/>
+<g transform="translate(70 40) scale(-1 1)"><text x="0" y="9" text-anchor="middle" font-size="27" font-weight="900" font-family="Tajawal, sans-serif" fill="#fff" stroke="rgba(0,0,0,0.45)" stroke-width="3" paint-order="stroke">${label}</text></g>
+<path d="M 130 45 L 22 2" stroke="#4f2d10" stroke-width="3.2" stroke-linecap="round"/>
+<path d="M 8 56 Q 12 66 20 70 L 118 68 Q 130 64 139 52 Q 134 80 114 94 Q 76 100 40 96 Q 18 92 8 56 Z" fill="url(#hull-${uid})" stroke="#2e1906" stroke-width="2" stroke-linejoin="round"/>
+<path d="M 14 68 Q 18 72 22 73 L 120 71 Q 128 68 134 62 L 132 70 Q 124 77 118 78 L 26 80 Q 18 78 14 68 Z" fill="${color}" stroke="rgba(0,0,0,0.3)" stroke-width="1"/>
+<path d="M 26 86 Q 70 90 122 80" stroke="rgba(255,226,180,0.35)" stroke-width="1.4" fill="none"/>
+<path d="M 14 66 L 13 56 L 40 57 L 42 69 Z" fill="#c99358" stroke="#2e1906" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M 15 56 L 15 50 M 24 56.4 L 24 50.6 M 33 56.7 L 33 51 M 14 50 L 40 51" stroke="#2e1906" stroke-width="1.5" stroke-linecap="round"/>
+<path d="M 136 54 L 140 48" stroke="#2e1906" stroke-width="2.2" stroke-linecap="round"/></svg>`;
+      };
+      const CROWN = `<svg viewBox="0 0 50 40"><defs><linearGradient id="crown-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset="0.45" stop-color="#ffd25c"/><stop offset="1" stop-color="#d18a10"/></linearGradient></defs>
+<path d="M5 34 L3 12 L15 22 L25 5 L35 22 L47 12 L45 34 Z" fill="url(#crown-g)" stroke="#7a4a05" stroke-width="2.2" stroke-linejoin="round"/>
+<rect x="5" y="31" width="40" height="6" rx="2" fill="#e8a21c" stroke="#7a4a05" stroke-width="2.2"/><circle cx="25" cy="5" r="3.2" fill="#ff5d4f" stroke="#7a4a05" stroke-width="1.6"/>
+<circle cx="3" cy="12" r="2.6" fill="#46cfd9" stroke="#7a4a05" stroke-width="1.4"/><circle cx="47" cy="12" r="2.6" fill="#46cfd9" stroke="#7a4a05" stroke-width="1.4"/><circle cx="25" cy="25" r="3" fill="#ff5d4f"/></svg>`;
+      document.getElementById("fursan-crown").innerHTML = CROWN;
+
+      // A ship: width w, waterline anchor at (75, 92) of the drawing; always sails bow-left (right to left, as Arabic reads).
+      const makeShip = (id, color, label, w) => {
+        const el = document.getElementById(id);
+        const k = w / 140;
+        el.innerHTML = `<div class="hd" style="left:${-75 * k}px; top:${-92 * k}px; transform: scale(${k})"><div style="transform: scaleX(-1); transform-origin: 70px 0">${dhow(color, label, id)}</div></div>`;
+        return { el, wake: el.querySelector(".wake"), wls: el.querySelectorAll(".wl"), svg: el.querySelector("svg") };
+      };
+      const setShip = (s, x, y, moving, t, opacity) => {
+        s.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+        s.el.style.opacity = opacity;
+        s.wake.setAttribute("opacity", moving.toFixed(3));
+        const off = (-mod(t / 0.7, 1) * 28).toFixed(2);
+        s.wls.forEach((w) => w.setAttribute("stroke-dashoffset", off));
+      };
+
+      const intro = [1, 2, 3, 4].map((n) => makeShip("ship-i" + n, COLORS[n - 1], n, 210));
+      const big = TL.blocks.map((b) => ({ b, s: makeShip("ship-" + b.slot, b.color, b.slot, 620) }));
+      const best = makeShip("ship-best", TL.best.color, TL.best.slot, 640);
+
+      // Confetti for the reveal (seeded).
+      let seed = 11;
+      const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+      const CC = ["#ffd25c", "#ffb627", "#ff5d4f", "#46cfd9", "#fff8e8", TL.best.color];
+      const conf = document.getElementById("confetti");
+      const bits = Array.from({ length: 90 }, (_, n) => {
+        const i = document.createElement("i");
+        i.style.width = 9 + rnd() * 9 + "px"; i.style.height = 6 + rnd() * 6 + "px"; i.style.background = CC[n % CC.length];
+        conf.appendChild(i);
+        return { el: i, x: rnd() * 1920, sway: (rnd() - 0.5) * 260, rot: (rnd() - 0.5) * 1080, dur: 2.6 + rnd() * 2.2, delay: rnd() * 1.2 };
+      });
+
+      const els = { gln: document.getElementById("gln"), glf: document.getElementById("glf"), night: document.getElementById("night"), dawn: document.getElementById("dawn"), flash: document.getElementById("flash") };
+      const F = TL.fin;
+
+      function render(t) {
+        // the sea drifts slowly, always
+        els.gln.style.transform = `translate(${mod(-22 * t, 360).toFixed(1)}px, ${mod(6 * t, 240).toFixed(1)}px)`;
+        els.glf.style.transform = `translate(${mod(-12 * t, 220).toFixed(1)}px, ${mod(4 * t, 150).toFixed(1)}px)`;
+
+        // intro: the four ships cross under the title, right to left, once
+        intro.forEach((s, n) => {
+          const u = clamp01((t - 0.2 - n * 0.35) / 7.5);
+          const x = 2150 - 2700 * u - n * 40;
+          setShip(s, x, 880 + (n % 2) * 70 - n * 12, u > 0 && u < 1 ? 1 : 0, t, u > 0 && u < 1 ? 1 : 0);
+        });
+
+        // each halaqa's ship sails in, waits while its knights are named, then sails on
+        big.forEach(({ b, s }) => {
+          const IN = 1.5;
+          let x, m = 0, op = 1;
+          if (t < b.t0 || t > b.t1 + 0.1) { op = 0; x = 2400; }
+          else if (t < b.t0 + IN) { const u = (t - b.t0) / IN; x = 2350 - (2350 - 560) * E("power3.out")(u); m = 1 - u * 0.8; }
+          else if (t < b.out) { x = 560; m = 0.2 * clamp01(1 - (t - b.t0 - IN) / 0.6); }
+          else { const u = clamp01((t - b.out) / (b.t1 - b.out)); x = 560 - (560 + 520) * E("power2.in")(u); m = Math.min(1, u * 2); }
+          setShip(s, x, 820, m, t, op);
+        });
+
+        // finale: night falls, a dark ship sails in, dawn rises behind it, then the reveal
+        const night = clamp01((t - F.dark) / 1.3);
+        const L = E("power2.in")(clamp01((t - F.light[0]) / (F.light[1] - F.light[0])));
+        const rv = t >= F.reveal;
+        const endLift = clamp01((t - (F.end - 0.6)) / 0.8);
+        els.night.style.opacity = ((rv ? 0.35 * (1 - clamp01((t - F.reveal) / 1.4)) : 0.94 - 0.25 * L) * night * (1 - endLift)).toFixed(3);
+        els.dawn.style.opacity = ((rv ? 0.55 * (1 - clamp01((t - F.reveal) / 1.5)) : L) * (1 - endLift)).toFixed(3);
+        els.dawn.style.transform = `scale(${(0.35 + 0.65 * L).toFixed(3)})`;
+        const fl = rv ? Math.max(0, 1 - (t - F.reveal) / 0.7) : clamp01((t - (F.reveal - 0.12)) / 0.12);
+        els.flash.style.opacity = (0.9 * fl).toFixed(3);
+
+        const bu = clamp01((t - F.shipIn[0]) / (F.shipIn[1] - F.shipIn[0]));
+        const bx = 2300 - (2300 - 960) * E("power2.out")(bu);
+        const shown = t >= F.shipIn[0] && t < F.end + 0.2;
+        setShip(best, bx, 960, bu < 1 ? 1 - bu * 0.7 : 0.15, t, shown ? (1 - endLift).toFixed(3) : 0);
+        // a silhouette with a faint rim until the light reaches it, full colour on the reveal
+        const br = rv ? 1 : 0.04 + 0.22 * L;
+        best.svg.style.filter = rv ? "none" : `brightness(${br.toFixed(3)}) drop-shadow(0 0 1.5px rgba(255, 236, 190, ${(0.25 + 0.5 * L).toFixed(3)}))`;
+
+        bits.forEach((q) => {
+          const u = (t - F.reveal - q.delay) / q.dur;
+          if (u <= 0 || u >= 1) { q.el.style.opacity = 0; return; }
+          q.el.style.opacity = (u < 0.8 ? 1 : (1 - u) / 0.2).toFixed(3);
+          q.el.style.transform = `translate(${(q.x + q.sway * Math.sin(u * 3)).toFixed(1)}px, ${(-40 + 1180 * u).toFixed(1)}px) rotate(${(q.rot * u).toFixed(1)}deg)`;
+        });
+      }
+
+      const tl = gsap.timeline({ paused: true });
+      const clock = { t: 0 };
+      tl.to(clock, { t: DUR, duration: DUR, ease: "none", onUpdate: () => render(clock.t) }, 0);
+
+      const blurIn = (sel, t0, d = 0.5) => tl.fromTo(sel, { opacity: 0, filter: "blur(12px)", scale: 1.06 }, { opacity: 1, filter: "blur(0px)", scale: 1, duration: d, ease: "expo.out" }, t0);
+      const blurOut = (sel, t1, d = 0.3) => tl.to(sel, { opacity: 0, filter: "blur(10px)", duration: d, ease: "power3.in" }, t1 - d - 0.02);
+      const sweep = (sel, t0, d = 1.4) => tl.fromTo(sel, { backgroundPosition: "100% 0" }, { backgroundPosition: "0% 0", duration: d, ease: "power2.inOut" }, t0);
+
+      // opening
+      const T = TL.T;
+      tl.fromTo("#t-title", { opacity: 0.35, filter: "blur(6px)", scale: 1.04 }, { opacity: 1, filter: "blur(0px)", scale: 1, duration: 0.9, ease: "expo.out" }, 0); blurOut("#t-title", T.title[1]);
+      tl.fromTo("#t-today", { opacity: 0, scale: 0.8, filter: "blur(14px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.8, ease: "expo.out" }, T.today[0]);
+      sweep("#t-today-g", T.today[0] + 0.5, 1.6); blurOut("#t-today", T.today[1]);
+      tl.fromTo("#fursan-crown", { opacity: 0, y: -60, scale: 0.6 }, { opacity: 1, y: 0, scale: 1, duration: 0.8, ease: "expo.out" }, T.fursan[0]);
+      tl.fromTo("#t-fursan-g", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.5, ease: "power2.out" }, T.fursan[0] + 0.35);
+      sweep("#t-fursan-g", T.fursan[0] + 0.9, 1.5); blurOut("#t-fursan", T.fursan[1]);
+
+      // each halaqa: its name, then its knights one rank at a time
+      TL.blocks.forEach((b) => {
+        const head = "#head-" + b.slot;
+        tl.fromTo(head + " .hname", { opacity: 0, filter: "blur(12px)", scale: 1.08 }, { opacity: 1, filter: "blur(0px)", scale: 1, duration: 0.6, ease: "expo.out" }, b.head[0] + 0.15);
+        blurOut(head, b.head[1]);
+        b.cards.forEach(([s, e], k) => {
+          const c = "#card-" + b.slot + "-" + k;
+          tl.fromTo(c + " .rank", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.6)" }, s + 0.05);
+          tl.fromTo(c + " .nm", { opacity: 0, filter: "blur(10px)", y: 24 }, { opacity: 1, filter: "blur(0px)", y: 0, duration: 0.55, ease: "expo.out", stagger: 0.22 }, s + 0.3);
+          tl.fromTo(c + " .pts", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "expo.out" }, s + 0.75);
+          blurOut(c, e, 0.28);
+        });
+      });
+
+      // finale
+      tl.fromTo("#t-ftitle", { opacity: 0, filter: "blur(14px)" }, { opacity: 0.85, filter: "blur(0px)", duration: 1.6, ease: "power2.out" }, F.title[0]);
+      blurOut("#t-ftitle", F.title[1], 0.5);
+      tl.fromTo("#t-reveal .k", { opacity: 0, y: -20 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out" }, F.reveal + 0.15);
+      tl.fromTo("#t-reveal-n", { opacity: 0, scale: 1.25, filter: "blur(16px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.7, ease: "expo.out" }, F.reveal + 0.05);
+      tl.fromTo("#t-reveal-p", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out" }, F.reveal + 0.9);
+      sweep("#t-reveal-k", F.reveal + 0.8, 1.6);
+      blurOut("#t-reveal", F.end, 0.5);
+
+      // logo
+      const Lg = TL.logo;
+      tl.fromTo("#logo-base", { opacity: 0, y: -36, scale: 0.86, filter: "blur(10px)" }, { opacity: 1, y: 0, scale: 1, filter: "blur(0px)", duration: 0.9, ease: "expo.out" }, Lg[0] + 0.1);
+      tl.fromTo("#logo-flag", { opacity: 0, scaleX: 0.2 }, { opacity: 1, scaleX: 1, duration: 0.6, ease: "expo.out" }, Lg[0] + 0.55);
+      tl.fromTo("#logo-star", { opacity: 0, scale: 0.2 }, { opacity: 1, scale: 1, duration: 0.6, ease: "expo.out", transformOrigin: "50% 50%" }, Lg[0] + 0.8);
+      tl.fromTo("#t-bless", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.5, ease: "power2.out" }, Lg[0] + 1.1);
+
+      render(0);
+      window.__timelines["show"] = tl;
+    })();
+  </script>
+</template>
