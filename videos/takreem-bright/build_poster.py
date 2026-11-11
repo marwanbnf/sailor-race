@@ -129,7 +129,7 @@ page = f'''<!doctype html>
   </div>
   <div class="best">
     <div class="crown">{CROWN}</div>
-    <div class="box">{SAIL(bc, best_i + 1)}<div class="txt"><div class="k">الحلقة المتميزة</div><div class="n">{esc(best["h"])}</div></div></div>
+    <div class="box">{SAIL(bc, best_i + 1)}<div class="txt"><div class="k">الحلقة المتميزة</div><div class="n" style="color:{bc}">{esc(best["h"])}</div></div></div>
   </div>
 </body></html>'''
 (ROOT / "poster.html").write_text(page)
