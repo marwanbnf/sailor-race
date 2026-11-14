@@ -2,10 +2,11 @@
 
 ## Skills policy (standing instruction from the repo owner)
 
-- Skills live on the owner's claude.ai account (uploaded plugins), so they
-  work in every project. Never install or commit skills into this repo's
-  `.claude/skills/`. When the owner shares a new skill, package it as a
-  plugin zip (with its upstream license) for them to upload to their account.
+- Skills live in the owner's skills repo, https://github.com/marwanbnf/my-skills,
+  which every cloud session installs into `~/.claude/skills/`, so they work in
+  every project. Never install or commit skills into this repo's
+  `.claude/skills/`. When the owner shares a new skill, add it to `my-skills`
+  (see that repo's `CLAUDE.md`).
 - Use installed skills by default for any task they cover. Do not hand-roll
   work a skill already handles. Read the skill's `SKILL.md` before starting.
 - Pick the right skill for the job:
@@ -50,8 +51,6 @@
 
 ## Where the skills come from
 
-All skills are uploaded plugins on the owner's account, not files in this repo:
-taste-skill, impeccable (with its agents), hyperframes, onetake (PolyForm
-Noncommercial 1.0.0), cartoon-animation (`claude-animation-base`),
-lemo-opuscar, vercel-agent-skills, design-md-library, imagegen-skills,
-playwright-cli and desloppify. `ui-ux-pro-max` is an Anthropic account skill.
+All skills, with their sources and licenses, are listed in the README of
+https://github.com/marwanbnf/my-skills. `ui-ux-pro-max` is an Anthropic
+account skill.
