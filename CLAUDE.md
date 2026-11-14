@@ -2,9 +2,11 @@
 
 ## Skills policy (standing instruction from the repo owner)
 
-- Any skill the owner shares (a GitHub repo, a link, or a folder) gets installed
-  into `.claude/skills/<name>/`, committed, and pushed, so it is available in
-  every session on this project. Keep the upstream license file next to it.
+- Skills live in the owner's skills repo, https://github.com/marwanbnf/my-skills,
+  which every cloud session installs into `~/.claude/skills/`, so they work in
+  every project. Never install or commit skills into this repo's
+  `.claude/skills/`. When the owner shares a new skill, add it to `my-skills`
+  (see that repo's `CLAUDE.md`).
 - Use installed skills by default for any task they cover. Do not hand-roll
   work a skill already handles. Read the skill's `SKILL.md` before starting.
 - Pick the right skill for the job:
@@ -47,14 +49,8 @@
   real screens and assets instead of invented ones, and check renders
   (`npx hyperframes check`, frame snapshots) before calling a video done.
 
-## Installed skills
+## Where the skills come from
 
-| Skill | Source |
-|---|---|
-| impeccable (v4.5.0) + agents in `.claude/agents/` | [pbakaus/impeccable](https://github.com/pbakaus/impeccable). `${CLAUDE_PLUGIN_ROOT}` paths rewritten to `.claude/skills/impeccable`. Its plugin hooks are not installed. |
-| brandkit, brutalist-skill, gpt-tasteskill, image-to-code-skill, imagegen-frontend-mobile, imagegen-frontend-web, minimalist-skill, output-skill, redesign-skill, soft-skill, stitch-skill, taste-skill, taste-skill-v1 | [leonxlnx/taste-skill](https://github.com/leonxlnx/taste-skill) (MIT, see `.claude/skills/TASTE-SKILL-LICENSE`) |
-| onetake | [feitangyuan/onetake](https://github.com/feitangyuan/onetake) @ abb6d17. PolyForm Noncommercial 1.0.0, see `.claude/skills/onetake/LICENSE`. The case films' `.mp4`/`.gif` renders were left out (~220 MB); their sources and READMEs are included. |
-| claude-animation-base | [JohnHeibel/ClaudeAnimationBase](https://github.com/JohnHeibel/ClaudeAnimationBase) @ 0ac8bf2 (MIT). The repo has no SKILL.md, so the kit sits in `kit/` and a wrapper `SKILL.md` was written for it. The 6.7 MB animated `docs/emotions.webp` was left out; the `.jpg` model sheets are kept. |
-| lemo-opuscar | [lemomo-ai/lemo-opuscar](https://github.com/lemomo-ai/lemo-opuscar) @ bebbbe1, from `plugin/skills/lemo-opuscar`. Code is MIT; demo films are CC BY 4.0 (credit LemoLab if reused); films we make are ours. The ~115 MB library is fetched at runtime, not committed. |
-| ui-ux-pro-max | Owner's account skill. Only `SKILL.md` was available; its `scripts/search.py` data is missing, so use its written guidance. |
-| figma, hyperframes, hyperframes-cli, hyperframes-registry, media-use, remotion-to-hyperframes, reverse-any-video, slideshow, style-sampling | [heygen-com/hyperframes](https://github.com/heygen-com/hyperframes) `skills/` @ b7a8cfa (Apache-2.0, see `.claude/skills/HYPERFRAMES-LICENSE`) |
+All skills, with their sources and licenses, are listed in the README of
+https://github.com/marwanbnf/my-skills. `ui-ux-pro-max` is an Anthropic
+account skill.
